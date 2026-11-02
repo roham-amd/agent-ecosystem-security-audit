@@ -1,7 +1,7 @@
 # Module: Hooks and Lifecycle Handlers
 
 **AESA module ID:** `HOOKS`  
-**Procedure reference:** Section 10.6 of `prompts/v1/audit.md`  
+**Procedure reference:** Section 10.6 of `prompts/02-modules.md` (core: `prompts/01-core-prompt.md`)
 **Applies when:** component type is `Hook` / lifecycle handler, or host configuration registers pre/post tool, session, file, or error hooks.
 
 Hooks can inherit excessive host privileges and may bypass interactive approval paths if not independently enforced.

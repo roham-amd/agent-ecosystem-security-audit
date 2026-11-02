@@ -1,7 +1,7 @@
 # Module: Subagents and Multi-Agent Systems
 
 **AESA module ID:** `SUBAGENTS`  
-**Procedure reference:** Section 10.5 of `prompts/v1/audit.md`  
+**Procedure reference:** Section 10.5 of `prompts/02-modules.md` (core: `prompts/01-core-prompt.md`)
 **Applies when:** component type is `Subagent`, `Agent Definition`, multi-agent orchestrator, or parent/child Agent delegation is present.
 
 A child Agent must **not** automatically inherit all authority of its parent. Inter-Agent messages and summaries are untrusted until authenticated and authorized.

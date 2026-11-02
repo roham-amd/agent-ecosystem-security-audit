@@ -1,7 +1,7 @@
 # Module: MCP Servers and Clients
 
 **AESA module ID:** `MCP`  
-**Procedure reference:** Section 10.4 of `prompts/v1/audit.md`  
+**Procedure reference:** Section 10.4 of `prompts/02-modules.md` (core: `prompts/01-core-prompt.md`)
 **Applies when:** component type is `MCP Server`, `MCP Client`, or a host configuration that registers MCP endpoints/tools.
 
 MCP assessment is mandatory for MCP components. Identify exact protocol revision, SDK/version, transport, endpoint or launch command, server identity, capability set, negotiated extensions, and implementation-specific behavior. Retrieve the official specification corresponding to the implementation and audit date. Never apply requirements from another revision without explaining compatibility and applicability.

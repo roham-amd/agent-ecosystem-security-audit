@@ -1,7 +1,7 @@
 # Module: Skills and Skill Packs
 
 **AESA module ID:** `SKILLS`  
-**Procedure reference:** Section 10.1 of `prompts/v1/audit.md`  
+**Procedure reference:** Section 10.1 of `prompts/02-modules.md` (core: `prompts/01-core-prompt.md`)
 **Applies when:** component type is `Skill` or `Skill Pack`, or local Skill-format content is discovered.
 
 Skills, Rules, prompts, and Agent definitions are security-relevant even when they contain no executable code. Standardized Skill format does **not** establish safety.

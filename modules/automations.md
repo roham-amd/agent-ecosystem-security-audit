@@ -1,7 +1,7 @@
 # Module: Automations, Scheduled Tasks and Workflows
 
 **AESA module ID:** `AUTOMATIONS`  
-**Procedure references:** Sections 10.7 and 10.8 of `prompts/v1/audit.md`  
+**Procedure references:** Sections 10.7 and 10.8 of `prompts/02-modules.md` (core: `prompts/01-core-prompt.md`)
 **Applies when:** component type is `Automation`, scheduled Agent task, webhook-triggered Agent job, `Workflow`, or `Orchestrator`.
 
 Unattended privilege is a first-class risk. Backend approval must be independently enforced; prompt text is not a control.

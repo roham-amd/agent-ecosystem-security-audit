@@ -7,7 +7,7 @@
 | 1.x | Yes |
 | < 1.0.0 | No |
 
-The bundled audit procedure version (`prompts/v1/` = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
+The bundled audit procedure version (`prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
 ## What this project is
 

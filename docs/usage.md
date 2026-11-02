@@ -6,11 +6,12 @@ It is **not** an automated scanner. You (or an audit agent following the procedu
 
 ## 1. Choose your scope
 
-Fill the audit inputs in Section 2 of [`prompts/v1/audit.md`](../prompts/v1/audit.md). At minimum:
+Fill the audit inputs in Section 2 of [`prompts/01-core-prompt.md`](../prompts/01-core-prompt.md). At minimum:
 
 | Input | Why it matters |
 | --- | --- |
 | `REPOSITORY_URL` | Exact GitHub repository under review |
+| `KIT_DIR` / `WORK_DIR` | Read-only kit vs writable outputs (outside target clone) |
 | `AUDIT_SCOPE_MODE` | Inventory-only vs selected/batch/full deep audit |
 | `EXTERNAL_SOURCE_SCOPE` | Whether linked repos may be inspected |
 | `HOST_AGENT` / host config | Integration trust depends on the host |
@@ -18,11 +19,15 @@ Fill the audit inputs in Section 2 of [`prompts/v1/audit.md`](../prompts/v1/audi
 
 **Rule:** a URL inside a catalog is not authorization to audit that target.
 
-## 2. Load the procedure
+## 2. Load the procedure (kit layout)
 
-1. Open [`prompts/v1/audit.md`](../prompts/v1/audit.md).
-2. Provide it as the system/developer procedure to your audit agent, **or** follow it manually as a human auditor.
-3. Attach only the specialized modules that match discovered component types from [`modules/`](../modules/).
+1. Operators: read [`prompts/00-OPERATOR-GUIDE.md`](../prompts/00-OPERATOR-GUIDE.md).
+2. Attach [`prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) and provide [`prompts/01-core-prompt.md`](../prompts/01-core-prompt.md) as the system/developer procedure.
+3. Set `KIT_DIR` (read-only kit path) and `WORK_DIR` (writable path outside the target clone) in Section 2.8.
+4. Before component deep audit, attach [`prompts/02-modules.md`](../prompts/02-modules.md) and only the matching files from [`modules/`](../modules/).
+5. JSON contract: [`prompts/03-report-contract.md`](../prompts/03-report-contract.md).
+
+Monolithic copy (optional): [`prompts/audit.full.md`](../prompts/audit.full.md). Index: [`prompts/audit.md`](../prompts/audit.md).
 
 Suggested module mapping:
 
@@ -61,7 +66,7 @@ Prefer `INSUFFICIENT EVIDENCE` over unsupported assurance.
 
 ## 5. Produce outputs
 
-Narrative report structure: Section 21 of the procedure (Persian by default; technical identifiers in English).
+Narrative report structure: Section 21 of `01-core-prompt.md`. Reports must be written in **English** (`REPORT_LANGUAGE: English` in Section 2.8).
 
 Machine-readable summary:
 
@@ -97,7 +102,7 @@ For Confidential / Restricted / Regulated / personal / credential / financial / 
 
 Always record:
 
-- AESA project / package version (`1.0.0`)
+- AESA project / package version (`1.1.0`)
 - Procedure version (`1.0`)
 - Repository tag/commit of AESA used
 - Audit date (UTC)

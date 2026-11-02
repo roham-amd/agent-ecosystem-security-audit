@@ -45,9 +45,15 @@ agent-ecosystem-security-audit/
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 ├── CHANGELOG.md
-├── prompts/
-│   └── v1/
-│       └── audit.md          # Full AESA v1.0 audit procedure / prompt
+├── VERSION
+├── prompts/                  # AESA kit procedure (load on demand)
+│   ├── 00-OPERATOR-GUIDE.md
+│   ├── 01-core-prompt.md     # Main procedure for the audit agent
+│   ├── 02-modules.md
+│   ├── 03-report-contract.md
+│   ├── 04-passive-guardrails.md
+│   ├── audit.md              # Kit index (entry pointer)
+│   └── audit.full.md         # Full monolithic procedure
 ├── modules/
 │   ├── mcp.md
 │   ├── skills.md
@@ -70,11 +76,12 @@ agent-ecosystem-security-audit/
 
 ## Quick start
 
-1. Read [`docs/usage.md`](docs/usage.md).
-2. Copy the current procedure from [`prompts/v1/audit.md`](prompts/v1/audit.md) into your audit agent or review workflow.
-3. Fill the **Audit Inputs** (repository URL, authorization scope, host context, data sensitivity).
-4. Apply relevant specialized modules from [`modules/`](modules/).
-5. Produce a narrative report plus a machine-readable summary conforming to [`schemas/audit-report.schema.json`](schemas/audit-report.schema.json).
+1. Read [`prompts/00-OPERATOR-GUIDE.md`](prompts/00-OPERATOR-GUIDE.md) and [`docs/usage.md`](docs/usage.md).
+2. Attach [`prompts/04-passive-guardrails.md`](prompts/04-passive-guardrails.md) and [`prompts/01-core-prompt.md`](prompts/01-core-prompt.md); fill **Audit Inputs** (Section 2, including `KIT_DIR` and `WORK_DIR`).
+3. During deep audit, attach [`prompts/02-modules.md`](prompts/02-modules.md) and matching files from [`modules/`](modules/).
+4. Produce a narrative report (Section 21 in the core prompt) plus JSON per [`prompts/03-report-contract.md`](prompts/03-report-contract.md) and [`schemas/audit-report.schema.json`](schemas/audit-report.schema.json).
+
+For a single file, use [`prompts/audit.full.md`](prompts/audit.full.md).
 
 ### Minimal workflow modes
 
@@ -97,9 +104,10 @@ agent-ecosystem-security-audit/
 - Prefer `INSUFFICIENT EVIDENCE` over unsupported assurance or unsupported accusation.
 - Never execute, install, or contact target-controlled services during a passive audit.
 - Never request or expose production secrets.
+- Narrative audit reports use **English** (`REPORT_LANGUAGE: English`).
 - Do not approve sensitive production use while a material hard gate is `FAIL` or `NOT VERIFIED`.
 
-See the full procedure in [`prompts/v1/audit.md`](prompts/v1/audit.md).
+See the kit in [`prompts/`](prompts/) or the monolithic [`prompts/audit.full.md`](prompts/audit.full.md).
 
 ---
 
@@ -121,8 +129,8 @@ AESA helps humans and audit agents produce **evidence-bounded** decisions about 
 
 | Kind | Current | Meaning |
 | --- | --- | --- |
-| Project / package release | **1.0.0** | AESA repository packaging and public release numbering |
-| Audit procedure | **1.0** (`prompts/v1/`) | Methodology / prompt / JSON contract version inside the framework |
+| Project / package release | **1.1.0** | AESA repository packaging and public release numbering |
+| Audit procedure | **1.0** (`prompts/`) | Methodology / prompt / JSON contract version inside the framework |
 
 Breaking changes to the audit procedure, decision enums, or JSON contract bump the major procedure version under `prompts/`. Project packaging may advance independently (for example `1.x.y`).
 
@@ -150,8 +158,8 @@ If you use AESA in an assessment report, cite the exact procedure version and co
 
 ```text
 AESA — Agent Ecosystem Security Audit
-Project: 1.0.0
+Project: 1.1.0
 Procedure: 1.0
 https://github.com/roham-amd/agent-ecosystem-security-audit
-Tag: v1.0.0
+Tag: v1.1.0
 ```

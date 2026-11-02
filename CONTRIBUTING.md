@@ -19,7 +19,7 @@ Thank you for helping improve the Agent Ecosystem Security Audit framework.
 4. **Keep enums stable** unless a major version bump is intentional.
 5. **Separate evidence classes.** Do not conflate source review, artifact verification, host configuration, and runtime observation.
 6. **No numeric score invention.** Qualitative risk, confidence, and coverage stay separate.
-7. **Preserve technical identifiers in English** even when narrative translations are added.
+7. **English only:** narrative reports and procedure-facing text use **English**. Technical identifiers (paths, enums, JSON keys, CVE IDs) stay in English.
 
 ## Pull request checklist
 
@@ -35,9 +35,15 @@ Thank you for helping improve the Agent Ecosystem Security Audit framework.
 | --- | --- |
 | Typo / clarification with no semantic change | Patch |
 | New optional module guidance; additive schema fields with defaults | Minor |
-| Changed decision enums, hard gates, or mandatory workflow meaning | Major (`prompts/vN/`) |
+| Changed decision enums, hard gates, or mandatory workflow meaning | Major (new `prompts/` tree or versioned kit directory) |
 
 When adding a new major procedure, keep prior versions under `prompts/` for reproducibility of historical audits.
+
+Keep kit files under `prompts/` consistent with each other:
+
+- Prefer editing `prompts/audit.full.md` when changing the full procedure text, then align the split kit files (`01-core-prompt.md`, `02-modules.md`, `03-report-contract.md`, `audit.md`) as needed.
+- Edit `04-passive-guardrails.md` directly when changing passive-audit boundaries; then align short pointers in `audit.full.md` Sections 4.5, 4.6, and 6 if needed.
+- There is no generator script; treat the split kit files as maintained source.
 
 ## Code of conduct expectations
 

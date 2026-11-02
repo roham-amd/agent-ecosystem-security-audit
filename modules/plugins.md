@@ -1,7 +1,7 @@
 # Module: Plugins and Connectors
 
 **AESA module ID:** `PLUGINS`  
-**Procedure reference:** Section 10.3 of `prompts/v1/audit.md`  
+**Procedure reference:** Section 10.3 of `prompts/02-modules.md` (core: `prompts/01-core-prompt.md`)
 **Applies when:** component type is `Plugin`, `Connector`, `IDE Extension`, or equivalent marketplace/extension package.
 
 Plugins and Connectors are not trusted merely because they use legitimate credentials or appear in a marketplace.
