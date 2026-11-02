@@ -1,0 +1,29 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+*.code-workspace
+
+# Local audit outputs (keep outside target repos; also ignore if created locally)
+security-audit-report.md
+security-audit-summary.json
+audit-state.json
+repository-inventory.json
+component-inventory.json
+component-assessments/
+findings.json
+evidence-registry.json
+external-source-registry.json
+tool-capability-matrix.json
+component-interaction-graph.json
+data-flow-map.json
+coverage-ledger.json
+
+# Python / node accidental local tooling
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
