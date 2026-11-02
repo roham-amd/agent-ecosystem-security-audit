@@ -152,6 +152,6 @@ If you use AESA in an assessment report, cite the exact procedure version and co
 AESA — Agent Ecosystem Security Audit
 Project: 1.0.0
 Procedure: 1.0
-https://github.com/<owner>/agent-ecosystem-security-audit
+https://github.com/roham-amd/agent-ecosystem-security-audit
 Tag: v1.0.0
 ```
