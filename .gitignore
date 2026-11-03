@@ -7,6 +7,7 @@ Thumbs.db
 *.code-workspace
 
 # Local audit outputs (keep outside target repos; also ignore if created locally)
+aesa-out/
 security-audit-report.md
 security-audit-summary.json
 audit-state.json

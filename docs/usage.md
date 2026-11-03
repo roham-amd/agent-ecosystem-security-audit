@@ -48,11 +48,12 @@ Install from [`tools/`](../tools/README.md):
 
 ```bash
 cd tools && python -m pip install -e ".[dev]"
-aesa inventory /path/to/target   # passive discovery seed
+aesa preflight /path/to/target   # inventory + coverage + audit-context.md
+aesa inventory /path/to/target   # JSON-only passive discovery
 aesa validate report summary.json
 ```
 
-See [`docs/MIGRATION-2.0.md`](MIGRATION-2.0.md) for limits — tooling does not replace the audit procedure.
+Prefer starting with `aesa preflight` so coverage and `NOT VERIFIED` items are explicit before deep review. See [`AESA-GATE.md`](AESA-GATE.md) and [`MIGRATION-2.0.md`](MIGRATION-2.0.md) — tooling does not replace the audit procedure.
 
 Complete stages in order. Do not silently skip.
 

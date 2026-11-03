@@ -7,6 +7,7 @@ from pathlib import Path
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.inventory.collector import collect_inventory, inventory_to_json
+from aesa.preflight import run_preflight
 from aesa.prompt_build import write_monolith
 from aesa.audit_diff import diff_graphs, diff_reports
 from aesa.export.sarif import report_to_sarif
@@ -16,7 +17,10 @@ from aesa.validate_report import analyze_graph_paths, validate_graph_file, valid
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="aesa", description="AESA build and validation tooling")
+    parser = argparse.ArgumentParser(
+        prog="aesa",
+        description="AESA Gate — agent ecosystem inventory, preflight, and audit tooling",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     build = sub.add_parser("build", help="Run build and consistency checks")
@@ -46,6 +50,18 @@ def main(argv: list[str] | None = None) -> int:
     inv = sub.add_parser("inventory", help="Passive read-only inventory of a directory")
     inv.add_argument("path", type=Path)
     inv.add_argument("-o", "--output", type=Path, help="Write JSON to file")
+
+    pre = sub.add_parser(
+        "preflight",
+        help="Passive discovery + coverage map + audit-context for AI deep review",
+    )
+    pre.add_argument("path", type=Path, nargs="?", default=Path("."))
+    pre.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Output directory (default: <path>/aesa-out)",
+    )
 
     verify = sub.add_parser("verify", help="Supply-chain verification helpers")
     verify_sub = verify.add_subparsers(dest="verify_cmd", required=True)
@@ -122,6 +138,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Wrote {args.output}")
         else:
             print(text)
+        return 0
+
+    if args.command == "preflight":
+        payload = run_preflight(args.path, output_dir=args.output_dir)
+        print(payload["summary"])
         return 0
 
     if args.command == "verify" and args.verify_cmd == "digest":

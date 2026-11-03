@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [2.3.0] — 2026-11-03
+
+### Added
+
+- **AESA Gate** positioning: evidence-first local preflight + agent deep review ([`docs/AESA-GATE.md`](docs/AESA-GATE.md)).
+- `aesa preflight` — inventory, coverage map, ecosystem graph seed, `audit-context.md`, console summary.
+- Inventory adapters (partial): hooks, plugins, subagents, automations; coverage matrix on inventory JSON.
+- Bounded collector I/O (`max_files` / `max_depth` / `max_file_bytes` before content reads).
+- Cursor / Claude Code skill kit: [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md), [`skills/cursor/AESA.md`](skills/cursor/AESA.md).
+- Version consistency checks across `VERSION`, `canonical/versions.json`, `tools/pyproject.toml`, and `tools/aesa/__init__.py`.
+
+### Changed
+
+- Tooling package version aligned to **0.2.0**.
+- `SECURITY.md` supports **2.x**; corpus README documents CORPUS-001–010 and non-goals.
+- `CONTRIBUTING.md` documents monolith regeneration via `aesa build prompts --write` (ADR-003).
+
+### Notes
+
+- Preflight / inventory is discovery + coverage — **not** a security clearance.
+- LLM audit quality remains unbenchmarked; corpus still targets deterministic tooling.
+
 ## [2.2.0] — 2026-11-03
 
 ### Added

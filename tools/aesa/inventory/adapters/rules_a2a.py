@@ -4,33 +4,37 @@ import json
 from pathlib import Path
 from typing import Any
 
+from aesa.inventory.io import safe_read_text, select_files
+from aesa.inventory.limits import CollectorLimits
+
+_CARD_NAMES = {"agent-card.json", "agent_card.json"}
+
 
 def discover_agent_cards(
     root: Path,
     *,
-    limits,
+    files: list[Path],
+    limits: CollectorLimits,
     events: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
-    names = ("agent-card.json", ".well-known/agent-card.json")
-    for path in root.rglob("*"):
-        if path.name not in names and path.name != "agent_card.json":
+    for path in select_files(
+        files,
+        lambda p: p.name in _CARD_NAMES
+        or (p.name == "agent-card.json" and ".well-known" in p.parts),
+    ):
+        raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="a2a_agent_card")
+        if raw is None:
             continue
-        if ".git" in path.parts or "node_modules" in path.parts:
-            continue
+        rel = path.relative_to(root).as_posix()
         try:
-            rel = path.relative_to(root)
-            raw = path.read_text(encoding="utf-8")
-            if len(raw.encode("utf-8")) > limits.max_file_bytes:
-                events.append({"type": "parse_skipped_size", "path": str(rel)})
-                continue
             data = json.loads(raw)
-        except (OSError, json.JSONDecodeError) as exc:
+        except json.JSONDecodeError as exc:
             events.append(
                 {
                     "type": "parse_error",
                     "adapter": "a2a_agent_card",
-                    "path": str(path.relative_to(root)),
+                    "path": rel,
                     "message": str(exc),
                 }
             )
@@ -40,11 +44,12 @@ def discover_agent_cards(
                 "name": data.get("name") or path.parent.name,
                 "type": "A2A Agent Card",
                 "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
-                "repository_path": str(rel),
+                "repository_path": rel,
                 "adapter": "a2a_agent_card",
-                "adapter_maturity": "partial",
+                "adapter_maturity": "PARTIAL",
                 "discovery_status": "IDENTIFIED",
                 "declared_url": data.get("url"),
+                "priority_hints": ["remote_agent_identity"] if data.get("url") else [],
             }
         )
     return results
@@ -53,42 +58,60 @@ def discover_agent_cards(
 def discover_instruction_rules(
     root: Path,
     *,
-    limits,
+    files: list[Path],
+    limits: CollectorLimits,
     events: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
-    patterns = (
-        "AGENTS.md",
-        "CLAUDE.md",
-        ".cursor/rules",
-    )
-    for path in root.rglob("*"):
-        if ".git" in path.parts or "node_modules" in path.parts:
-            continue
-        rel = path.relative_to(root)
-        if path.name in ("AGENTS.md", "CLAUDE.md"):
+    seen_dirs: set[str] = set()
+    for path in select_files(
+        files,
+        lambda p: p.name in {"AGENTS.md", "CLAUDE.md"}
+        or (".cursor" in p.parts and "rules" in p.parts),
+    ):
+        rel = path.relative_to(root).as_posix()
+        if path.name in {"AGENTS.md", "CLAUDE.md"}:
+            # Confirm readable under limits (content not required for identity)
+            raw = safe_read_text(
+                path, root=root, limits=limits, events=events, adapter="instruction_rules"
+            )
+            if raw is None:
+                continue
             results.append(
                 {
                     "name": path.name,
                     "type": "Rule / instruction file",
                     "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
-                    "repository_path": str(rel),
+                    "repository_path": rel,
                     "adapter": "instruction_rules",
-                    "adapter_maturity": "supported",
+                    "adapter_maturity": "SUPPORTED",
                     "discovery_status": "IDENTIFIED",
                     "instruction_content_present": True,
+                    "priority_hints": [],
                 }
             )
-        elif path.is_dir() and path.name == "rules" and ".cursor" in path.parts:
-            results.append(
-                {
-                    "name": "cursor-rules",
-                    "type": "Rule pack",
-                    "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
-                    "repository_path": str(rel),
-                    "adapter": "instruction_rules",
-                    "adapter_maturity": "partial",
-                    "discovery_status": "IDENTIFIED",
-                }
-            )
+            continue
+
+        # Cursor rules: group by rules directory
+        rules_dir = None
+        parts = path.relative_to(root).parts
+        for i, part in enumerate(parts):
+            if part == "rules" and i > 0 and parts[i - 1] == ".cursor":
+                rules_dir = "/".join(parts[: i + 1])
+                break
+        if not rules_dir or rules_dir in seen_dirs:
+            continue
+        seen_dirs.add(rules_dir)
+        results.append(
+            {
+                "name": "cursor-rules",
+                "type": "Rule pack",
+                "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
+                "repository_path": rules_dir,
+                "adapter": "instruction_rules",
+                "adapter_maturity": "PARTIAL",
+                "discovery_status": "IDENTIFIED",
+                "priority_hints": [],
+            }
+        )
     return results

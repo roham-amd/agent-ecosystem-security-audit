@@ -28,6 +28,7 @@ AESA targets **agent ecosystems** (Skills, MCP, Hooks, …), not generic automat
 
 ## Execution steps
 
+0. **Recommended:** run `aesa preflight <target>` (see [`../docs/AESA-GATE.md`](../docs/AESA-GATE.md)) and attach `aesa-out/audit-context.md` before deep review. Or load [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md).
 1. Read this file and, if needed, [`../docs/usage.md`](../docs/usage.md).
 2. Provide `04-passive-guardrails.md` and `01-core-prompt.md` to the audit agent. Fill Section 2: at minimum `REPOSITORY_URL`, `KIT_DIR`, `WORK_DIR`, `AUDIT_SCOPE_MODE`, `EXTERNAL_SOURCE_SCOPE`, `DATA_SENSITIVITY`, and host context.
 3. The agent completes stages 0–2 (scope, discovery, triage). **Before Phase 4 deep audit**, attach `02-modules.md` and the needed files from `modules/`.

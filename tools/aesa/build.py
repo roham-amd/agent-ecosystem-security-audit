@@ -62,6 +62,29 @@ def check_version_metadata() -> None:
             f"({versions.get('aesa_product')})"
         )
 
+    # Keep tooling package metadata aligned with canonical build_tool tag.
+    build_tool = str(versions.get("build_tool") or "")
+    expected_pkg = build_tool.removeprefix("aesa-tools-")
+    pyproject = (repo_root() / "tools" / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.MULTILINE)
+    if not match:
+        raise SystemExit("tools/pyproject.toml missing version")
+    if expected_pkg and match.group(1) != expected_pkg:
+        raise SystemExit(
+            f"tools/pyproject.toml version ({match.group(1)}) != "
+            f"canonical build_tool package version ({expected_pkg})"
+        )
+
+    init_text = (repo_root() / "tools" / "aesa" / "__init__.py").read_text(encoding="utf-8")
+    init_match = re.search(r'__version__\s*=\s*"([^"]+)"', init_text)
+    if not init_match:
+        raise SystemExit("tools/aesa/__init__.py missing __version__")
+    if expected_pkg and init_match.group(1) != expected_pkg:
+        raise SystemExit(
+            f"tools/aesa/__init__.py __version__ ({init_match.group(1)}) != "
+            f"canonical build_tool package version ({expected_pkg})"
+        )
+
 
 def validate_json_schema_document() -> None:
     path = canonical_schema_path()

@@ -1,6 +1,6 @@
-# AESA tooling
+# AESA Gate tooling
 
-Deterministic build, report validation, passive inventory, and corpus evaluation (assessment R-001, R-002, R-003, R-005).
+Deterministic build, report validation, passive inventory/preflight, and corpus evaluation.
 
 ## Install (local)
 
@@ -12,10 +12,15 @@ python -m pip install -e ".[dev]"
 ## Commands
 
 ```bash
+aesa preflight PATH     # discovery + coverage + audit-context (writes aesa-out/)
 aesa build all          # sync schemas, check versions, validate examples
 aesa validate report PATH.json
-aesa inventory PATH     # passive read-only discovery
-aesa corpus run         # run corpus harness (fixtures + validators)
+aesa inventory PATH     # passive read-only discovery JSON
+aesa diff report A B
+aesa export sarif REPORT.json
+aesa corpus run         # tooling corpus harness (not LLM detection benchmark)
 ```
 
-See [`docs/MIGRATION-2.0.md`](../docs/MIGRATION-2.0.md) for upgrade notes.
+Resource limits for collectors: `max_files`, `max_depth`, `max_file_bytes` (see `aesa.inventory.limits`).
+
+See [`docs/AESA-GATE.md`](../docs/AESA-GATE.md) and [`docs/MIGRATION-2.0.md`](../docs/MIGRATION-2.0.md).

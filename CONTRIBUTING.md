@@ -46,9 +46,9 @@ Keep kit files under `prompts/` consistent with each other:
 
 - **Canonical schema:** edit `canonical/schemas/audit-report.schema.json`, then run `aesa build schemas`.
 - **Prompt kit composition:** declared in `canonical/prompt-kit.manifest.json` (split kit files remain editable sources).
-- Prefer editing `prompts/01-core-prompt.md`, `02-modules.md`, and `03-report-contract.md` for procedure changes; align `prompts/audit.full.md` when changing monolithic consumers (full regeneration automation is planned — do not let monolith drift silently).
-- Edit `04-passive-guardrails.md` directly when changing passive-audit boundaries; then align short pointers in `audit.full.md` Sections 4.5, 4.6, and 6 if needed.
-- CI runs `aesa build all` — generated schema aliases must match canonical.
+- Prefer editing `prompts/01-core-prompt.md`, `02-modules.md`, and `03-report-contract.md` for procedure changes; regenerate the monolith with `aesa build prompts --write` (see `docs/architecture/ADR-003-monolith-generation.md`). CI runs a parity check so the monolith must not drift silently.
+- Edit `04-passive-guardrails.md` directly when changing passive-audit boundaries; then regenerate or align `audit.full.md`.
+- CI runs `aesa build all` — generated schema aliases must match canonical; `VERSION`, `canonical/versions.json`, `tools/pyproject.toml`, and `tools/aesa/__init__.py` must stay aligned.
 
 ## Code of conduct expectations
 

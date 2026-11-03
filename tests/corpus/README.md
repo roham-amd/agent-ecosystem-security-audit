@@ -1,11 +1,11 @@
-# AESA security regression corpus (v0.1)
+# AESA security regression corpus (v0.3)
 
-Pilot ground-truth cases for deterministic tooling (R-001). LLM procedure effectiveness is **not** fully benchmarked by this harness yet.
+Pilot ground-truth cases for **deterministic tooling** (inventory adapters, validators, graph helpers, digest/SARIF pilots). LLM procedure effectiveness is **not** fully benchmarked by this harness yet — do not cite corpus pass rates as detection quality for model-led audits.
 
 ## Layout
 
 - `fixtures/` — synthetic miniature repositories (benign, vulnerable, ambiguous cases expand over time).
-- `cases/` — case manifests referencing fixtures and expected validator outcomes.
+- `cases/` — case manifests referencing fixtures and expected validator outcomes (`CORPUS-001` … `CORPUS-010`).
 - `../validation/` — shared positive/negative JSON fixtures for schema and semantic validation.
 
 ## Run
@@ -29,5 +29,15 @@ aesa corpus run
 | CORPUS-002 | Report JSON Schema + semantic validation (positive) |
 | CORPUS-003 | Semantic validator rejects orphan evidence |
 | CORPUS-004 | Ecosystem graph JSON Schema |
+| CORPUS-005 | Prompt-injection skill inventory fixture |
+| CORPUS-006 | A2A Agent Card discovery |
+| CORPUS-007 | Attack path search helper |
+| CORPUS-008 | Digest verify helper |
+| CORPUS-009 | Duplicate component id rejection |
+| CORPUS-010 | SARIF export pilot |
 
-Planned: prompt-injection fixtures, A2A Agent Card tampering, supply-chain digest mismatch (R-001 expansion).
+## Explicit non-goals (today)
+
+- Measuring recall/precision of AI audit agents
+- Full SBOM / signature verification
+- Runtime detonation or live MCP endpoint testing

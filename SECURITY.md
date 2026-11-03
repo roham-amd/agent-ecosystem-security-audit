@@ -4,20 +4,23 @@
 
 | Project version | Supported |
 | --- | --- |
-| 1.x | Yes |
+| 2.x | Yes |
+| 1.x | Best-effort (security fixes only when practical) |
 | < 1.0.0 | No |
 
 The bundled audit procedure version (`prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
+Tooling package version (`aesa-tools`, currently **0.2.0**) is tracked in `canonical/versions.json` as `build_tool` and must stay aligned with `tools/pyproject.toml` and `tools/aesa/__init__.py`.
+
 ## What this project is
 
-AESA is an **open-source security audit framework**: procedures, prompts, specialized modules, and report schemas for assessing AI agent ecosystems.
+AESA (AESA Gate) is an **open-source security audit framework** plus **local-first deterministic tooling**: procedures, prompts, specialized modules, report schemas, passive inventory/preflight, and validation helpers for assessing AI agent ecosystems.
 
-It is **not** an automated vulnerability scanner, penetration-testing tool, or certification authority.
+It is **not** an automated vulnerability scanner, penetration-testing tool, runtime sandbox, marketplace certification authority, or substitute for organizational risk acceptance.
 
 ## Reporting a vulnerability in AESA itself
 
-If you discover a security issue in this repository’s documentation, prompts, schemas, or examples that could cause auditors to:
+If you discover a security issue in this repository’s documentation, prompts, schemas, tooling, or examples that could cause auditors to:
 
 - execute untrusted target code,
 - contact production endpoints,
@@ -39,14 +42,6 @@ Do **not** include production secrets, customer data, or live exploit payloads a
 
 ## Auditor safety expectations
 
-When using AESA against a target:
+Operators and audit agents must treat target repositories as **untrusted data**. Passive audits must remain read-only: no install, no execute, no contact with target-controlled services. See `prompts/04-passive-guardrails.md` and `docs/toolchain-threat-model.md`.
 
-- Treat all target-controlled content as untrusted data.
-- Do not execute, install, or connect to target-controlled code or services during a passive audit.
-- Do not request, paste, validate, or expose production credentials in chat or reports.
-- Do not claim scanner, sandbox, SBOM, signature, or runtime verification unless it was actually performed.
-- Prefer `INSUFFICIENT EVIDENCE` over unsupported assurance.
-
-## Scope exclusions
-
-Reports about vulnerabilities in third-party agent frameworks, MCP servers, plugins, or marketplace listings are out of scope for AESA’s own security process unless they demonstrate a defect in AESA’s guidance that causes unsafe auditor behavior.
+Deterministic collectors apply resource limits (`max_files`, `max_depth`, `max_file_bytes`). Limits reduce abuse risk; they are not a full sandbox.

@@ -1,7 +1,7 @@
 [project]
 name = "aesa-tools"
-version = "0.1.0"
-description = "Build, validation, inventory and corpus harness for AESA"
+version = "0.2.0"
+description = "AESA Gate tooling — preflight, inventory, validation, and corpus harness"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
