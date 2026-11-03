@@ -8,6 +8,9 @@ Desktop.ini
 .vscode/
 *.code-workspace
 .cursor/
+# Allow Cursor host/MCP fixtures used by tests (still ignore project .cursor/)
+!tests/**/.cursor/
+!tests/**/.cursor/**
 
 # Secrets / local env (never commit)
 .env
