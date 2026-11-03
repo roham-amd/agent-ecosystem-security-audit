@@ -1,6 +1,6 @@
 # AESA Guard scan — operator guide
 
-This document describes the **primary product experience** introduced in release **3.1.0** and refined in **3.1.1**: deterministic discovery plus evidence-backed security observations via `aesa scan`, with explicit capability / exposure / finding separation.
+This document describes the **primary product experience** introduced in release **3.1.0** and current through **3.3.1**: deterministic discovery plus evidence-backed security observations via `aesa scan`, with explicit capability / exposure / finding separation.
 
 Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md).
 

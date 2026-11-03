@@ -7,7 +7,7 @@
   "primary_command": "aesa scan",
   "north_star": "Continuous Agent Authority Security Gate",
   "positioning": "Know what your AI agents can access, execute, and trust. Detect dangerous changes before they reach production.",
-  "release_status": "ready_to_tag",
+  "release_status": "released",
   "contracts": {
     "audit_procedure": "1.0",
     "audit_report_schema": "1.0",
