@@ -27,14 +27,24 @@ upgrade inventory into production approval without evidence.
 
 ### 1. Audit / preflight (deterministic)
 
-If AESA tooling is available:
+If AESA tooling is available (local uv):
 
 ```bash
-cd <AESA_KIT>/tools && python -m pip install -e ".[dev]"
-aesa audit <TARGET_REPO> --profile standard -o <WORK_DIR>/aesa-out
+cd <AESA_KIT>/tools && uv sync --locked
+uv run aesa audit <TARGET_REPO> --profile standard -o <WORK_DIR>/aesa-out
 # quick inventory only:
-aesa audit <TARGET_REPO> --profile quick -o <WORK_DIR>/aesa-out
+uv run aesa audit <TARGET_REPO> --profile quick -o <WORK_DIR>/aesa-out
 ```
+
+Or via Docker (no local Python), from the AESA kit root:
+
+```bash
+docker compose build
+TARGET=<TARGET_REPO> docker compose run --rm aesa \
+  audit /work --profile standard -o /work/aesa-out
+```
+
+Full Docker + agent handoff: `docs/docker-agent-audit.md`.
 
 Read:
 

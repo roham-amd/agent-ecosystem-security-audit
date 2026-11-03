@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 # Maturity of deterministic discovery for each ecosystem family.
-ADAPTER_COVERAGE: list[dict[str, str]] = [
+ADAPTER_COVERAGE: list[dict[str, str | None]] = [
     {
         "family": "Skill",
         "adapter": "skill_md",

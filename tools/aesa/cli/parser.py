@@ -116,13 +116,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     deps = sub.add_parser(
         "deps",
-        help="Check/upgrade pinned dependencies (ncu-style for constraints/pyproject)",
+        help="Check/upgrade dependencies (uv.lock; constraints stay in pyproject.toml)",
     )
     deps_sub = deps.add_subparsers(dest="deps_cmd", required=True)
-    deps_sub.add_parser("outdated", help="Compare constraints.txt pins to latest PyPI")
+    deps_sub.add_parser("outdated", help="Compare uv.lock pins to latest PyPI")
     dep_up = deps_sub.add_parser(
         "upgrade",
-        help="Bump pins to latest PyPI across constraints/lock/pyproject (like ncu -u)",
+        help="Bump lock via uv lock --upgrade (does not rewrite pyproject constraints)",
     )
     dep_up.add_argument(
         "--dry-run",

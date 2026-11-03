@@ -1,5 +1,0 @@
-# Runtime install of aesa-tools dependencies under constraints.txt.
-# Prefer: python -m pip install -c constraints.txt -e ".[dev]"
--c constraints.txt
-jsonschema==4.26.0
-packaging==26.3

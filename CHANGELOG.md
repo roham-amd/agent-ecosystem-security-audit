@@ -6,13 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [3.0.1] — 2026-11-04
+
+### Added
+
+- Docker image + Compose (`Dockerfile`, `docker-compose.yml`) on digest-pinned `python:3.15.2-slim-trixie` and `ghcr.io/astral-sh/uv`.
+- Operator guide [`docs/docker-agent-audit.md`](docs/docker-agent-audit.md) — Docker preflight + AI agent deep review (Cursor, Claude Code, Codex, Antigravity, …).
+- Dev quality toolchain: mypy, pytest-cov, pip-audit; optional Ruff hooks via `.pre-commit-config.yaml` (`uvx pre-commit`).
+- Dependabot `docker` ecosystem for `tag@digest` base updates; Actions remain SHA-pinned.
+- `tools/.python-version` (`3.15`) and committed `tools/uv.lock`.
+
+### Changed
+
+- Product version **3.0.1**; tooling package **0.3.1**.
+- Tooling stack: **uv + pyproject.toml + uv.lock + Ruff + Pytest + mypy** (PEP 735 `[dependency-groups]`; constraints via `uv add`; exact versions/hashes in lock). Removed `constraints.txt` / `requirements*.txt`.
+- CI and AESA Gate install with `uv sync --locked` / `uv run --locked`; CI pins patch via `uv python install 3.15.2`.
+- Production containers use `uv sync --locked --no-dev`.
+
+### Notes
+
+- Report schema / procedure versions remain **1.0** (no breaking report contract).
+
 ## [3.0.0] — 2026-11-03
 
 ### Added
 
-- `aesa deps outdated` / `aesa deps upgrade` — ncu-style PyPI pin check and bump for `constraints.txt` / lock / `pyproject.toml`.
-- `aesa lint` — Ruff lint/format gate (`ruff==0.17.3`) for `tools/aesa` + `tests`.
-- Dependabot (`.github/dependabot.yml`): weekly grouped `pip` (`/tools`) + `github-actions` updates; pin SoT remains `tools/constraints.txt`.
+- `aesa deps outdated` / `aesa deps upgrade` — ncu-style PyPI pin check and bump for constraints / lock / `pyproject.toml`.
+- `aesa lint` — Ruff lint/format gate for `tools/aesa` + `tests`.
+- Dependabot (`.github/dependabot.yml`): weekly grouped Python + `github-actions` updates.
 - **AESA 3.0 product specification** ([`docs/AESA-3.0-PRODUCT-SPEC.md`](docs/AESA-3.0-PRODUCT-SPEC.md)): CLI contract, adapter architecture, evidence rules, 30-day backlog status.
 - `aesa audit PATH --profile quick|standard|deployment` — unified local assessment entry (inventory + handoff package + profile metadata).
 - Inventory adapter `github_workflows` for `.github/workflows` authority surfaces.

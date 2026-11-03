@@ -7,6 +7,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from aesa.deps import ensure_lock_in_sync, parse_declared_requirements, parse_lock_pins
 from aesa.paths import (
     canonical_schema_path,
     published_schema_paths,
@@ -14,7 +15,7 @@ from aesa.paths import (
     version_file_path,
     versions_path,
 )
-from aesa.pins import normalize_package_name, parse_pin_file
+from aesa.pins import normalize_package_name
 from aesa.prompt_build import write_monolith
 
 
@@ -50,8 +51,11 @@ def check_schema_parity() -> None:
             )
 
 
-def load_versions() -> dict:
-    return json.loads(versions_path().read_text(encoding="utf-8"))
+def load_versions() -> dict[str, object]:
+    data = json.loads(versions_path().read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit(f"Invalid versions.json: expected object, got {type(data).__name__}")
+    return data
 
 
 def check_requires_python() -> None:
@@ -125,11 +129,23 @@ def validate_examples() -> list[str]:
 _LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
+_SKIP_MD_PARTS = frozenset(
+    {
+        ".venv",
+        "venv",
+        "node_modules",
+        "site-packages",
+        ".git",
+        "aesa-independent-assessment",
+    }
+)
+
+
 def check_internal_markdown_links() -> list[str]:
     root = repo_root()
     checked: list[str] = []
     for md in sorted(root.rglob("*.md")):
-        if "aesa-independent-assessment" in md.parts:
+        if _SKIP_MD_PARTS.intersection(md.parts):
             continue
         text = md.read_text(encoding="utf-8")
         for target in _LINK_RE.findall(text):
@@ -152,63 +168,29 @@ def check_prompt_manifest() -> None:
             raise SystemExit(f"Prompt manifest references missing file: {rel}")
 
 
-def _load_normalized_pins(path: Path) -> dict[str, str]:
-    try:
-        raw = parse_pin_file(path)
-    except FileNotFoundError as exc:
-        raise SystemExit(f"Missing dependency pin file: {path}") from exc
-    return {normalize_package_name(name): ver for name, ver in raw.items()}
-
-
 def check_dependency_pins() -> list[str]:
-    """Ensure pyproject direct pins and lock files agree with constraints.txt."""
-    tools = repo_root() / "tools"
-    constraints = _load_normalized_pins(tools / "constraints.txt")
-    lock = _load_normalized_pins(tools / "requirements.lock.txt")
-    runtime = _load_normalized_pins(tools / "requirements.txt")
+    """Ensure ``uv.lock`` is in sync and satisfies declared ``pyproject.toml`` constraints."""
+    ensure_lock_in_sync()
+    lock = parse_lock_pins()
+    normalized = {normalize_package_name(name): ver for name, ver in lock.items()}
 
-    pyproject = (tools / "pyproject.toml").read_text(encoding="utf-8")
-    direct: dict[str, str] = {}
-    for match in re.finditer(
-        r'"(jsonschema|packaging|pytest|ruff|setuptools)==([^"]+)"', pyproject
-    ):
-        direct[match.group(1).lower()] = match.group(2)
-
-    actions: list[str] = []
-    for name, ver in direct.items():
-        expected = constraints.get(name)
-        if expected is None:
-            raise SystemExit(f"pyproject pin {name}=={ver} missing from constraints.txt")
-        if expected != ver:
-            raise SystemExit(f"pyproject {name}=={ver} != constraints.txt {name}=={expected}")
-        actions.append(f"ok pyproject {name}=={ver}")
-
-    for name, ver in lock.items():
-        expected = constraints.get(name)
-        if expected is None:
-            raise SystemExit(f"lock pin {name}=={ver} missing from constraints.txt")
-        if expected != ver:
-            raise SystemExit(
-                f"requirements.lock.txt {name}=={ver} != constraints {name}=={expected}"
-            )
-    actions.append(f"ok lock pins ({len(lock)}) match constraints")
-
-    for name, ver in runtime.items():
-        expected = constraints.get(name)
-        if expected is None:
-            raise SystemExit(f"requirements.txt pin {name}=={ver} missing from constraints")
-        if expected != ver:
-            raise SystemExit(f"requirements.txt {name}=={ver} != constraints {name}=={expected}")
-    actions.append(f"ok runtime pins ({len(runtime)}) match constraints")
-
-    # Declared requirement compatibility among locked packages (subset used by AESA).
     try:
         from packaging.requirements import Requirement
         from packaging.version import Version
     except ImportError as exc:  # pragma: no cover
         raise SystemExit(f"packaging is required for pin checks: {exc}") from exc
 
-    # Known Requires-Dist for the locked set (from PyPI metadata / installed pkgs).
+    actions: list[str] = [f"ok uv.lock present ({len(lock)} packages)"]
+    for req in parse_declared_requirements():
+        key = normalize_package_name(req.name)
+        locked = normalized.get(key)
+        if locked is None:
+            raise SystemExit(f"declared requirement {req} missing from uv.lock")
+        if req.specifier and not req.specifier.contains(Version(locked), prereleases=True):
+            raise SystemExit(f"uv.lock {key}=={locked} does not satisfy {req}")
+        actions.append(f"ok {req} -> {locked}")
+
+    # Declared requirement compatibility among locked packages (subset used by AESA).
     declared: dict[str, list[str]] = {
         "jsonschema": [
             "attrs>=22.2.0",
@@ -225,8 +207,6 @@ def check_dependency_pins() -> list[str]:
             "pygments>=2.15",
         ],
     }
-    normalized = dict(constraints)
-    normalized.setdefault("pygments", constraints.get("pygments", ""))
 
     for parent, reqs in declared.items():
         for raw in reqs:
@@ -234,17 +214,17 @@ def check_dependency_pins() -> list[str]:
             key = normalize_package_name(req.name)
             pinned = normalized.get(key)
             if pinned is None:
-                raise SystemExit(f"constraint missing for {key} required by {parent}")
+                raise SystemExit(f"uv.lock missing {key} required by {parent}")
             if not req.specifier.contains(Version(pinned), prereleases=True):
                 raise SystemExit(
-                    f"collision: {parent} needs {raw}, but constraints pin {key}=={pinned}"
+                    f"collision: {parent} needs {raw}, but uv.lock pins {key}=={pinned}"
                 )
-        actions.append(f"ok {parent} requirements satisfied by constraints")
+        actions.append(f"ok {parent} requirements satisfied by uv.lock")
 
     return actions
 
 
-def build_all() -> dict[str, list[str] | str]:
+def build_all() -> dict[str, object]:
     sync = sync_schemas()
     check_schema_parity()
     check_version_metadata()

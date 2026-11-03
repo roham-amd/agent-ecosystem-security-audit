@@ -28,6 +28,10 @@ aesa audit . --profile standard   # deeper handoff checklist
 # → aesa validate report summary.json
 ```
 
+**Docker + AI agent:** build the kit image, mount the target, run `aesa audit`, then hand
+`aesa-out/` to Cursor / Claude Code / Codex / Antigravity (or similar). Step-by-step:
+[`docker-agent-audit.md`](docker-agent-audit.md).
+
 `aesa preflight` remains as an alias of `aesa audit --profile quick`.
 
 Preflight/audit must never print “secure” / “insecure” as a global verdict. It reports coverage and unknowns.

@@ -1,9 +1,10 @@
-"""npm-check-updates style dependency pin checker/updater for AESA tools."""
+"""Dependency check/upgrade helpers backed by uv.lock."""
 
 from __future__ import annotations
 
 import json
-import re
+import subprocess
+import tomllib
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
@@ -11,10 +12,11 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from packaging.requirements import Requirement
 from packaging.version import InvalidVersion, Version
 
 from aesa.paths import repo_root
-from aesa.pins import parse_pin_file, parse_pins, replace_pins
+from aesa.pins import normalize_package_name
 
 _PYPI = "https://pypi.org/pypi/{name}/json"
 _USER_AGENT = "aesa-deps/0.3 (+https://github.com/roham-amd/agent-ecosystem-security-audit)"
@@ -33,26 +35,39 @@ def tools_dir() -> Path:
     return repo_root() / "tools"
 
 
-def constraints_path() -> Path:
-    return tools_dir() / "constraints.txt"
-
-
 def lock_path() -> Path:
-    return tools_dir() / "requirements.lock.txt"
-
-
-def runtime_req_path() -> Path:
-    return tools_dir() / "requirements.txt"
+    return tools_dir() / "uv.lock"
 
 
 def pyproject_path() -> Path:
     return tools_dir() / "pyproject.toml"
 
 
-def parse_constraint_pins(text: str | None = None) -> dict[str, str]:
-    if text is not None:
-        return parse_pins(text)
-    return parse_pin_file(constraints_path())
+def parse_lock_pins(text: str | None = None) -> dict[str, str]:
+    """Return ``name -> version`` for every package entry in ``uv.lock``."""
+    raw = text if text is not None else lock_path().read_text(encoding="utf-8")
+    data = tomllib.loads(raw)
+    pins: dict[str, str] = {}
+    for package in data.get("package", []):
+        name = package.get("name")
+        version = package.get("version")
+        if isinstance(name, str) and isinstance(version, str):
+            pins[name] = version
+    return pins
+
+
+def parse_declared_requirements(text: str | None = None) -> list[Requirement]:
+    """Runtime + PEP 735 dependency-group requirements from ``pyproject.toml``."""
+    raw = text if text is not None else pyproject_path().read_text(encoding="utf-8")
+    data = tomllib.loads(raw)
+    declared: list[str] = []
+    project = data.get("project") or {}
+    declared.extend(str(item) for item in project.get("dependencies") or [])
+    groups = data.get("dependency-groups") or {}
+    for entries in groups.values():
+        if isinstance(entries, list):
+            declared.extend(str(item) for item in entries if isinstance(item, str))
+    return [Requirement(item) for item in declared]
 
 
 def fetch_latest_version(name: str, *, timeout: float = 20.0) -> str:
@@ -85,7 +100,7 @@ def _resolve_pin_name(pins: dict[str, str], name: str) -> tuple[str, str] | None
 
 
 def check_outdated(*, packages: list[str] | None = None) -> list[PinStatus]:
-    pins = parse_constraint_pins()
+    pins = parse_lock_pins()
     names = packages or sorted(pins.keys(), key=str.lower)
     results: list[PinStatus] = []
     for name in names:
@@ -97,7 +112,7 @@ def check_outdated(*, packages: list[str] | None = None) -> list[PinStatus]:
                     current="",
                     latest="",
                     outdated=False,
-                    error="not in constraints.txt",
+                    error="not in uv.lock",
                 )
             )
             continue
@@ -125,42 +140,14 @@ def check_outdated(*, packages: list[str] | None = None) -> list[PinStatus]:
     return results
 
 
-def _update_pyproject_pins(updates: dict[str, str], *, requires_python: str | None) -> None:
-    path = pyproject_path()
-    text = path.read_text(encoding="utf-8")
-    for name, ver in updates.items():
-        text = re.sub(
-            rf'("{re.escape(name)}"\s*==\s*")[^"]+(")',
-            rf"\g<1>{ver}\g<2>",
-            text,
-            flags=re.IGNORECASE,
-        )
-        text = re.sub(
-            rf'({re.escape(name)}\s*==\s*")[^"]+(")',
-            rf"\g<1>{ver}\g<2>",
-            text,
-            flags=re.IGNORECASE,
-        )
-    if requires_python:
-        text = re.sub(
-            r'(requires-python\s*=\s*")[^"]+(")',
-            rf"\g<1>{requires_python}\g<2>",
-            text,
-        )
-    path.write_text(text, encoding="utf-8")
-
-
-def _constraints_document(pins: dict[str, str], *, as_of: date) -> str:
-    header = (
-        f"# Authoritative pin set for aesa-tools "
-        f"(latest compatible from PyPI, {as_of.isoformat()}).\n"
-        '# Use with: python -m pip install -c constraints.txt -e ".[dev]"\n'
-        "# Update: aesa deps upgrade   |   Check: aesa deps outdated\n"
-        "# Minimum Python: >=3.15\n"
-        "\n"
+def _run_uv(args: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["uv", *args],
+        cwd=tools_dir(),
+        check=False,
+        text=True,
+        capture_output=True,
     )
-    body = "\n".join(f"{name}=={pins[name]}" for name in sorted(pins.keys(), key=str.lower))
-    return header + body + "\n"
 
 
 def upgrade_pins(
@@ -169,7 +156,7 @@ def upgrade_pins(
     requires_python: str = ">=3.15",
     as_of: date | None = None,
 ) -> dict[str, Any]:
-    """Bump all constraints to latest PyPI versions (ncu -u equivalent)."""
+    """Bump locked deps via ``uv lock --upgrade`` (constraints stay in pyproject.toml)."""
     as_of = as_of or date.today()
     statuses = check_outdated()
     errors = [status for status in statuses if status.error]
@@ -181,7 +168,6 @@ def upgrade_pins(
             "updated": [],
         }
 
-    updates = {status.name: status.latest for status in statuses}
     changed = [
         {"name": status.name, "from": status.current, "to": status.latest}
         for status in statuses
@@ -195,19 +181,26 @@ def upgrade_pins(
             "requires_python": requires_python,
             "as_of": as_of.isoformat(),
             "updated": changed,
-            "pins": updates,
+            "pins": {status.name: status.latest for status in statuses},
+            "command": "uv lock --upgrade",
         }
 
-    constraints_path().write_text(_constraints_document(updates, as_of=as_of), encoding="utf-8")
-    lock_path().write_text(
-        replace_pins(lock_path().read_text(encoding="utf-8"), updates),
-        encoding="utf-8",
-    )
-    runtime_req_path().write_text(
-        replace_pins(runtime_req_path().read_text(encoding="utf-8"), updates),
-        encoding="utf-8",
-    )
-    _update_pyproject_pins(updates, requires_python=requires_python)
+    proc = _run_uv(["lock", "--upgrade"])
+    if proc.returncode != 0:
+        return {
+            "ok": False,
+            "dry_run": False,
+            "errors": [
+                {
+                    "name": "uv",
+                    "current": "",
+                    "latest": "",
+                    "outdated": False,
+                    "error": (proc.stderr or proc.stdout or f"exit {proc.returncode}").strip(),
+                }
+            ],
+            "updated": [],
+        }
 
     return {
         "ok": True,
@@ -215,7 +208,8 @@ def upgrade_pins(
         "requires_python": requires_python,
         "as_of": as_of.isoformat(),
         "updated": changed,
-        "pins": parse_constraint_pins(),
+        "pins": parse_lock_pins(),
+        "command": "uv lock --upgrade",
     }
 
 
@@ -230,4 +224,25 @@ def outdated_report() -> dict[str, Any]:
         "errors": errors,
         "all": [asdict(status) for status in statuses],
         "requires_python_expected": ">=3.15",
+        "lock": str(lock_path().relative_to(repo_root()).as_posix()),
     }
+
+
+def ensure_lock_in_sync() -> None:
+    """Fail if ``uv.lock`` is missing or out of sync with ``pyproject.toml``."""
+    path = lock_path()
+    if not path.is_file():
+        raise SystemExit(f"Missing lockfile: {path} (run: cd tools && uv lock)")
+    proc = _run_uv(["lock", "--check"])
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "uv.lock is out of date").strip()
+        raise SystemExit(f"uv.lock out of sync with pyproject.toml: {detail}")
+
+
+def lock_version_for(name: str, pins: dict[str, str] | None = None) -> str | None:
+    resolved = pins if pins is not None else parse_lock_pins()
+    key = next(
+        (k for k in resolved if normalize_package_name(k) == normalize_package_name(name)),
+        None,
+    )
+    return resolved.get(key) if key is not None else None

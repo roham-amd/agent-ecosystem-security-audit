@@ -41,8 +41,8 @@ A positive answer to one question does **not** imply a positive answer to the ot
 ## 10-minute first experience
 
 ```bash
-cd tools && python -m pip install -e ".[dev]"
-aesa audit /path/to/target-repo --profile quick
+cd tools && uv sync --locked
+uv run aesa audit /path/to/target-repo --profile quick
 ```
 
 You get inventory counts, a coverage map (what was discovered deterministically vs manual-only), high-priority review hints, and `NOT VERIFIED` items — **not** a pass/fail verdict. Outputs land in `aesa-out/` (`inventory.json`, `ecosystem-graph.json`, `audit-context.md`, `profile.json`).
@@ -61,6 +61,8 @@ agent-ecosystem-security-audit/
 ├── SECURITY.md
 ├── CHANGELOG.md
 ├── VERSION
+├── Dockerfile                # python:3.15.2-slim-trixie@sha256 + uv (tag@digest)
+├── docker-compose.yml
 ├── canonical/                # Source of truth (schemas, versions.json, prompt manifest)
 ├── tools/                    # aesa CLI — audit, build, validate, inventory, corpus
 ├── skills/                   # Cursor / Claude Code skill + task shortcuts
@@ -95,6 +97,7 @@ agent-ecosystem-security-audit/
 ├── docs/
 │   ├── AESA-3.0-PRODUCT-SPEC.md
 │   ├── usage.md
+│   ├── docker-agent-audit.md   # Docker preflight + AI agent deep review
 │   ├── AESA-GATE.md
 │   ├── MIGRATION-2.0.md
 │   ├── toolchain-threat-model.md
@@ -123,17 +126,40 @@ agent-ecosystem-security-audit/
 
 ### Tooling commands
 
+Stack: **uv + pyproject.toml + uv.lock + Ruff + Pytest + mypy** (see [`tools/README.md`](tools/README.md)).
+
 ```bash
-cd tools && python -m pip install -e ".[dev]"
-aesa audit /path/to/target-repo --profile quick
-aesa audit /path/to/target-repo --profile standard
-aesa inventory /path/to/target-repo
-aesa validate report ../examples/sample-audit-summary.json
-aesa diff report old.json new.json
-aesa export sarif report.json
-aesa corpus run
-aesa benchmark run
+cd tools && uv sync --locked
+uv run aesa audit /path/to/target-repo --profile quick
+uv run aesa audit /path/to/target-repo --profile standard
+uv run aesa inventory /path/to/target-repo
+uv run aesa validate report ../examples/sample-audit-summary.json
+uv run aesa diff report old.json new.json
+uv run aesa export sarif report.json
+uv run aesa corpus run
+uv run aesa benchmark run
+uv run --locked mypy aesa
+uv run --locked pip-audit
+uv run --locked pytest -q ../tests
 ```
+
+### Docker + AI agent (Cursor, Claude Code, Codex, …)
+
+Full walkthrough: [`docs/docker-agent-audit.md`](docs/docker-agent-audit.md).
+
+```bash
+docker compose build
+# Mount the target clone; write aesa-out/ inside it
+TARGET=/path/to/target-repo docker compose run --rm aesa \
+  audit /work --profile standard -o /work/aesa-out
+```
+
+Then open Cursor / Claude Code / Codex / Antigravity (or similar), attach
+[`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md) +
+[`prompts/04-passive-guardrails.md`](prompts/04-passive-guardrails.md), and hand the agent
+`aesa-out/audit-context.md` + `inventory.json` for deep review.
+
+Base image pins are `name:tag@sha256:…` in [`Dockerfile`](Dockerfile); Dependabot’s `docker` ecosystem updates them weekly.
 
 ### Minimal workflow modes
 

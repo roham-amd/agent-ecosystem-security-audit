@@ -11,7 +11,7 @@ Pilot ground-truth cases for **deterministic tooling** (inventory adapters, vali
 ## Run
 
 ```bash
-cd tools && pip install -e ".[dev]"
+cd tools && uv sync --locked
 aesa corpus run
 ```
 

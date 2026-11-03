@@ -95,11 +95,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     semantic = not args.no_semantic
     match args.validate_cmd:
         case "report":
-            result = validate_report_file(args.path, semantic=semantic)
-            return _print_validation(args.path, ok=result.ok, issues=result.issues)
+            report_result = validate_report_file(args.path, semantic=semantic)
+            return _print_validation(args.path, ok=report_result.ok, issues=report_result.issues)
         case "graph":
-            result = validate_graph_file(args.path, semantic=semantic)
-            return _print_validation(args.path, ok=result.ok, issues=result.issues)
+            graph_result = validate_graph_file(args.path, semantic=semantic)
+            return _print_validation(args.path, ok=graph_result.ok, issues=graph_result.issues)
         case _:
             return 2
 

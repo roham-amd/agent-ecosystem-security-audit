@@ -16,14 +16,15 @@ def test_dependency_pins_consistent():
     check_requires_python()
     actions = check_dependency_pins()
     assert any("jsonschema" in a for a in actions)
-    assert any("lock pins" in a for a in actions)
+    assert any("uv.lock" in a for a in actions)
 
 
 def test_deps_outdated_report_structure(monkeypatch):
     from aesa import deps
 
-    pins = deps.parse_constraint_pins()
+    pins = deps.parse_lock_pins()
     assert "jsonschema" in pins
+    assert deps.lock_path().is_file()
 
     def fake_latest(name: str, *, timeout: float = 20.0) -> str:
         return pins.get(name, pins.get(next(k for k in pins if k.lower() == name.lower())))
@@ -33,6 +34,7 @@ def test_deps_outdated_report_structure(monkeypatch):
     assert report["outdated_count"] == 0
     assert report["requires_python_expected"] == ">=3.15"
     assert report["checked"] == len(pins)
+    assert report["lock"] == "tools/uv.lock"
 
 
 def test_corpus_harness_passes():

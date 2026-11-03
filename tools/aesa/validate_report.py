@@ -13,7 +13,10 @@ from aesa.semantic import SemanticResult, validate_semantics
 
 
 def load_report(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit(f"Expected JSON object in {path}, got {type(data).__name__}")
+    return data
 
 
 def validate_report_file(path: Path, *, semantic: bool = True) -> SemanticResult:

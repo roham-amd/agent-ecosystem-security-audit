@@ -1,0 +1,18 @@
+# Local AESA container — kit baked into the image; mount a target repo at /work.
+#
+#   docker compose build
+#   docker compose run --rm aesa audit /work --profile quick -o /work/aesa-out
+#
+# Override the bind mount:
+#   TARGET=/path/to/repo docker compose run --rm aesa audit /work --profile quick
+
+services:
+  aesa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aesa:local
+    working_dir: /work
+    volumes:
+      - ${TARGET:-.}:/work
+    # Drop privileges already handled by USER in the Dockerfile.

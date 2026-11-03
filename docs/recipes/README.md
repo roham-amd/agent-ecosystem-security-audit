@@ -2,6 +2,7 @@
 
 | Recipe | Doc |
 | --- | --- |
+| Docker + AI agent (Cursor / Claude / Codex / …) | [`../docker-agent-audit.md`](../docker-agent-audit.md) |
 | Catalog / awesome-list inventory | [`catalog-inventory.md`](catalog-inventory.md) |
 | Small repo deep audit | [`small-repo-deep-audit.md`](small-repo-deep-audit.md) |
 | Source-only review | [`source-only-review.md`](source-only-review.md) |

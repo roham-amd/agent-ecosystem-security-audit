@@ -2,75 +2,112 @@
 
 Deterministic build, unified audit profiles, report validation, passive inventory, corpus, and benchmark harness.
 
+## Stack (Python 3.15)
+
+| Responsibility | Choice |
+| --- | --- |
+| Runtime | CPython 3.15 (`.python-version` = `3.15`; CI/Docker pin patch `3.15.2`) |
+| Project / venv / lock | **uv** + `pyproject.toml` + `uv.lock` |
+| Dev deps | PEP 735 `[dependency-groups]` |
+| Lint / format | Ruff |
+| Types | mypy |
+| Tests | Pytest (+ pytest-cov) |
+| Vuln scan | pip-audit |
+| CI | GitHub Actions + `uv sync --locked` |
+| Deploy | Docker (`uv sync --locked --no-dev`) |
+
+Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
+
 ## Install (local)
 
-Preferred (constraints prevent resolver drift / collisions):
-
 ```bash
+# https://docs.astral.sh/uv/getting-started/installation/
 cd tools
-python -m pip install -c constraints.txt -e ".[dev]"
-python -m pip check
+uv sync --locked          # creates .venv from uv.lock
+uv run aesa --help
 ```
 
-Equivalent lock install:
+`.python-version` selects the **minor** interpreter (`3.15`). Patch pins belong in CI (`uv python install 3.15.2`) and the Docker base image.
+
+### Dependency layout
+
+| Requirement | Location / command |
+| --- | --- |
+| Runtime deps | `pyproject.toml` `[project].dependencies` (constraints via `uv add`) |
+| Dev deps | `pyproject.toml` `[dependency-groups] dev` (`uv add --dev …`) |
+| Exact versions + hashes | `uv.lock` (commit it) |
+| Install | `uv sync --locked` |
+| Updates | `uv add` / `uv lock --upgrade` / `aesa deps upgrade` |
+| Git | Commit `pyproject.toml`, `uv.lock`, `.python-version` — ignore `.venv/` |
 
 ```bash
-python -m pip install -r requirements.lock.txt
-python -m pip install -e .
-python -m pip check
+uv add jsonschema              # runtime constraint + lock
+uv add --dev ruff              # PEP 735 group
+uv lock --upgrade              # refresh lock
+uv lock --upgrade-package ruff # one package
+uv sync --locked
+uv tree
+aesa deps outdated             # compare lock → PyPI
 ```
 
-Requires **Python >= 3.15**.
+### Docker
 
-Pin source of truth: [`constraints.txt`](constraints.txt) (latest compatible set, 2026-11-03).
-`pyproject.toml`, [`requirements.txt`](requirements.txt), and [`requirements.lock.txt`](requirements.lock.txt)
-must match it — enforced by `aesa build all`.
-
-### Dependency updates (like `ncu` / `ncu -u`)
+Root [`Dockerfile`](../Dockerfile) uses `python:3.15.2-slim-trixie@sha256:…` and pinned `ghcr.io/astral-sh/uv:…@sha256:…`, then `uv sync --locked --no-dev`.
 
 ```bash
-aesa deps outdated          # compare pins to latest PyPI (exit 1 if any outdated)
-aesa deps upgrade --dry-run # show bumps
-aesa deps upgrade           # rewrite constraints + lock + pyproject pins
-python -m pip install -c constraints.txt -e ".[dev]"
-python -m pip check
+docker compose build
+TARGET=/path/to/repo docker compose run --rm aesa \
+  audit /work --profile standard -o /work/aesa-out
 ```
 
-**Dependabot** (`.github/dependabot.yml`) opens weekly grouped PRs for `pip` (`/tools`) and `github-actions`.
-Pin source of truth stays `constraints.txt` — after merging a Dependabot bump that touches
-`pyproject.toml` / requirements, re-run `aesa deps upgrade` (or align pins by hand) so
-constraints, lock, and `pyproject.toml` match; `aesa build all` enforces that.
+Operator guide for Docker discovery + Cursor / Claude Code / Codex / Antigravity deep review:
+[`docs/docker-agent-audit.md`](../docs/docker-agent-audit.md).
+
+### Pre-commit (optional)
+
+```bash
+uvx pre-commit install
+uvx pre-commit run --all-files
+```
+
+Config: [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) (Ruff lint + format). Kept out of the `dev` group so Windows hosts are not forced to build PyYAML.
+
+### Quality gates
+
+```bash
+uv run --locked aesa lint --check-format
+uv run --locked mypy aesa
+uv run --locked pip-audit
+uv run --locked pytest -q ../tests
+uv run --locked aesa build all
+```
+
+**Dependabot** (`.github/dependabot.yml`): weekly `uv`, `docker` (tag@digest), and SHA-pinned `github-actions`.
 
 ## Commands
 
 ```bash
-aesa audit PATH --profile quick|standard|deployment
-aesa preflight PATH     # alias of audit --profile quick
-aesa build all          # sync schemas, check versions, validate examples
-aesa validate report PATH.json
-aesa inventory PATH     # JSON-only passive discovery
-aesa diff report A B
-aesa export sarif REPORT.json
-aesa corpus run         # tooling corpus harness
-aesa benchmark run      # detection benchmark scaffold (no LLM)
-aesa deps outdated|upgrade
-aesa lint                 # Ruff check
-aesa lint --fix --format # autofix + format
-aesa lint --check-format  # CI: fail on format drift
+uv run aesa audit PATH --profile quick|standard|deployment
+uv run aesa preflight PATH
+uv run aesa build all
+uv run aesa validate report PATH.json
+uv run aesa inventory PATH
+uv run aesa diff report A B
+uv run aesa export sarif REPORT.json
+uv run aesa corpus run
+uv run aesa benchmark run
+uv run aesa deps outdated|upgrade
+uv run aesa lint [--fix] [--format] [--check-format]
 ```
 
 ## Code layout (tools/aesa)
 
 | Module | Responsibility |
 | --- | --- |
-| `cli/` | argparse + command dispatch (SRP) |
+| `cli/` | argparse + command dispatch |
 | `inventory/` | bounded I/O, adapter registry, collector |
 | `audit.py` / `preflight.py` | assessment orchestration + graph seed |
-| `deps.py` / `pins.py` | pin check/upgrade (ncu-style) |
+| `deps.py` / `pins.py` | uv.lock check/upgrade helpers |
 | `jsonio.py` | shared JSON/text writers |
-
-Style: Python **3.15+**, Ruff (`pyproject.toml` `[tool.ruff]`), typed public surfaces, adapters registered in `inventory/adapters/registry.py`.
-
-Resource limits for collectors: `max_files`, `max_depth`, `max_file_bytes` (see `aesa.inventory.limits`).
 
 See [`docs/AESA-3.0-PRODUCT-SPEC.md`](../docs/AESA-3.0-PRODUCT-SPEC.md) and [`docs/AESA-GATE.md`](../docs/AESA-GATE.md).

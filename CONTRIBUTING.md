@@ -29,13 +29,19 @@ GitHub Dependabot is configured in [`.github/dependabot.yml`](.github/dependabot
 
 | Ecosystem | Directory | Cadence |
 | --- | --- | --- |
-| `pip` | `/tools` | Weekly (Monday UTC) |
+| `uv` | `/tools` | Weekly (Monday UTC) |
+| `docker` | `/` | Weekly (Monday UTC) |
 | `github-actions` | `/` | Weekly (Monday UTC) |
 
-- Version bumps are grouped (runtime / dev / build for Python; one group for Actions).
-- Cooldown delays non-security version PRs a few days after release; **security updates are not delayed**.
-- `insecure-external-code-execution: deny` for pip (no setup/build-hook execution while resolving).
-- After merging pip PRs, keep [`tools/constraints.txt`](tools/constraints.txt), lock, and `pyproject.toml` aligned (`aesa deps upgrade` + `aesa build all`).
+Stack: **uv + pyproject.toml + uv.lock + Ruff + Pytest + mypy** (no Poetry / pip-tools / Pipenv).
+
+- Python: declare constraints in [`tools/pyproject.toml`](tools/pyproject.toml) via `uv add` / `uv add --dev`; lock exact versions + hashes in [`tools/uv.lock`](tools/uv.lock); interpreter minor in [`tools/.python-version`](tools/.python-version) (`3.15`). Commit all three; ignore `.venv/`.
+- Docker: [`Dockerfile`](Dockerfile) pins `python:3.15.2-slim-trixie@sha256:…` + `ghcr.io/astral-sh/uv:…@sha256:…`; `uv sync --locked --no-dev`.
+- Actions: full commit SHAs with version comments; CI uses `uv python install 3.15.2` + `uv sync --locked` + `uv run --locked …`.
+- Cooldown delays non-security version PRs; **security updates are not delayed**.
+- After uv PRs: `cd tools && uv sync --locked && uv run --locked aesa build all`.
+- After Docker PRs: `docker compose build`.
+- Optional hooks: `uvx pre-commit install` (Ruff via [`.pre-commit-config.yaml`](.pre-commit-config.yaml)).
 
 ## Pull request checklist
 
@@ -45,7 +51,7 @@ GitHub Dependabot is configured in [`.github/dependabot.yml`](.github/dependabot
 - [ ] New modules state applicability and `N/A` / `NOT VERIFIED` rules
 - [ ] Docs do not market AESA as an automated scanner or certification
 - [ ] No production credentials, customer data, or live exploit payloads
-- [ ] Dependabot / pin PRs leave `constraints.txt`, lock, and `pyproject.toml` consistent
+- [ ] Dependabot / pin PRs leave `pyproject.toml` + `uv.lock` consistent (`uv sync --locked`); Docker digests still build
 
 ## Procedure versioning
 

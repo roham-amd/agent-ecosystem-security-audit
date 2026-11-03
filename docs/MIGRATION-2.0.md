@@ -21,7 +21,7 @@ Baseline repository commit before engineering transition: `82e3ec8328a4a4e54b760
 
 ## Operator migration
 
-1. Install tooling: `cd tools && python -m pip install -e ".[dev]"`.
+1. Install tooling: `cd tools && uv sync --locked`.
 2. Before publishing JSON summaries, run `aesa validate report path/to/security-audit-summary.json`.
 3. Optionally generate inventory: `aesa inventory /path/to/target-repo -o repository-inventory.json` and reconcile with manual discovery.
 4. Attach new modules when applicable: `modules/a2a.md`, `modules/multimodal.md`.

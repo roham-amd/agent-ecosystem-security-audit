@@ -60,7 +60,7 @@ Deliverables
 
 ## 3. CLI contract
 
-Install: `cd tools && python -m pip install -e ".[dev]"` → console script `aesa`.
+Install: `cd tools && uv sync --locked` → console script `aesa` (via `.venv` / `uv run`).
 
 ### Primary command
 
@@ -208,7 +208,7 @@ Procedure stages 0–8 remain under `prompts/`. Profiles select **how far** the 
 
 | Channel | 3.0.0 expectation |
 | --- | --- |
-| Editable pip install from `tools/` | Required |
+| `uv sync --locked` from `tools/` | Required |
 | `skills/aesa-auditor` | Required entry skill |
 | Consumer GitHub Action (composite) | Ships under `.github/actions/aesa-gate` |
 | PyPI publish | Optional follow-up |

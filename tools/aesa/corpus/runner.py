@@ -95,15 +95,15 @@ def run_corpus() -> dict:
         if digest_check:
             fixture_base = (root / case.get("fixture_path", ".")).resolve()
             target = (fixture_base / digest_check["path"]).resolve()
-            match, actual = verify_file_digest(target, digest_check["expected_sha256"])
+            digest_ok, digest_hex = verify_file_digest(target, digest_check["expected_sha256"])
             entry["checks"].append(
                 {
                     "name": "digest_verify",
-                    "ok": match,
-                    "sha256": actual,
+                    "ok": digest_ok,
+                    "sha256": digest_hex,
                 }
             )
-            ok = ok and match
+            ok = ok and digest_ok
 
         neg_report = case.get("negative_report_fixture")
         if neg_report:

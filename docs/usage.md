@@ -23,12 +23,30 @@ Fill the audit inputs in Section 2 of [`prompts/01-core-prompt.md`](../prompts/0
 
 ## 2. First run (recommended)
 
+### Option A — local uv
+
 ```bash
-cd tools && python -m pip install -e ".[dev]"
-aesa audit /path/to/target --profile quick
+cd tools && uv sync --locked
+uv run aesa audit /path/to/target --profile quick
 # deepen:
-aesa audit /path/to/target --profile standard
+uv run aesa audit /path/to/target --profile standard
 ```
+
+### Option B — Docker + AI agent (Cursor, Claude Code, Codex, Antigravity, …)
+
+No local Python required for discovery. See the full guide:
+[`docker-agent-audit.md`](docker-agent-audit.md).
+
+```bash
+docker compose build
+TARGET=/path/to/target-repo docker compose run --rm aesa \
+  audit /work --profile standard -o /work/aesa-out
+```
+
+Then open your AI agent on the AESA kit + target, attach
+[`skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) and
+[`prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md), and point it at
+`aesa-out/audit-context.md` / `inventory.json`.
 
 Outputs under `aesa-out/`: `inventory.json`, `ecosystem-graph.json`, `audit-context.md`, `profile.json`.
 

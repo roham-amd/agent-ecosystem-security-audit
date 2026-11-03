@@ -5,4 +5,4 @@ Public entry points:
 - Library: ``aesa.audit.run_audit``, ``aesa.inventory.collector.collect_inventory``
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"

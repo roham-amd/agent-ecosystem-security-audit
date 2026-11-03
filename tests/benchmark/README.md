@@ -16,7 +16,7 @@ It does **not** invoke Cursor, Claude, or other models yet. Do not cite pass rat
 ## Run
 
 ```bash
-cd tools && pip install -e ".[dev]"
+cd tools && uv sync --locked
 aesa benchmark run
 ```
 

@@ -117,15 +117,15 @@ def discover_mcp_configs(
             continue
 
         rel = path.relative_to(root).as_posix()
-        hints: list[str] = ["mcp_server_source"]
+        server_hints: list[str] = ["mcp_server_source"]
         if "urllib" in lowered or "requests." in lowered or "httpx" in lowered:
-            hints.append("network_client_in_server")
+            server_hints.append("network_client_in_server")
         if "write_bytes" in lowered or ("open(" in lowered and '"w' in lowered):
-            hints.append("filesystem_write_capability_reference")
+            server_hints.append("filesystem_write_capability_reference")
         if "subprocess" in lowered or "os.system" in lowered:
-            hints.append("possible_code_execution_reference")
+            server_hints.append("possible_code_execution_reference")
         if "github.com" in lowered or "api.github.com" in lowered:
-            hints.append("github_fetch_capability")
+            server_hints.append("github_fetch_capability")
 
         results.append(
             {
@@ -136,7 +136,7 @@ def discover_mcp_configs(
                 "adapter": "mcp_server_source",
                 "adapter_maturity": "PARTIAL",
                 "discovery_status": "IDENTIFIED",
-                "priority_hints": hints,
+                "priority_hints": server_hints,
             }
         )
 
