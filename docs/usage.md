@@ -2,7 +2,7 @@
 
 AESA is a **security audit framework** for AI agent ecosystems. It gives you a versioned procedure, specialized modules, and a report schema so different teams can produce comparable, evidence-bounded assessments.
 
-It is **not** an automated scanner. You (or an audit agent following the procedure) perform a **passive, read-only** assessment within an explicitly authorized scope.
+It is **not** an automated scanner. Release **2.0.0** adds optional deterministic helpers (inventory seeding, JSON validation, pilot regression corpus). You (or an audit agent following the procedure) still perform judgment within an explicitly authorized scope.
 
 ## 1. Choose your scope
 
@@ -39,8 +39,20 @@ Suggested module mapping:
 | Hook / lifecycle handler | `modules/hooks.md` |
 | Subagent / multi-agent | `modules/subagents.md` |
 | Automation / Workflow | `modules/automations.md` |
+| A2A / Agent Card | `modules/a2a.md` |
+| Multimodal pipelines | `modules/multimodal.md` |
 
-## 3. Follow staged workflow
+### Optional tooling (2.0+)
+
+Install from [`tools/`](../tools/README.md):
+
+```bash
+cd tools && python -m pip install -e ".[dev]"
+aesa inventory /path/to/target   # passive discovery seed
+aesa validate report summary.json
+```
+
+See [`docs/MIGRATION-2.0.md`](MIGRATION-2.0.md) for limits — tooling does not replace the audit procedure.
 
 Complete stages in order. Do not silently skip.
 
@@ -73,7 +85,9 @@ Machine-readable summary:
 - Conform to [`schemas/audit-report.schema.json`](../schemas/audit-report.schema.json) (alias: [`schemas/AI_Agent_Ecosystem_Security_Audit_v1.schema.json`](../schemas/AI_Agent_Ecosystem_Security_Audit_v1.schema.json), the canonical filename named in v1.0 Section 22.5)
 - Keep `score` as `null` and `score_type` as `NONE`
 - Keep `recommend_production_use` as `false` unless all applicable production gates actually pass
-- Set `json_validation_status` to `VALIDATED` only after a real validator run
+- Set `json_validation_status` to `VALIDATED` only after `aesa validate report` (or equivalent schema + semantic validation)
+
+Optional graph export: [`schemas/ecosystem-graph.schema.json`](../schemas/ecosystem-graph.schema.json). Scope manifest: [`schemas/audit-manifest.schema.json`](../schemas/audit-manifest.schema.json) and [`examples/sample-audit-manifest.yaml`](../examples/sample-audit-manifest.yaml).
 
 Example starter inputs:
 
@@ -102,7 +116,7 @@ For Confidential / Restricted / Regulated / personal / credential / financial / 
 
 Always record:
 
-- AESA project / package version (`1.1.0`)
+- AESA project / package version (`2.0.0`)
 - Procedure version (`1.0`)
 - Repository tag/commit of AESA used
 - Audit date (UTC)

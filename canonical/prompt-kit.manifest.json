@@ -1,0 +1,16 @@
+{
+  "procedure_version": "1.0",
+  "kit_dir": "prompts",
+  "monolithic_output": "prompts/audit.full.md",
+  "segments": [
+    { "file": "prompts/01-core-prompt.md", "role": "core_procedure" },
+    { "file": "prompts/02-modules.md", "role": "component_modules" },
+    { "file": "prompts/03-report-contract.md", "role": "report_contract" }
+  ],
+  "standalone": [
+    "prompts/00-OPERATOR-GUIDE.md",
+    "prompts/04-passive-guardrails.md",
+    "prompts/audit.md"
+  ],
+  "modules_dir": "modules"
+}

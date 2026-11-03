@@ -6,7 +6,9 @@ Thank you for helping improve the Agent Ecosystem Security Audit framework.
 
 - Clarify audit procedure language without weakening evidence gates
 - Improve specialized modules (`modules/`)
-- Extend or harden the JSON Schema (`schemas/`)
+- Extend or harden the JSON Schema (`canonical/schemas/` → `aesa build schemas`)
+- Add corpus cases (`tests/corpus/`) and validation fixtures
+- Improve tooling adapters (`tools/aesa/inventory/`)
 - Add anonymized examples under `examples/`
 - Improve usage docs and translator notes
 - Report documentation defects that could cause unsafe auditor behavior (see `SECURITY.md`)
@@ -24,6 +26,7 @@ Thank you for helping improve the Agent Ecosystem Security Audit framework.
 ## Pull request checklist
 
 - [ ] Change targets the correct procedure version under `prompts/`
+- [ ] `aesa build all` and `aesa corpus run` pass when tooling changes are included
 - [ ] Schema and example updates remain consistent with Section 22 enums
 - [ ] New modules state applicability and `N/A` / `NOT VERIFIED` rules
 - [ ] Docs do not market AESA as an automated scanner or certification
@@ -41,9 +44,11 @@ When adding a new major procedure, keep prior versions under `prompts/` for repr
 
 Keep kit files under `prompts/` consistent with each other:
 
-- Prefer editing `prompts/audit.full.md` when changing the full procedure text, then align the split kit files (`01-core-prompt.md`, `02-modules.md`, `03-report-contract.md`, `audit.md`) as needed.
+- **Canonical schema:** edit `canonical/schemas/audit-report.schema.json`, then run `aesa build schemas`.
+- **Prompt kit composition:** declared in `canonical/prompt-kit.manifest.json` (split kit files remain editable sources).
+- Prefer editing `prompts/01-core-prompt.md`, `02-modules.md`, and `03-report-contract.md` for procedure changes; align `prompts/audit.full.md` when changing monolithic consumers (full regeneration automation is planned — do not let monolith drift silently).
 - Edit `04-passive-guardrails.md` directly when changing passive-audit boundaries; then align short pointers in `audit.full.md` Sections 4.5, 4.6, and 6 if needed.
-- There is no generator script; treat the split kit files as maintained source.
+- CI runs `aesa build all` — generated schema aliases must match canonical.
 
 ## Code of conduct expectations
 

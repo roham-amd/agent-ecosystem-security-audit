@@ -12,6 +12,8 @@ For Skills, Plugins, MCP, Hooks, Subagents, and Automations, use the **full chec
 | Hooks | [`../modules/hooks.md`](../modules/hooks.md) |
 | Subagents | [`../modules/subagents.md`](../modules/subagents.md) |
 | Automations | [`../modules/automations.md`](../modules/automations.md) |
+| A2A (Agent-to-Agent) | [`../modules/a2a.md`](../modules/a2a.md) |
+| Multimodal / cross-modal | [`../modules/multimodal.md`](../modules/multimodal.md) |
 
 ---
 

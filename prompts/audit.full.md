@@ -423,6 +423,8 @@ Establish canonical repository identity, authorized ref, commit SHA, tree SHA wh
 
 Identify every discoverable component entry. Distinguish local implementation, local configuration, instruction-only content, external implementation reference, package coordinate, downloadable artifact, remote service, documentation-only entry, duplicate, dead link, and unknown. Assign stable `COMPONENT_ID` values. Preserve separate publisher/version/artifact identities.
 
+When AESA tooling is available in the audit environment, you may use passive inventory output (`aesa inventory`) to seed discovery. Reconcile tool output with manual review; treat adapter gaps and `parser_events` as limitations, not proof of exhaustive discovery.
+
 **Gate 2:** Freeze the inventory population and denominator before reporting counts or selecting deep-audit batches.
 
 ## Phase 3 — Risk triage and candidate selection
@@ -816,6 +818,8 @@ Review publisher, manifest, permissions, automatic loading, workspace trust, sta
 ## 10.15 MCP Apps and untrusted UI surfaces
 
 Where applicable, review origin isolation, iframe/webview boundaries, CSP, navigation, external links, data passed to UI, tool invocation from UI, user identity, spoofed approval screens, deceptive content, UI-to-host message validation, and whether a component can impersonate trusted host UI. Visual confirmation is not a secure authorization boundary unless bound to the backend action.
+
+---
 
 ---
 

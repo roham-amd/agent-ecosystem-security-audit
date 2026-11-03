@@ -443,6 +443,8 @@ Establish canonical repository identity, authorized ref, commit SHA, tree SHA wh
 
 Identify every discoverable component entry. Distinguish local implementation, local configuration, instruction-only content, external implementation reference, package coordinate, downloadable artifact, remote service, documentation-only entry, duplicate, dead link, and unknown. Assign stable `COMPONENT_ID` values. Preserve separate publisher/version/artifact identities.
 
+When AESA tooling is available in the audit environment, you may use passive inventory output (`aesa inventory`) to seed discovery. Reconcile tool output with manual review; treat adapter gaps and `parser_events` as limitations, not proof of exhaustive discovery.
+
 **Gate 2:** Freeze the inventory population and denominator before reporting counts or selecting deep-audit batches.
 
 ## Phase 3 — Risk triage and candidate selection
@@ -765,6 +767,8 @@ Selection is driven by Section 7 (threat model) and Phase 2 classification. Typi
 | MCP Server / Client | `../modules/mcp.md` |
 | Hook / lifecycle handler | `../modules/hooks.md` |
 | Subagent / multi-agent | `../modules/subagents.md` |
+| A2A peer / Agent Card | `../modules/a2a.md` |
+| Multimodal / audio / video / OCR | `../modules/multimodal.md` |
 | Automation / scheduled task | `../modules/automations.md` |
 | Rules, workflows, RAG, models, IDE extensions, … | `02-modules.md` Sections 10.2-10.15 |
 

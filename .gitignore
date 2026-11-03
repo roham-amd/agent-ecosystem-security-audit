@@ -27,3 +27,6 @@ __pycache__/
 .venv/
 venv/
 node_modules/
+.pytest_cache/
+tools/*.egg-info/
+tools/aesa_tools.egg-info/

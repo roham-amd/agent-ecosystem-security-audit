@@ -1,0 +1,25 @@
+name: AESA validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tooling
+        working-directory: tools
+        run: pip install -e ".[dev]"
+      - name: Build and consistency checks
+        run: aesa build all
+      - name: Corpus harness
+        run: aesa corpus run
+      - name: Pytest
+        working-directory: tools
+        run: pytest -q ../tests

@@ -6,9 +6,9 @@ A Security Audit Framework for AI Agent Ecosystems
 
 > **Trust Nothing. Verify Everything. Secure Every Agent.**
 
-AESA is an open-source **security audit framework** — a structured methodology, versioned audit prompts, specialized review modules, and machine-readable report schemas for assessing AI agent ecosystems.
+AESA is an open-source **security audit framework** — a structured methodology, versioned audit prompts, specialized review modules, machine-readable report schemas, and **deterministic validation/inventory tooling** for assessing AI agent ecosystems.
 
-It is **not** an automated security scanner, sandbox, penetration test, marketplace certification, or substitute for organizational risk acceptance.
+It is **not** an automated security scanner, sandbox, penetration test, marketplace certification, or substitute for organizational risk acceptance. Release **2.1.0** adds reproducible build checks, monolith generation, graph path search pilot, and an expanded test corpus; it does **not** claim calibrated detection accuracy across all threat families.
 
 ---
 
@@ -46,6 +46,10 @@ agent-ecosystem-security-audit/
 ├── SECURITY.md
 ├── CHANGELOG.md
 ├── VERSION
+├── canonical/                # Source of truth (schemas, versions.json, prompt manifest)
+├── tools/                    # aesa CLI — build, validate, inventory, corpus
+├── tests/                    # Corpus + pytest
+├── control-packs/            # Versioned control crosswalks (pilot)
 ├── prompts/                  # AESA kit procedure (load on demand)
 │   ├── 00-OPERATOR-GUIDE.md
 │   ├── 01-core-prompt.md     # Main procedure for the audit agent
@@ -60,16 +64,24 @@ agent-ecosystem-security-audit/
 │   ├── plugins.md
 │   ├── hooks.md
 │   ├── subagents.md
-│   └── automations.md
+│   ├── automations.md
+│   ├── a2a.md
+│   └── multimodal.md
 ├── schemas/
 │   ├── audit-report.schema.json
-│   └── AI_Agent_Ecosystem_Security_Audit_v1.schema.json  # same contract; canonical name in v1.0
+│   ├── AI_Agent_Ecosystem_Security_Audit_v1.schema.json  # synced alias
+│   ├── ecosystem-graph.schema.json
+│   └── audit-manifest.schema.json
 ├── examples/
 │   ├── sample-audit-context.yaml
+│   ├── sample-audit-manifest.yaml
 │   ├── sample-component-inventory.json
 │   └── sample-audit-summary.json
 └── docs/
-    └── usage.md
+    ├── usage.md
+    ├── MIGRATION-2.0.md
+    ├── toolchain-threat-model.md
+    └── architecture/
 ```
 
 ---
@@ -79,9 +91,19 @@ agent-ecosystem-security-audit/
 1. Read [`prompts/00-OPERATOR-GUIDE.md`](prompts/00-OPERATOR-GUIDE.md) and [`docs/usage.md`](docs/usage.md).
 2. Attach [`prompts/04-passive-guardrails.md`](prompts/04-passive-guardrails.md) and [`prompts/01-core-prompt.md`](prompts/01-core-prompt.md); fill **Audit Inputs** (Section 2, including `KIT_DIR` and `WORK_DIR`).
 3. During deep audit, attach [`prompts/02-modules.md`](prompts/02-modules.md) and matching files from [`modules/`](modules/).
-4. Produce a narrative report (Section 21 in the core prompt) plus JSON per [`prompts/03-report-contract.md`](prompts/03-report-contract.md) and [`schemas/audit-report.schema.json`](schemas/audit-report.schema.json).
+4. Produce a narrative report (Section 21 in the core prompt) plus JSON per [`prompts/03-report-contract.md`](prompts/03-report-contract.md) and [`schemas/audit-report.schema.json`](schemas/audit-report.schema.json). Validate JSON with `aesa validate report` when tooling is installed ([`tools/README.md`](tools/README.md)).
 
 For a single file, use [`prompts/audit.full.md`](prompts/audit.full.md).
+
+### Tooling (optional, 2.0+)
+
+```bash
+cd tools && python -m pip install -e ".[dev]"
+aesa build all
+aesa inventory /path/to/target-repo
+aesa validate report ../examples/sample-audit-summary.json
+aesa corpus run
+```
 
 ### Minimal workflow modes
 
@@ -116,6 +138,7 @@ See the kit in [`prompts/`](prompts/) or the monolithic [`prompts/audit.full.md`
 | Claim | Status |
 | --- | --- |
 | Automated vulnerability scanner | No |
+| Validated detection benchmark across all modules | No (pilot corpus covers tooling only) |
 | Runtime malware detonation sandbox | No |
 | Compliance certification (SOC 2, ISO, HIPAA, GDPR, …) | No |
 | Guarantee that a marketplace or catalog is “safe” | No |
@@ -129,7 +152,7 @@ AESA helps humans and audit agents produce **evidence-bounded** decisions about 
 
 | Kind | Current | Meaning |
 | --- | --- | --- |
-| Project / package release | **1.1.0** | AESA repository packaging and public release numbering |
+| Project / package release | **2.1.0** | AESA repository packaging and public release numbering |
 | Audit procedure | **1.0** (`prompts/`) | Methodology / prompt / JSON contract version inside the framework |
 
 Breaking changes to the audit procedure, decision enums, or JSON contract bump the major procedure version under `prompts/`. Project packaging may advance independently (for example `1.x.y`).
@@ -158,8 +181,8 @@ If you use AESA in an assessment report, cite the exact procedure version and co
 
 ```text
 AESA — Agent Ecosystem Security Audit
-Project: 1.1.0
+Project: 2.1.0
 Procedure: 1.0
 https://github.com/roham-amd/agent-ecosystem-security-audit
-Tag: v1.1.0
+Tag: v2.1.0
 ```
