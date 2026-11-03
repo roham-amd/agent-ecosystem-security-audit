@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from aesa import __version__
@@ -13,7 +13,9 @@ def build_digest_manifest(root: Path, *, max_files: int = 2000) -> dict:
     entries: list[dict] = []
     count = 0
     for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
-        dirnames[:] = [d for d in dirnames if d not in {".git", "node_modules", ".venv", "venv", "__pycache__"}]
+        dirnames[:] = [
+            d for d in dirnames if d not in {".git", "node_modules", ".venv", "venv", "__pycache__"}
+        ]
         for name in filenames:
             if count >= max_files:
                 break
@@ -37,7 +39,7 @@ def build_digest_manifest(root: Path, *, max_files: int = 2000) -> dict:
     return {
         "manifest_version": "1.0",
         "root_path": str(root),
-        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "tool": {"name": "aesa-tools", "version": __version__},
         "entries": sorted(entries, key=lambda e: e["relative_path"]),
         "limitations": [

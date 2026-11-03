@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _SARIF_SEVERITY = {
     "CRITICAL": "error",
     "HIGH": "error",
@@ -12,8 +11,10 @@ _SARIF_SEVERITY = {
 }
 
 
-def report_to_sarif(report: dict[str, Any], *, tool_version: str = "2.2.0") -> dict[str, Any]:
-    evidence_by_id = {e["evidence_id"]: e for e in report.get("evidence_registry") or [] if e.get("evidence_id")}
+def report_to_sarif(report: dict[str, Any], *, tool_version: str = "3.0.0") -> dict[str, Any]:
+    evidence_by_id = {
+        e["evidence_id"]: e for e in report.get("evidence_registry") or [] if e.get("evidence_id")
+    }
     rules: dict[str, dict] = {}
     results: list[dict] = []
 

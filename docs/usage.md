@@ -1,8 +1,10 @@
 # Using AESA
 
-AESA is a **security audit framework** for AI agent ecosystems. It gives you a versioned procedure, specialized modules, and a report schema so different teams can produce comparable, evidence-bounded assessments.
+AESA is an **evidence-first security assessment toolkit** for AI agent ecosystems: a versioned procedure, specialized modules, report schemas, and deterministic local tooling.
 
-It is **not** an automated scanner. Release **2.0.0** adds optional deterministic helpers (inventory seeding, JSON validation, pilot regression corpus). You (or an audit agent following the procedure) still perform judgment within an explicitly authorized scope.
+Release **3.0.0** centers on `aesa audit` (Quick / Standard / Deployment profiles). It is **not** an automated scanner or certification authority. Judgment still belongs to a human-authorized AI auditor following the procedure.
+
+Normative product contract: [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md). Short primer: [`AESA-GATE.md`](AESA-GATE.md).
 
 ## 1. Choose your scope
 
@@ -10,7 +12,7 @@ Fill the audit inputs in Section 2 of [`prompts/01-core-prompt.md`](../prompts/0
 
 | Input | Why it matters |
 | --- | --- |
-| `REPOSITORY_URL` | Exact GitHub repository under review |
+| `REPOSITORY_URL` | Exact repository under review |
 | `KIT_DIR` / `WORK_DIR` | Read-only kit vs writable outputs (outside target clone) |
 | `AUDIT_SCOPE_MODE` | Inventory-only vs selected/batch/full deep audit |
 | `EXTERNAL_SOURCE_SCOPE` | Whether linked repos may be inspected |
@@ -19,17 +21,28 @@ Fill the audit inputs in Section 2 of [`prompts/01-core-prompt.md`](../prompts/0
 
 **Rule:** a URL inside a catalog is not authorization to audit that target.
 
-## 2. Load the procedure (kit layout)
+## 2. First run (recommended)
+
+```bash
+cd tools && python -m pip install -e ".[dev]"
+aesa audit /path/to/target --profile quick
+# deepen:
+aesa audit /path/to/target --profile standard
+```
+
+Outputs under `aesa-out/`: `inventory.json`, `ecosystem-graph.json`, `audit-context.md`, `profile.json`.
+
+Then attach [`skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) (or the prompt kit) and load only modules listed in the handoff.
+
+## 3. Load the procedure (kit layout)
 
 1. Operators: read [`prompts/00-OPERATOR-GUIDE.md`](../prompts/00-OPERATOR-GUIDE.md).
-2. Attach [`prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) and provide [`prompts/01-core-prompt.md`](../prompts/01-core-prompt.md) as the system/developer procedure.
-3. Set `KIT_DIR` (read-only kit path) and `WORK_DIR` (writable path outside the target clone) in Section 2.8.
-4. Before component deep audit, attach [`prompts/02-modules.md`](../prompts/02-modules.md) and only the matching files from [`modules/`](../modules/).
+2. Attach [`prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) and provide [`prompts/01-core-prompt.md`](../prompts/01-core-prompt.md).
+3. Set `KIT_DIR` / `WORK_DIR` in Section 2.8.
+4. Before component deep audit, attach [`prompts/02-modules.md`](../prompts/02-modules.md) and only matching [`modules/`](../modules/).
 5. JSON contract: [`prompts/03-report-contract.md`](../prompts/03-report-contract.md).
 
 Monolithic copy (optional): [`prompts/audit.full.md`](../prompts/audit.full.md). Index: [`prompts/audit.md`](../prompts/audit.md).
-
-Suggested module mapping:
 
 | Discovered type | Module |
 | --- | --- |
@@ -38,24 +51,25 @@ Suggested module mapping:
 | Plugin / Connector / Extension | `modules/plugins.md` |
 | Hook / lifecycle handler | `modules/hooks.md` |
 | Subagent / multi-agent | `modules/subagents.md` |
-| Automation / Workflow | `modules/automations.md` |
+| Automation / Workflow / CI | `modules/automations.md` |
 | A2A / Agent Card | `modules/a2a.md` |
 | Multimodal pipelines | `modules/multimodal.md` |
 
-### Optional tooling (2.0+)
-
-Install from [`tools/`](../tools/README.md):
+### Tooling commands (3.0+)
 
 ```bash
-cd tools && python -m pip install -e ".[dev]"
-aesa preflight /path/to/target   # inventory + coverage + audit-context.md
-aesa inventory /path/to/target   # JSON-only passive discovery
+aesa audit PATH --profile quick|standard|deployment
+aesa preflight PATH          # alias of audit --profile quick
+aesa inventory PATH
 aesa validate report summary.json
+aesa validate graph graph.json
+aesa diff report old.json new.json
+aesa export sarif report.json
+aesa corpus run              # tooling fixtures
+aesa benchmark run           # detection benchmark scaffold (no LLM yet)
 ```
 
-Prefer starting with `aesa preflight` so coverage and `NOT VERIFIED` items are explicit before deep review. See [`AESA-GATE.md`](AESA-GATE.md) and [`MIGRATION-2.0.md`](MIGRATION-2.0.md) — tooling does not replace the audit procedure.
-
-Complete stages in order. Do not silently skip.
+See [`tools/README.md`](../tools/README.md) and [`MIGRATION-2.0.md`](MIGRATION-2.0.md).
 
 | If you only have… | Complete at least… | Typical ecosystem decision |
 | --- | --- | --- |
@@ -79,46 +93,12 @@ Prefer `INSUFFICIENT EVIDENCE` over unsupported assurance.
 
 ## 5. Produce outputs
 
-Narrative report structure: Section 21 of `01-core-prompt.md`. Reports must be written in **English** (`REPORT_LANGUAGE: English` in Section 2.8).
+1. Narrative Markdown report
+2. Machine-readable summary conforming to [`schemas/audit-report.schema.json`](../schemas/audit-report.schema.json)
+3. Optional ecosystem graph + digest manifest
+4. Validate: `aesa validate report`
 
-Machine-readable summary:
+## 6. Continuous use
 
-- Conform to [`schemas/audit-report.schema.json`](../schemas/audit-report.schema.json) (alias: [`schemas/AI_Agent_Ecosystem_Security_Audit_v1.schema.json`](../schemas/AI_Agent_Ecosystem_Security_Audit_v1.schema.json), the canonical filename named in v1.0 Section 22.5)
-- Keep `score` as `null` and `score_type` as `NONE`
-- Keep `recommend_production_use` as `false` unless all applicable production gates actually pass
-- Set `json_validation_status` to `VALIDATED` only after `aesa validate report` (or equivalent schema + semantic validation)
-
-Optional graph export: [`schemas/ecosystem-graph.schema.json`](../schemas/ecosystem-graph.schema.json). Scope manifest: [`schemas/audit-manifest.schema.json`](../schemas/audit-manifest.schema.json) and [`examples/sample-audit-manifest.yaml`](../examples/sample-audit-manifest.yaml).
-
-Example starter inputs:
-
-- [`examples/sample-audit-context.yaml`](../examples/sample-audit-context.yaml)
-- [`examples/sample-component-inventory.json`](../examples/sample-component-inventory.json)
-
-## 6. Passive-audit hard stops
-
-During a passive AESA audit, do **not**:
-
-- Execute Skills, Hooks, Plugins, MCP servers, Automations, Workflows, or repo scripts
-- Install target dependencies (`npm install`, `pip install`, etc.)
-- Contact operational endpoints or validate credentials
-- Request or paste production secrets into chat
-- Claim sandbox/scanner/SBOM/runtime results that were not performed
-
-## 7. Sensitive production gate
-
-For Confidential / Restricted / Regulated / personal / credential / financial / health data:
-
-- Source review alone is **not** production validation
-- Missing material runtime/host evidence → production suitability = `INSUFFICIENT EVIDENCE`
-- `APPROVED_FOR_RESTRICTED_USE` must name allowed/prohibited data, enforcement points, owner, and expiry
-
-## 8. Cite the exact version
-
-Always record:
-
-- AESA project / package version (`2.0.0`)
-- Procedure version (`1.0`)
-- Repository tag/commit of AESA used
-- Audit date (UTC)
-- Target repository commit/tree SHA (or explicit unavailability)
+- Save `aesa-out/inventory.json` as a baseline
+- Diff with `aesa diff` or the consumer Action example in [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml)

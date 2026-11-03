@@ -39,8 +39,29 @@ def discover_skills(
             hints.append("external_url_reference")
         if any(token in lowered for token in ("subprocess", "os.system", "bash ", "powershell")):
             hints.append("possible_code_execution_reference")
-        if any(token in lowered for token in (".sh", ".ps1", "```python", "```bash", "```powershell")):
+        if any(
+            token in lowered for token in (".sh", ".ps1", "```python", "```bash", "```powershell")
+        ):
             hints.append("script_reference")
+        if any(
+            token in lowered
+            for token in (
+                "secret",
+                "api_key",
+                "apikey",
+                "password",
+                "token",
+                "credential",
+                "1password",
+                "op_service_account",
+            )
+        ):
+            hints.append("secrets_or_credential_handling")
+        if "service_account" in lowered or "op signin" in lowered:
+            hints.append("identity_or_auth_workflow")
+        # Bundled helper scripts next to the skill raise authority questions.
+        if any((path.parent / "scripts").glob("*")):
+            hints.append("bundled_scripts_directory")
 
         results.append(
             {

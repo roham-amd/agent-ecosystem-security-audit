@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [3.0.0] — 2026-11-03
+
+### Added
+
+- `aesa deps outdated` / `aesa deps upgrade` — ncu-style PyPI pin check and bump for `constraints.txt` / lock / `pyproject.toml`.
+- `aesa lint` — Ruff lint/format gate (`ruff==0.17.3`) for `tools/aesa` + `tests`.
+- Dependabot (`.github/dependabot.yml`): weekly grouped `pip` (`/tools`) + `github-actions` updates; pin SoT remains `tools/constraints.txt`.
+- **AESA 3.0 product specification** ([`docs/AESA-3.0-PRODUCT-SPEC.md`](docs/AESA-3.0-PRODUCT-SPEC.md)): CLI contract, adapter architecture, evidence rules, 30-day backlog status.
+- `aesa audit PATH --profile quick|standard|deployment` — unified local assessment entry (inventory + handoff package + profile metadata).
+- Inventory adapter `github_workflows` for `.github/workflows` authority surfaces.
+- Consumer composite Action [`.github/actions/aesa-gate`](.github/actions/aesa-gate) + example workflow ([`docs/aesa-consumer-gate.example.yml`](docs/aesa-consumer-gate.example.yml)).
+- Agent detection benchmark scaffold: `aesa benchmark run`, `tests/benchmark/` (BENCH-001–002; LLM scoring deferred).
+
+### Changed
+
+- Product version **3.0.0**; tooling package **0.3.0**; inventory JSON `aesa_inventory_version` **0.3.0**.
+- Minimum Python **>=3.15** (`tools/pyproject.toml`, CI, consumer Action).
+- `aesa preflight` is now an alias of `aesa audit --profile quick`.
+- Tooling refactor: modular CLI (`cli/`), adapter registry, shared `jsonio`/`pins`, typed audit profiles, Ruff py315 defaults.
+- Expanded name framing: Assessment (continuous discovery/gate) while retaining Audit procedure v1.0.
+
+### Notes
+
+- Report schema / procedure versions remain **1.0** (no breaking report contract).
+- Benchmark harness does not invoke models; corpus still validates tooling only.
+
 ## [2.3.0] — 2026-11-03
 
 ### Added

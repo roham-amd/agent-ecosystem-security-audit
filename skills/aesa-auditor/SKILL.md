@@ -1,9 +1,9 @@
 ---
 name: aesa-auditor
 description: >-
-  Run AESA Gate passive preflight and evidence-bounded deep audit of AI agent
-  ecosystems (Skills, MCP, hooks, plugins, subagents, automations). Use when the
-  user asks to audit agent security, review MCP/skills, or run AESA.
+  Run AESA passive audit (aesa audit profiles) and evidence-bounded deep review
+  of AI agent ecosystems (Skills, MCP, hooks, plugins, subagents, automations).
+  Use when the user asks to audit agent security, review MCP/skills, or run AESA.
 ---
 
 # AESA Gate Auditor Skill
@@ -25,20 +25,23 @@ upgrade inventory into production approval without evidence.
 
 ## Preferred workflow
 
-### 1. Preflight (deterministic)
+### 1. Audit / preflight (deterministic)
 
 If AESA tooling is available:
 
 ```bash
 cd <AESA_KIT>/tools && python -m pip install -e ".[dev]"
-aesa preflight <TARGET_REPO> -o <WORK_DIR>/aesa-out
+aesa audit <TARGET_REPO> --profile standard -o <WORK_DIR>/aesa-out
+# quick inventory only:
+aesa audit <TARGET_REPO> --profile quick -o <WORK_DIR>/aesa-out
 ```
 
 Read:
 
 - `aesa-out/inventory.json`
 - `aesa-out/audit-context.md`
-- `aesa-out/preflight-summary.md`
+- `aesa-out/profile.json`
+- `aesa-out/audit-summary.md`
 
 If tooling is unavailable, perform passive discovery manually and state that
 deterministic coverage was skipped.

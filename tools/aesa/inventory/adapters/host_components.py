@@ -17,8 +17,10 @@ def discover_plugins(
     results: list[dict[str, Any]] = []
     for path in select_files(
         files,
-        lambda p: p.name in {"plugin.json", "plugin.yaml", "plugin.yml", ".cursor-plugin"}
-        or (p.name == "package.json" and "plugin" in p.parent.name.lower()),
+        lambda p: (
+            p.name in {"plugin.json", "plugin.yaml", "plugin.yml", ".cursor-plugin"}
+            or (p.name == "package.json" and "plugin" in p.parent.name.lower())
+        ),
     ):
         raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="plugins")
         if raw is None:
@@ -50,11 +52,13 @@ def discover_subagents(
     for path in select_files(
         files,
         lambda p: (
-            ("agents" in p.parts or "subagents" in p.parts)
-            and p.suffix in {".md", ".json", ".yaml", ".yml"}
-            and p.name.lower() not in {"readme.md", "agents.md"}
-        )
-        or p.name in {"subagents.json", "agents.json"},
+            (
+                ("agents" in p.parts or "subagents" in p.parts)
+                and p.suffix in {".md", ".json", ".yaml", ".yml"}
+                and p.name.lower() not in {"readme.md", "agents.md"}
+            )
+            or p.name in {"subagents.json", "agents.json"}
+        ),
     ):
         raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="subagents")
         if raw is None:
@@ -89,13 +93,11 @@ def discover_automations(
     results: list[dict[str, Any]] = []
     for path in select_files(
         files,
-        lambda p: p.name in {"automations.json", "automation.yaml", "automation.yml"}
-        or (
-            ".github" in p.parts
-            and "workflows" in p.parts
-            and p.suffix in {".yml", ".yaml"}
-        )
-        or ("automations" in p.parts and p.suffix in {".json", ".yaml", ".yml", ".md"}),
+        lambda p: (
+            p.name in {"automations.json", "automation.yaml", "automation.yml"}
+            or (".github" in p.parts and "workflows" in p.parts and p.suffix in {".yml", ".yaml"})
+            or ("automations" in p.parts and p.suffix in {".json", ".yaml", ".yml", ".md"})
+        ),
     ):
         raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="automations")
         if raw is None:

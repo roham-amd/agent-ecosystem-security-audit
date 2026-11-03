@@ -10,11 +10,11 @@
 
 The bundled audit procedure version (`prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
-Tooling package version (`aesa-tools`, currently **0.2.0**) is tracked in `canonical/versions.json` as `build_tool` and must stay aligned with `tools/pyproject.toml` and `tools/aesa/__init__.py`.
+Tooling package version (`aesa-tools`, currently **0.3.0**) is tracked in `canonical/versions.json` as `build_tool` and must stay aligned with `tools/pyproject.toml` and `tools/aesa/__init__.py`.
 
 ## What this project is
 
-AESA (AESA Gate) is an **open-source security audit framework** plus **local-first deterministic tooling**: procedures, prompts, specialized modules, report schemas, passive inventory/preflight, and validation helpers for assessing AI agent ecosystems.
+AESA is an **open-source agent-ecosystem security assessment toolkit** (AESA Gate): procedures, prompts, specialized modules, report schemas, passive inventory/`aesa audit`, and validation helpers.
 
 It is **not** an automated vulnerability scanner, penetration-testing tool, runtime sandbox, marketplace certification authority, or substitute for organizational risk acceptance.
 

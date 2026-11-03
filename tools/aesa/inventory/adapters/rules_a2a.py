@@ -20,10 +20,13 @@ def discover_agent_cards(
     results: list[dict[str, Any]] = []
     for path in select_files(
         files,
-        lambda p: p.name in _CARD_NAMES
-        or (p.name == "agent-card.json" and ".well-known" in p.parts),
+        lambda p: (
+            p.name in _CARD_NAMES or (p.name == "agent-card.json" and ".well-known" in p.parts)
+        ),
     ):
-        raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="a2a_agent_card")
+        raw = safe_read_text(
+            path, root=root, limits=limits, events=events, adapter="a2a_agent_card"
+        )
         if raw is None:
             continue
         rel = path.relative_to(root).as_posix()
@@ -66,8 +69,9 @@ def discover_instruction_rules(
     seen_dirs: set[str] = set()
     for path in select_files(
         files,
-        lambda p: p.name in {"AGENTS.md", "CLAUDE.md"}
-        or (".cursor" in p.parts and "rules" in p.parts),
+        lambda p: (
+            p.name in {"AGENTS.md", "CLAUDE.md"} or (".cursor" in p.parts and "rules" in p.parts)
+        ),
     ):
         rel = path.relative_to(root).as_posix()
         if path.name in {"AGENTS.md", "CLAUDE.md"}:

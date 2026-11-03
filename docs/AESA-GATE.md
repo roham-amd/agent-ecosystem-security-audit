@@ -1,14 +1,14 @@
-# AESA Gate — product direction
+# AESA Gate — short primer
 
-AESA Gate is the 2.3+ product identity for this repository.
+AESA Gate is the operator-facing name for AESA’s local discovery + CI-oriented change gate. Normative product contract: [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md) (release **3.0.0**).
 
 ## Job to be done
 
 Help teams **discover**, **evidence**, and **gate change** in AI agent ecosystems — without claiming false assurance.
 
-1. **Discover** — Skills, MCP registrations, hooks, plugins, subagents, automations, instruction rules, A2A cards.
+1. **Discover** — Skills, MCP registrations, hooks, plugins, subagents, automations, instruction rules, A2A cards, CI workflows.
 2. **Assess** — Evidence-bounded component and integration review (AI agent + human).
-3. **Control change** — Diff / CI-oriented posture change (roadmap); preflight is the local entry point today.
+3. **Control change** — Baseline inventory, diff, optional GitHub Action.
 
 ## Execution model (hybrid)
 
@@ -21,20 +21,23 @@ Help teams **discover**, **evidence**, and **gate change** in AI agent ecosystem
 ## First user journey
 
 ```bash
-aesa preflight .
-# → aesa-out/inventory.json + audit-context.md
+aesa audit . --profile quick
+# → aesa-out/inventory.json + audit-context.md + profile.json
 # → load skills/aesa-auditor + matching modules/
+aesa audit . --profile standard   # deeper handoff checklist
 # → aesa validate report summary.json
 ```
 
-Preflight must never print “secure” / “insecure” as a global verdict. It reports coverage and unknowns.
+`aesa preflight` remains as an alias of `aesa audit --profile quick`.
 
-## Near-term roadmap (condensed)
+Preflight/audit must never print “secure” / “insecure” as a global verdict. It reports coverage and unknowns.
 
-- Harden collectors and expand adapters with explicit `SUPPORTED` / `PARTIAL` / `MANUAL_ONLY` maturity.
-- Ship Cursor / Claude Code skill workflows (done: `skills/`).
-- GitHub Action PR gate for security-impactful ecosystem diffs (next).
-- Benchmark corpus for agent audit quality (long-term; separate from tooling corpus).
+## Near-term roadmap
+
+- Expand adapters with explicit `SUPPORTED` / `PARTIAL` / `MANUAL_ONLY` maturity (ongoing).
+- Cursor / Claude Code skill workflows (`skills/`).
+- Consumer GitHub Action (`.github/actions/aesa-gate`).
+- Benchmark corpus for agent audit quality (`aesa benchmark run` scaffold; LLM scoring next).
 
 ## Non-goals (for now)
 

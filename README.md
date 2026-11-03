@@ -1,14 +1,14 @@
-# AESA Gate
+# AESA
 
-**Agent Ecosystem Security Audit**
+**Agent Ecosystem Security Assessment**
 
-Evidence-first security gate for AI agent ecosystems
+Evidence-first security for AI-agent ecosystems
 
 > **Trust Nothing. Verify Everything. Secure Every Agent.**
 
-AESA is an open-source **hybrid audit framework** — a structured methodology, versioned audit prompts, specialized review modules, machine-readable report schemas, and **deterministic local tooling** (inventory, preflight, validation, diff, SARIF) for assessing AI agent ecosystems.
+AESA is an open-source **local-first security toolchain** — a structured methodology, versioned audit prompts, specialized review modules, machine-readable report schemas, and **deterministic tooling** (`aesa audit`, inventory, validation, diff, SARIF, CI Action) for assessing AI agent ecosystems.
 
-**Product positioning (2.3+):** AESA Gate helps you discover what is in an agent ecosystem, what changed, what evidence supports risk claims, and what remains `NOT VERIFIED` — then hands deep semantic review to an AI coding agent (Cursor, Claude Code, …) under hard passive-audit guardrails.
+**Product positioning (3.0):** Discover agent components and trust relationships, establish what they can do with evidence, prioritize what to fix or verify, and gate change in CI — with deep semantic review by an AI coding agent under hard passive-audit guardrails.
 
 It is **not** an automated security scanner, sandbox, penetration test, marketplace certification, or substitute for organizational risk acceptance. It does **not** ship a runtime test harness or full SBOM/signature verification.
 
@@ -42,12 +42,12 @@ A positive answer to one question does **not** imply a positive answer to the ot
 
 ```bash
 cd tools && python -m pip install -e ".[dev]"
-aesa preflight /path/to/target-repo
+aesa audit /path/to/target-repo --profile quick
 ```
 
-You get inventory counts, a coverage map (what was discovered deterministically vs manual-only), high-priority review hints, and `NOT VERIFIED` items — **not** a pass/fail verdict. Outputs land in `aesa-out/` (`inventory.json`, `ecosystem-graph.json`, `audit-context.md`).
+You get inventory counts, a coverage map (what was discovered deterministically vs manual-only), high-priority review hints, and `NOT VERIFIED` items — **not** a pass/fail verdict. Outputs land in `aesa-out/` (`inventory.json`, `ecosystem-graph.json`, `audit-context.md`, `profile.json`).
 
-Then attach the kit (or [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md)) to Cursor / Claude Code for evidence-bounded deep review.
+Then attach the kit (or [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md)) to Cursor / Claude Code for evidence-bounded deep review. Spec: [`docs/AESA-3.0-PRODUCT-SPEC.md`](docs/AESA-3.0-PRODUCT-SPEC.md).
 
 ---
 
@@ -62,9 +62,9 @@ agent-ecosystem-security-audit/
 ├── CHANGELOG.md
 ├── VERSION
 ├── canonical/                # Source of truth (schemas, versions.json, prompt manifest)
-├── tools/                    # aesa CLI — preflight, build, validate, inventory, corpus
+├── tools/                    # aesa CLI — audit, build, validate, inventory, corpus
 ├── skills/                   # Cursor / Claude Code skill + task shortcuts
-├── tests/                    # Corpus + pytest
+├── tests/                    # Corpus + benchmark + pytest
 ├── control-packs/            # Versioned control crosswalks (pilot)
 ├── prompts/                  # AESA kit procedure (load on demand)
 │   ├── 00-OPERATOR-GUIDE.md
@@ -92,21 +92,24 @@ agent-ecosystem-security-audit/
 │   ├── evidence-digest-manifest.schema.json
 │   └── runtime-test-record.schema.json
 ├── examples/
-└── docs/
-    ├── usage.md
-    ├── AESA-GATE.md
-    ├── MIGRATION-2.0.md
-    ├── toolchain-threat-model.md
-    └── architecture/
+├── docs/
+│   ├── AESA-3.0-PRODUCT-SPEC.md
+│   ├── usage.md
+│   ├── AESA-GATE.md
+│   ├── MIGRATION-2.0.md
+│   ├── toolchain-threat-model.md
+│   └── architecture/
+├── .github/actions/aesa-gate/
+└── tests/benchmark/
 ```
 
 ---
 
 ## Quick start
 
-### A. Preflight + agent deep audit (recommended)
+### A. Unified audit + agent deep review (recommended)
 
-1. Install tooling and run `aesa preflight <target>`.
+1. Install tooling and run `aesa audit <target> --profile quick` (then `standard` for handoff depth).
 2. Read [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md) (or [`prompts/00-OPERATOR-GUIDE.md`](prompts/00-OPERATOR-GUIDE.md)).
 3. Attach [`prompts/04-passive-guardrails.md`](prompts/04-passive-guardrails.md) + fill **Audit Inputs** in [`prompts/01-core-prompt.md`](prompts/01-core-prompt.md).
 4. Load only matching [`modules/`](modules/) for selected components.
@@ -122,21 +125,23 @@ agent-ecosystem-security-audit/
 
 ```bash
 cd tools && python -m pip install -e ".[dev]"
-aesa preflight /path/to/target-repo
+aesa audit /path/to/target-repo --profile quick
+aesa audit /path/to/target-repo --profile standard
 aesa inventory /path/to/target-repo
 aesa validate report ../examples/sample-audit-summary.json
 aesa diff report old.json new.json
 aesa export sarif report.json
 aesa corpus run
+aesa benchmark run
 ```
 
 ### Minimal workflow modes
 
 | Mode | When to use | Typical stages completed |
 | --- | --- | --- |
-| Catalog inventory / preflight | Awesome-list / marketplace index / discovery repo | Stages 0–2 (+ `aesa preflight`) |
-| Risk-prioritized deep audit | Selected authorized components | Stages 0–8 as evidence allows |
-| Full ecosystem deep audit | Explicitly authorized full scope | All stages with evidence gates |
+| Quick inventory | Awesome-list / marketplace index / first look | Stages 0–2 (`--profile quick`) |
+| Standard assessment | Selected authorized components | Stages 0–8 as evidence allows (`--profile standard`) |
+| Deployment suitability | Host + data sensitivity declared | Full gate worksheet (`--profile deployment`) |
 
 **Important:** A single GitHub URL does **not** authorize deep audit of every linked project. External sources require separate exact authorization.
 
@@ -153,9 +158,9 @@ aesa corpus run
 - Never request or expose production secrets.
 - Narrative audit reports use **English** (`REPORT_LANGUAGE: English`).
 - Do not approve sensitive production use while a material hard gate is `FAIL` or `NOT VERIFIED`.
-- Inventory / preflight is **not** a security clearance.
+- Inventory / `aesa audit` is **not** a security clearance.
 
-See the kit in [`prompts/`](prompts/) or the monolithic [`prompts/audit.full.md`](prompts/audit.full.md). Product direction: [`docs/AESA-GATE.md`](docs/AESA-GATE.md).
+See the kit in [`prompts/`](prompts/) or the monolithic [`prompts/audit.full.md`](prompts/audit.full.md). Product spec: [`docs/AESA-3.0-PRODUCT-SPEC.md`](docs/AESA-3.0-PRODUCT-SPEC.md).
 
 ---
 
@@ -178,8 +183,8 @@ AESA helps humans and audit agents produce **evidence-bounded** decisions about 
 
 | Kind | Current | Meaning |
 | --- | --- | --- |
-| Project / package release | **2.3.0** | AESA repository packaging and public release numbering |
-| Tooling (`aesa-tools`) | **0.2.0** | CLI / collectors (`canonical/versions.json` → `build_tool`) |
+| Project / package release | **3.0.0** | AESA repository packaging and public release numbering |
+| Tooling (`aesa-tools`) | **0.3.0** | CLI / collectors (`canonical/versions.json` → `build_tool`) |
 | Audit procedure | **1.0** (`prompts/`) | Methodology / prompt / JSON contract version inside the framework |
 
 Breaking changes to the audit procedure, decision enums, or JSON contract bump the major procedure version under `prompts/`. Project packaging may advance independently.
@@ -207,9 +212,9 @@ See [`SECURITY.md`](SECURITY.md).
 If you use AESA in an assessment report, cite the exact procedure version and commit/tag, for example:
 
 ```text
-AESA Gate — Agent Ecosystem Security Audit
-Project: 2.3.0
+AESA — Agent Ecosystem Security Assessment
+Project: 3.0.0
 Procedure: 1.0
 https://github.com/roham-amd/agent-ecosystem-security-audit
-Tag: v2.3.0
+Tag: v3.0.0
 ```

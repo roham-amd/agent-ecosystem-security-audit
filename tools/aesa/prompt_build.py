@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-from pathlib import Path
 
 from aesa.paths import repo_root
 

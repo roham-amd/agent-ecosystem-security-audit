@@ -23,7 +23,7 @@ Scope: **AESA deterministic tooling** (`tools/aesa/`) introduced in 2.0.0. Promp
 2. **Archive bombs / huge files** — partial: file size and count limits in collector; archive adapters not shipped yet.
 3. **Parser differential** — JSON/YAML parsers must fail closed with visible errors.
 4. **Instruction injection in target Markdown** — tooling must not interpret Skill/MCP file content as operator instructions.
-5. **Supply chain of AESA tools** — pin dependencies in CI; review adapter changes.
+5. **Supply chain of AESA tools** — pin dependencies in CI (`tools/constraints.txt`); Dependabot weekly updates (`.github/dependabot.yml`) with review before merge; review adapter changes.
 
 ## Residual risks
 
@@ -33,6 +33,6 @@ Scope: **AESA deterministic tooling** (`tools/aesa/`) introduced in 2.0.0. Promp
 
 ## Validation
 
-Malicious parser fixtures are tracked under corpus family *Parser/audit-tool abuse* (roadmap). Current cases: CORPUS-001–004.
+Malicious parser fixtures are tracked under corpus family *Parser/audit-tool abuse*. Tooling cases currently include CORPUS-001–010; agent-detection stubs live under `tests/benchmark/` (BENCH-001+).
 
 See assessment R-013 for full hardening requirements.

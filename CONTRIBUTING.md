@@ -23,6 +23,20 @@ Thank you for helping improve the Agent Ecosystem Security Audit framework.
 6. **No numeric score invention.** Qualitative risk, confidence, and coverage stay separate.
 7. **English only:** narrative reports and procedure-facing text use **English**. Technical identifiers (paths, enums, JSON keys, CVE IDs) stay in English.
 
+## Dependency updates (Dependabot)
+
+GitHub Dependabot is configured in [`.github/dependabot.yml`](.github/dependabot.yml):
+
+| Ecosystem | Directory | Cadence |
+| --- | --- | --- |
+| `pip` | `/tools` | Weekly (Monday UTC) |
+| `github-actions` | `/` | Weekly (Monday UTC) |
+
+- Version bumps are grouped (runtime / dev / build for Python; one group for Actions).
+- Cooldown delays non-security version PRs a few days after release; **security updates are not delayed**.
+- `insecure-external-code-execution: deny` for pip (no setup/build-hook execution while resolving).
+- After merging pip PRs, keep [`tools/constraints.txt`](tools/constraints.txt), lock, and `pyproject.toml` aligned (`aesa deps upgrade` + `aesa build all`).
+
 ## Pull request checklist
 
 - [ ] Change targets the correct procedure version under `prompts/`
@@ -31,6 +45,7 @@ Thank you for helping improve the Agent Ecosystem Security Audit framework.
 - [ ] New modules state applicability and `N/A` / `NOT VERIFIED` rules
 - [ ] Docs do not market AESA as an automated scanner or certification
 - [ ] No production credentials, customer data, or live exploit payloads
+- [ ] Dependabot / pin PRs leave `constraints.txt`, lock, and `pyproject.toml` consistent
 
 ## Procedure versioning
 

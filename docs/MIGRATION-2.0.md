@@ -34,10 +34,17 @@ Baseline repository commit before engineering transition: `82e3ec8328a4a4e54b760
 - Prompt kit canonical composition: `canonical/prompt-kit.manifest.json`.
 - Run `aesa build all` and `aesa corpus run` before opening PRs.
 
+## Later releases (see also 3.0)
+
+- **2.1+:** `aesa graph paths` (pilot path search), monolith generator, A2A/rules inventory.
+- **2.2+:** SARIF export, audit diff, digest manifests.
+- **2.3+:** `aesa preflight`, expanded adapters, native skills.
+- **3.0.0:** `aesa audit --profile …`, consumer Action, benchmark scaffold — [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md).
+
 ## Not yet available (do not claim)
 
 - Full AISVS 191-requirement crosswalk (R-007 remainder)
-- Automated attack-path engine (graph schema only; path search not shipped)
-- SBOM/signature/provenance verifiers (R-008)
+- Full automated attack-path proof engine (path search is heuristic on typed graphs)
+- SBOM/signature/provenance verifiers beyond digest helpers (R-008)
 - Runtime staging harness (R-009)
-- LLM procedure benchmark scores (corpus validates tooling, not model detection rates)
+- LLM procedure benchmark scores (tooling corpus + benchmark inventory stubs only; no model runner yet)

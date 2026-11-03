@@ -14,7 +14,13 @@ ADAPTER_COVERAGE: list[dict[str, str]] = [
         "family": "MCP",
         "adapter": "mcp_config",
         "maturity": "PARTIAL",
-        "notes": "Client registration configs only; server source and auth require manual/agent review.",
+        "notes": "Client registration JSON including mcp_example.json; effective host binding is MANUAL_ONLY.",
+    },
+    {
+        "family": "MCP server source",
+        "adapter": "mcp_server_source",
+        "maturity": "PARTIAL",
+        "notes": "Heuristic discovery of MCP server implementations; tool authz not verified.",
     },
     {
         "family": "A2A",
@@ -51,6 +57,12 @@ ADAPTER_COVERAGE: list[dict[str, str]] = [
         "adapter": "automations",
         "maturity": "PARTIAL",
         "notes": "Workflow and automation manifests; effective credentials are NOT VERIFIED.",
+    },
+    {
+        "family": "CI / GitHub Actions",
+        "adapter": "github_workflows",
+        "maturity": "PARTIAL",
+        "notes": "Discovers .github/workflows; does not evaluate runner trust or secret exfil paths.",
     },
     {
         "family": "Host effective permissions",
@@ -110,7 +122,9 @@ def summarize_coverage(components: list[dict[str, Any]]) -> dict[str, Any]:
         "deterministically_discovered": by_maturity.get("SUPPORTED", 0)
         + by_maturity.get("PARTIAL", 0),
         "manual_review_families": [
-            row["family"] for row in ADAPTER_COVERAGE if row["maturity"] in {"MANUAL_ONLY", "UNSUPPORTED"}
+            row["family"]
+            for row in ADAPTER_COVERAGE
+            if row["maturity"] in {"MANUAL_ONLY", "UNSUPPORTED"}
         ],
         "high_priority_review_areas": high_priority[:25],
         "not_verified": [

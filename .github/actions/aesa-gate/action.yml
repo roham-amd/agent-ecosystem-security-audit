@@ -1,0 +1,78 @@
+name: AESA Gate
+description: >-
+  Passive agent-ecosystem inventory and optional baseline diff for pull requests.
+  Does not execute target application code or contact MCP endpoints.
+
+inputs:
+  path:
+    description: Repository path to assess (relative to workspace)
+    required: false
+    default: "."
+  profile:
+    description: Audit profile (quick|standard|deployment)
+    required: false
+    default: "quick"
+  baseline-inventory:
+    description: Optional path to previous inventory.json for diff annotation
+    required: false
+    default: ""
+  output-dir:
+    description: Output directory for AESA artifacts
+    required: false
+    default: "aesa-out"
+  install-tools-from:
+    description: Path to AESA tools/ directory containing pyproject.toml
+    required: false
+    default: "tools"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.15"
+
+    - name: Install AESA tooling
+      shell: bash
+      working-directory: ${{ inputs.install-tools-from }}
+      run: python -m pip install -e .
+
+    - name: Run AESA audit (passive)
+      shell: bash
+      run: |
+        set -euo pipefail
+        aesa audit "${{ inputs.path }}" --profile "${{ inputs.profile }}" -o "${{ inputs.output-dir }}"
+
+    - name: Diff against baseline inventory (optional)
+      if: inputs.baseline-inventory != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        BASE="${{ inputs.baseline-inventory }}"
+        CUR="${{ inputs.output-dir }}/inventory.json"
+        OUT="${{ inputs.output-dir }}/inventory-delta.json"
+        if [[ ! -f "$BASE" ]]; then
+          echo "Baseline inventory not found; skipping diff."
+          exit 0
+        fi
+        python -c "
+        import json, pathlib, sys
+        base = pathlib.Path(sys.argv[1])
+        cur = pathlib.Path(sys.argv[2])
+        out = pathlib.Path(sys.argv[3])
+        b = {c.get('repository_path') or c.get('name') for c in json.loads(base.read_text(encoding='utf-8'))['components']}
+        c = {c.get('repository_path') or c.get('name') for c in json.loads(cur.read_text(encoding='utf-8'))['components']}
+        added = sorted(c - b)
+        removed = sorted(b - c)
+        print('## AESA inventory delta')
+        print('Added (%d): %s' % (len(added), ', '.join(added) or '(none)'))
+        print('Removed (%d): %s' % (len(removed), ', '.join(removed) or '(none)'))
+        out.write_text(json.dumps({'added': added, 'removed': removed}, indent=2) + '\n', encoding='utf-8')
+        " "$BASE" "$CUR" "$OUT"
+
+    - name: Upload AESA artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: aesa-out
+        path: ${{ inputs.output-dir }}

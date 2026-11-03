@@ -7,8 +7,8 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 from aesa.build import validate_json_schema_document
-from aesa.paths import canonical_schema_path, repo_root
 from aesa.graph.analysis import GraphSemanticResult, find_paths, validate_graph_semantics
+from aesa.paths import canonical_schema_path, repo_root
 from aesa.semantic import SemanticResult, validate_semantics
 
 

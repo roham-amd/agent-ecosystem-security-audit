@@ -1,0 +1,31 @@
+# Example consumer workflow — copy into a product repo as
+# .github/workflows/aesa-gate.yml after checking out the AESA kit.
+#
+# This file is documentation only (not executed by this repository's CI).
+
+name: AESA consumer gate (example)
+
+on:
+  pull_request:
+
+jobs:
+  aesa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout AESA kit
+        uses: actions/checkout@v4
+        with:
+          repository: roham-amd/agent-ecosystem-security-audit
+          path: .aesa-kit
+          ref: main
+
+      - name: AESA Gate
+        uses: ./.aesa-kit/.github/actions/aesa-gate
+        with:
+          path: .
+          profile: quick
+          install-tools-from: .aesa-kit/tools
+          baseline-inventory: .aesa/baseline-inventory.json
+          output-dir: aesa-out

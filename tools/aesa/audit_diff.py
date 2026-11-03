@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 
 def diff_reports(base: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
-    base_components = {c["component_id"]: c for c in base.get("components") or [] if c.get("component_id")}
-    target_components = {c["component_id"]: c for c in target.get("components") or [] if c.get("component_id")}
+    base_components = {
+        c["component_id"]: c for c in base.get("components") or [] if c.get("component_id")
+    }
+    target_components = {
+        c["component_id"]: c for c in target.get("components") or [] if c.get("component_id")
+    }
     base_findings = {f["finding_id"]: f for f in base.get("findings") or [] if f.get("finding_id")}
-    target_findings = {f["finding_id"]: f for f in target.get("findings") or [] if f.get("finding_id")}
+    target_findings = {
+        f["finding_id"]: f for f in target.get("findings") or [] if f.get("finding_id")
+    }
 
     comp_added = sorted(set(target_components) - set(base_components))
     comp_removed = sorted(set(base_components) - set(target_components))

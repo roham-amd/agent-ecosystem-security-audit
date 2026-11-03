@@ -1,3 +1,8 @@
+"""Preflight helpers: git identity, graph seed, context rendering.
+
+``run_preflight`` delegates to ``run_audit(profile=\"quick\")`` for a single write path.
+"""
+
 from __future__ import annotations
 
 import json
@@ -5,10 +10,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from aesa.inventory.collector import InventoryResult, collect_inventory, inventory_to_json
+from aesa.inventory.collector import InventoryResult
 
 
-def _git_commit(root: Path) -> str | None:
+def resolve_git_commit(root: Path) -> str | None:
     try:
         proc = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -20,20 +25,52 @@ def _git_commit(root: Path) -> str | None:
         )
         if proc.returncode == 0:
             return proc.stdout.strip() or None
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return None
     return None
 
 
-def inventory_to_graph(result: InventoryResult) -> dict[str, Any]:
+def _node_kind_for_component(comp: dict[str, Any]) -> str:
+    ctype = str(comp.get("type") or "").lower()
+    mapping = (
+        ("skill", "Skill"),
+        ("mcp server registration", "McpClient"),
+        ("mcp server implementation", "McpServer"),
+        ("mcp", "McpServer"),
+        ("plugin", "Plugin"),
+        ("hook", "Hook"),
+        ("subagent", "Agent"),
+        ("automation", "Automation"),
+        ("ci workflow", "Workflow"),
+        ("workflow", "Workflow"),
+        ("a2a", "A2APeer"),
+        ("rule", "Policy"),
+        ("instruction", "Policy"),
+    )
+    for needle, kind in mapping:
+        if needle in ctype:
+            return kind
+    return "Package"
+
+
+def inventory_to_graph(
+    result: InventoryResult,
+    *,
+    commit: str | None = None,
+    audit_id: str = "preflight",
+) -> dict[str, Any]:
+    """Build a schema-valid structural graph seed from inventory (not attack-path proof)."""
     nodes: list[dict[str, Any]] = []
     edges: list[dict[str, Any]] = []
-    repo_node = "N-REPO"
+    host_node = "N-host"
+    inv_evidence = "E-INV"
     nodes.append(
         {
-            "node_id": repo_node,
-            "kind": "repository",
+            "node_id": host_node,
+            "kind": "AgentHost",
             "label": Path(result.repository_path).name,
+            "verification_state": "INFERRED",
+            "evidence_ids": [inv_evidence],
         }
     )
     for idx, comp in enumerate(result.components, start=1):
@@ -41,31 +78,43 @@ def inventory_to_graph(result: InventoryResult) -> dict[str, Any]:
         nodes.append(
             {
                 "node_id": node_id,
-                "kind": str(comp.get("type") or "component"),
+                "kind": _node_kind_for_component(comp),
                 "label": str(comp.get("name") or node_id),
                 "component_id": comp.get("component_id"),
-                "path": comp.get("repository_path"),
+                "verification_state": "INFERRED",
+                "evidence_ids": [inv_evidence],
             }
         )
         edges.append(
             {
                 "edge_id": f"E-{idx:03d}",
-                "from_node_id": repo_node,
+                "kind": "loads",
+                "from_node_id": host_node,
                 "to_node_id": node_id,
-                "relation": "contains",
-                "direction": "forward",
-                "evidence_ids": [],
+                "direction": "directed",
+                "verification_state": "INFERRED",
+                "evidence_ids": [inv_evidence],
+                "limitations": [
+                    "Structural inventory edge only; host binding not independently verified.",
+                    f"source_path={comp.get('repository_path')}",
+                ],
             }
         )
     return {
         "graph_version": "1.0",
-        "mode": "preflight_inventory",
+        "audit_id": audit_id,
+        "scope": {
+            "repository": result.repository_path,
+            "audited_commit": commit,
+            "tree_sha": None,
+        },
         "nodes": nodes,
         "edges": edges,
         "attack_paths": [],
         "limitations": [
-            "Preflight graph is structural only — not an attack-path proof.",
-            "Edges lack evidence_ids until deep audit.",
+            "Preflight/audit graph is structural inventory only — not an attack-path proof.",
+            "All edges use synthetic evidence id E-INV from deterministic discovery.",
+            "Deep audit must replace INFERRED edges with CONFIRMED evidence where claimed.",
         ],
     }
 
@@ -197,32 +246,7 @@ def render_preflight_text(result: InventoryResult, *, commit: str | None, out_di
 
 
 def run_preflight(target: Path, *, output_dir: Path | None = None) -> dict[str, Any]:
-    target = target.resolve()
-    out_dir = (output_dir or (target / "aesa-out")).resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
+    """Compatibility wrapper — same artifacts as ``aesa audit --profile quick``."""
+    from aesa.audit import run_audit
 
-    result = collect_inventory(target)
-    commit = _git_commit(target)
-    inventory = inventory_to_json(result)
-    if commit:
-        inventory["repository_commit"] = commit
-    graph = inventory_to_graph(result)
-    context_md = build_audit_context_md(result, commit=commit)
-    summary_text = render_preflight_text(result, commit=commit, out_dir=out_dir)
-
-    (out_dir / "inventory.json").write_text(
-        json.dumps(inventory, indent=2) + "\n", encoding="utf-8"
-    )
-    (out_dir / "ecosystem-graph.json").write_text(
-        json.dumps(graph, indent=2) + "\n", encoding="utf-8"
-    )
-    (out_dir / "audit-context.md").write_text(context_md, encoding="utf-8")
-    (out_dir / "preflight-summary.md").write_text(summary_text + "\n", encoding="utf-8")
-
-    return {
-        "output_dir": str(out_dir),
-        "commit": commit,
-        "component_count": len(result.components),
-        "coverage": result.coverage,
-        "summary": summary_text,
-    }
+    return run_audit(target, profile="quick", output_dir=output_dir)

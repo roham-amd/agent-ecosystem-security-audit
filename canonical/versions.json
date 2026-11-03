@@ -1,9 +1,10 @@
 {
-  "aesa_product": "2.3.0",
+  "aesa_product": "3.0.0",
   "audit_procedure": "1.0",
   "audit_report_schema": "1.0",
   "ecosystem_graph_schema": "1.0",
   "audit_manifest_schema": "1.0",
   "test_corpus": "0.3.0",
-  "build_tool": "aesa-tools-0.2.0"
+  "agent_benchmark": "0.1.0",
+  "build_tool": "aesa-tools-0.3.0"
 }

@@ -12,10 +12,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.15"
       - name: Install tooling
         working-directory: tools
-        run: pip install -e ".[dev]"
+        run: |
+          python -m pip install -U pip
+          python -m pip install -c constraints.txt -e ".[dev]"
+          python -m pip check
+      - name: Lint (Ruff)
+        working-directory: tools
+        run: aesa lint --check-format
       - name: Build and consistency checks
         run: aesa build all
       - name: Corpus harness

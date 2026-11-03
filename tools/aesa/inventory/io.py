@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any
 
 from aesa.inventory.limits import CollectorLimits
 

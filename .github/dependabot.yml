@@ -1,0 +1,81 @@
+# Dependabot — AESA toolchain + CI Actions
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+#
+# Pin SoT remains tools/constraints.txt. After merging Dependabot PRs that touch
+# tools/pyproject.toml or requirements*, run:
+#   aesa deps upgrade   # or ensure constraints/lock/pyproject stay aligned
+#   aesa build all
+# Security updates ignore cooldown and open independently of the version schedule.
+
+version: 2
+
+updates:
+  # --- PyPI (aesa-tools under tools/) ---
+  - package-ecosystem: pip
+    directory: /tools
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    # Do not execute setup.py / PEP 517 build hooks while resolving (supply-chain caution).
+    insecure-external-code-execution: deny
+    # Exact pins in pyproject / constraints — bump when a newer release exists.
+    versioning-strategy: increase
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: "deps"
+      include: scope
+    groups:
+      python-runtime:
+        patterns:
+          - "jsonschema*"
+          - "packaging"
+          - "referencing"
+          - "attrs"
+          - "rpds-py"
+        exclude-patterns:
+          - "pytest*"
+          - "ruff"
+          - "Pygments"
+          - "pluggy"
+          - "iniconfig"
+          - "colorama"
+      python-dev:
+        dependency-type: development
+        patterns:
+          - "*"
+      python-build:
+        patterns:
+          - "setuptools"
+          - "pip"
+          - "wheel"
+
+  # --- GitHub Actions (workflows + composite actions) ---
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: "ci"
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - "*"

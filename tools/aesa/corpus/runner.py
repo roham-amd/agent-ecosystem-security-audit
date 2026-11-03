@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from aesa.inventory.collector import collect_inventory
 from aesa.paths import repo_root
@@ -42,9 +41,7 @@ def run_corpus() -> dict:
             for substr in case.get("expected_inventory", {}).get("component_names_contain", []):
                 names = " ".join(c.get("name", "") for c in inv.components)
                 c_ok = substr in names
-                entry["checks"].append(
-                    {"name": f"inventory_name_contains:{substr}", "ok": c_ok}
-                )
+                entry["checks"].append({"name": f"inventory_name_contains:{substr}", "ok": c_ok})
                 ok = ok and c_ok
 
         report_rel = case.get("report_fixture")
@@ -59,10 +56,7 @@ def run_corpus() -> dict:
             except SystemExit:
                 valid = False
                 sem = None
-            if expect == "pass":
-                check_ok = valid
-            else:
-                check_ok = not valid
+            check_ok = valid if expect == "pass" else not valid
             entry["checks"].append({"name": f"report_{expect}", "ok": check_ok})
             if sem and not sem.ok and expect == "fail":
                 entry["semantic_issues"] = [

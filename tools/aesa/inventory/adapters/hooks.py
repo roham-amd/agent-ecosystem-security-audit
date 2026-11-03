@@ -20,7 +20,10 @@ def discover_hooks(
     results: list[dict[str, Any]] = []
     for path in select_files(
         files,
-        lambda p: p.name in _HOOK_NAMES or (p.parent.name == "hooks" and p.suffix in {".json", ".md", ".py"}),
+        lambda p: (
+            p.name in _HOOK_NAMES
+            or (p.parent.name == "hooks" and p.suffix in {".json", ".md", ".py"})
+        ),
     ):
         raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="hooks")
         if raw is None:
@@ -37,23 +40,6 @@ def discover_hooks(
         if path.suffix == ".json":
             try:
                 data = json.loads(raw)
-                if isinstance(data, dict):
-                    # Cursor-style hooks map
-                    if "hooks" in data and isinstance(data["hooks"], dict):
-                        for hook_name in data["hooks"]:
-                            results.append(
-                                {
-                                    "name": str(hook_name),
-                                    "type": "Hook",
-                                    "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
-                                    "repository_path": rel,
-                                    "adapter": "hooks",
-                                    "adapter_maturity": "PARTIAL",
-                                    "discovery_status": "IDENTIFIED",
-                                    "priority_hints": list(hints),
-                                }
-                            )
-                        continue
             except json.JSONDecodeError as exc:
                 events.append(
                     {
@@ -63,6 +49,22 @@ def discover_hooks(
                         "message": str(exc),
                     }
                 )
+                continue
+
+            if isinstance(data, dict) and "hooks" in data and isinstance(data["hooks"], dict):
+                for hook_name in data["hooks"]:
+                    results.append(
+                        {
+                            "name": str(hook_name),
+                            "type": "Hook",
+                            "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
+                            "repository_path": rel,
+                            "adapter": "hooks",
+                            "adapter_maturity": "PARTIAL",
+                            "discovery_status": "IDENTIFIED",
+                            "priority_hints": list(hints),
+                        }
+                    )
                 continue
 
         results.append(

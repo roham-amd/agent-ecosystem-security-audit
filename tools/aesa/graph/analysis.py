@@ -4,7 +4,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from aesa.semantic import SemanticIssue, _issue
+from aesa.semantic import SemanticIssue, issue
 
 
 @dataclass
@@ -30,7 +30,7 @@ def validate_graph_semantics(graph: dict[str, Any]) -> GraphSemanticResult:
     edge_ids = {e["edge_id"] for e in edges if e.get("edge_id")}
 
     if len(node_ids) != len(nodes):
-        issues.append(_issue("DUPLICATE_ID", "node_id values must be unique", "nodes"))
+        issues.append(issue("DUPLICATE_ID", "node_id values must be unique", "nodes"))
 
     for idx, edge in enumerate(edges):
         for ref_key, label in (
@@ -40,7 +40,7 @@ def validate_graph_semantics(graph: dict[str, Any]) -> GraphSemanticResult:
             ref = edge.get(ref_key)
             if ref and ref not in node_ids:
                 issues.append(
-                    _issue(
+                    issue(
                         "DANGLING_NODE_REF",
                         f"edge {edge.get('edge_id')} {label} references unknown node {ref}",
                         f"edges[{idx}]",
@@ -49,14 +49,16 @@ def validate_graph_semantics(graph: dict[str, Any]) -> GraphSemanticResult:
         for eid in edge.get("evidence_ids") or []:
             if not eid:
                 issues.append(
-                    _issue("INVALID_EVIDENCE", "edge evidence_ids must be non-empty", f"edges[{idx}]")
+                    issue(
+                        "INVALID_EVIDENCE", "edge evidence_ids must be non-empty", f"edges[{idx}]"
+                    )
                 )
 
     for ap in graph.get("attack_paths") or []:
         for eid in ap.get("edge_ids") or []:
             if eid not in edge_ids:
                 issues.append(
-                    _issue(
+                    issue(
                         "DANGLING_EDGE_REF",
                         f"path {ap.get('path_id')} references unknown edge {eid}",
                         "attack_paths",
@@ -112,7 +114,7 @@ def find_paths(
             for nxt, eid in adj.get(node, []):
                 if nxt in npath:
                     continue
-                queue.append((nxt, npath + [nxt], epath + [eid]))
+                queue.append((nxt, [*npath, nxt], [*epath, eid]))
     return results
 
 
