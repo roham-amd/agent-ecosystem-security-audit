@@ -66,9 +66,9 @@ updates:
       time: "06:00"
       timezone: UTC
     open-pull-requests-limit: 5
+    # github-actions does not support semver-*-days cooldown fields.
     cooldown:
       default-days: 3
-      semver-major-days: 7
     labels:
       - dependencies
       - github-actions
