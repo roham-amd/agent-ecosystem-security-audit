@@ -8,7 +8,7 @@ A Security Audit Framework for AI Agent Ecosystems
 
 AESA is an open-source **security audit framework** — a structured methodology, versioned audit prompts, specialized review modules, machine-readable report schemas, and **deterministic validation/inventory tooling** for assessing AI agent ecosystems.
 
-It is **not** an automated security scanner, sandbox, penetration test, marketplace certification, or substitute for organizational risk acceptance. Release **2.1.0** adds reproducible build checks, monolith generation, graph path search pilot, and an expanded test corpus; it does **not** claim calibrated detection accuracy across all threat families.
+It is **not** an automated security scanner, sandbox, penetration test, marketplace certification, or substitute for organizational risk acceptance. Release **2.2.0** adds SARIF export, audit diff, digest manifests, and an expanded corpus; it does **not** ship a runtime test harness or full SBOM/signature verification.
 
 ---
 
@@ -152,7 +152,7 @@ AESA helps humans and audit agents produce **evidence-bounded** decisions about 
 
 | Kind | Current | Meaning |
 | --- | --- | --- |
-| Project / package release | **2.1.0** | AESA repository packaging and public release numbering |
+| Project / package release | **2.2.0** | AESA repository packaging and public release numbering |
 | Audit procedure | **1.0** (`prompts/`) | Methodology / prompt / JSON contract version inside the framework |
 
 Breaking changes to the audit procedure, decision enums, or JSON contract bump the major procedure version under `prompts/`. Project packaging may advance independently (for example `1.x.y`).
@@ -181,8 +181,8 @@ If you use AESA in an assessment report, cite the exact procedure version and co
 
 ```text
 AESA — Agent Ecosystem Security Audit
-Project: 2.1.0
+Project: 2.2.0
 Procedure: 1.0
 https://github.com/roham-amd/agent-ecosystem-security-audit
-Tag: v2.1.0
+Tag: v2.2.0
 ```

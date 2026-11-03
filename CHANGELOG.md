@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [2.2.0] — 2026-11-03
+
+### Added
+
+- SARIF 2.1.0 export: `aesa export sarif` (findings with resolvable file evidence only).
+- Audit diff: `aesa diff report|graph` and `schemas/audit-diff.schema.json`.
+- Digest manifest: `aesa verify manifest` and `schemas/evidence-digest-manifest.schema.json` (R-008 pilot).
+- Runtime test record schema + docs (`schemas/runtime-test-record.schema.json`) — **no runtime harness**.
+- Corpus cases CORPUS-009–010; recipes for source-only and staging boundary.
+
+### Notes
+
+- SARIF omits findings without file-backed evidence locations (by design).
+
 ## [2.1.0] — 2026-11-03
 
 ### Added

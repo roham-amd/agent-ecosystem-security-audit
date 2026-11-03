@@ -121,6 +121,24 @@ def run_corpus() -> dict:
             entry["checks"].append({"name": "semantic_negative", "ok": check_ok})
             ok = ok and check_ok
 
+        sarif_cfg = case.get("sarif_export")
+        report_rel = case.get("report_fixture")
+        if sarif_cfg and report_rel:
+            from aesa.export.sarif import report_to_sarif
+
+            report_path = (root / report_rel).resolve()
+            if not report_path.is_file():
+                report_path = (repo_root() / "tests" / "corpus" / report_rel).resolve()
+            doc = json.loads(report_path.read_text(encoding="utf-8"))
+            sarif = report_to_sarif(doc)
+            count = len(sarif["runs"][0]["results"])
+            min_r = sarif_cfg.get("min_results", 1)
+            s_ok = count >= min_r
+            entry["checks"].append(
+                {"name": "sarif_export", "min_results": min_r, "actual": count, "ok": s_ok}
+            )
+            ok = ok and s_ok
+
         entry["ok"] = ok
         results.append(entry)
         if ok:
@@ -129,7 +147,7 @@ def run_corpus() -> dict:
             failed += 1
 
     return {
-        "corpus_version": "0.2.0",
+        "corpus_version": "0.3.0",
         "passed": passed,
         "failed": failed,
         "cases": results,

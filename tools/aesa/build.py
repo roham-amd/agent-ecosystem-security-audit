@@ -75,7 +75,7 @@ def validate_examples() -> list[str]:
     validator = Draft202012Validator(schema)
     results: list[str] = []
     for example in sorted((root / "examples").glob("*.json")):
-        if example.name == "sample-component-inventory.json":
+        if example.name in ("sample-component-inventory.json", "sample-runtime-test-record.json"):
             continue
         doc = json.loads(example.read_text(encoding="utf-8"))
         errors = sorted(validator.iter_errors(doc), key=lambda e: e.path)

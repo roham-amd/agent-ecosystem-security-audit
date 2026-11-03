@@ -54,6 +54,13 @@ Keep kit files under `prompts/` consistent with each other:
 
 Be precise, evidence-oriented, and respectful. Disagreement about severity is fine; unsupported accusation of maintainers is not. Unobservable controls are `NOT VERIFIED`, not automatic findings against authors.
 
+## Corpus contributions (R-001 / R-014 pilot)
+
+1. Add fixtures under `tests/corpus/fixtures/` — synthetic only, no secrets or working exploits.
+2. Add a case manifest in `tests/corpus/cases/*.json` with expected validator outcomes.
+3. Run `aesa corpus run` and `pytest`.
+4. Document ground truth and intentional `NOT VERIFIED` gaps in the case title/description.
+
 ## License
 
 By contributing, you agree that your contributions are licensed under the MIT License.
