@@ -1,6 +1,6 @@
 # AESA documentation index
 
-Complete map of project documentation for **AESA Guard 3.1.0** (procedure **1.0**, tooling **0.4.0**).
+Complete map of project documentation for **AESA Guard 3.3.1** (procedure **1.0**, tooling **0.6.1**).
 
 Use this file as the table of contents. Prefer the **primary** doc for each topic; secondary docs add depth or history.
 
@@ -67,7 +67,12 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | [`SECURITY-RULES.md`](SECURITY-RULES.md) | Deterministic Guard rules AESA-RULE-001…010 |
 | [`threat-scenarios.md`](threat-scenarios.md) | Capability-first threat scenarios |
 | [`toolchain-threat-model.md`](toolchain-threat-model.md) | Threats against AESA itself |
-| [`runtime-validation/README.md`](runtime-validation/README.md) | Optional runtime test record (out of passive mode) |
+| [`runtime-validation/README.md`](runtime-validation/README.md) | Runtime validation status (design only; disabled by default) |
+| [`runtime-validation/ARCHITECTURE.md`](runtime-validation/ARCHITECTURE.md) | Runtime orchestrator boundaries and activation contract |
+| [`runtime-validation/THREAT-MODEL.md`](runtime-validation/THREAT-MODEL.md) | Runtime validation adversaries and controls |
+| [`hosts/README.md`](hosts/README.md) | Host profiles: declared vs effective permissions |
+| [`hosts/cursor.md`](hosts/cursor.md) | Cursor host profile |
+| [`hosts/claude-code.md`](hosts/claude-code.md) | Claude Code host profile |
 | [`../control-packs/README.md`](../control-packs/README.md) | Control crosswalk packs (pilot) |
 
 ---

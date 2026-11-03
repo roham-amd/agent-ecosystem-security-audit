@@ -1,6 +1,6 @@
 # Operator guide: AESA Kit (procedure 1.0) + Guard tooling
 
-This guide orients humans who run AESA engagements. Product release **3.1.0** adds **AESA Guard** (`aesa scan`); the audit **procedure version remains 1.0**.
+This guide orients humans who run AESA engagements. Product release **3.3.1** centers on **AESA Guard** (`aesa scan`); the audit **procedure version remains 1.0**.
 
 Full documentation map: [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md).
 

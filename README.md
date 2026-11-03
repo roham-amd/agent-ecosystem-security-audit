@@ -94,7 +94,7 @@ agent-ecosystem-security-audit/
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 ├── CHANGELOG.md
-├── VERSION                      # product version (3.1.0)
+├── VERSION                      # product version (3.3.1)
 ├── Dockerfile                   # python:3.15.2-slim-trixie@sha256 + uv
 ├── docker-compose.yml
 ├── canonical/                   # versions.json, schemas, prompt manifest
@@ -247,13 +247,13 @@ AESA helps humans and audit agents produce **evidence-bounded** decisions about 
 
 | Kind | Current | Meaning |
 | --- | --- | --- |
-| Project / package release | **3.1.0** | AESA Guard product release (`VERSION`) |
-| Tooling (`aesa-tools`) | **0.4.0** | CLI / collectors / Guard rules |
+| Project / package release | **3.3.1** | AESA Guard product release (`VERSION`) |
+| Tooling (`aesa-tools`) | **0.6.1** | CLI / collectors / Guard rules / hosts |
 | Audit procedure | **1.0** (`prompts/`) | Methodology / prompt / JSON contract |
-| AgentSecBench | **0.2.0** | Deterministic + Guard-rule expectations |
+| AgentSecBench | **0.3.0** / LLM **0.3.0** | Deterministic + governed offline LLM scoring |
 | Report / graph schemas | **1.0** | See [`schemas/README.md`](schemas/README.md) |
 
-Authoritative alignment: `VERSION` ↔ `canonical/versions.json` ↔ `tools/pyproject.toml` ↔ `tools/aesa/__init__.py` (enforced by `aesa build`).
+Authoritative alignment: [`canonical/release-manifest.json`](canonical/release-manifest.json) plus `VERSION` ↔ `canonical/versions.json` ↔ `tools/pyproject.toml` ↔ `tools/aesa/__init__.py` (enforced by `aesa build`).
 
 ---
 
@@ -273,8 +273,8 @@ See [`SECURITY.md`](SECURITY.md).
 
 ```text
 AESA Guard — Agent Ecosystem Security Assessment
-Project: 3.1.0
+Project: 3.3.1
 Procedure: 1.0
 https://github.com/roham-amd/agent-ecosystem-security-audit
-Tag: v3.1.0
+Tag: v3.3.1
 ```

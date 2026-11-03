@@ -21,6 +21,8 @@ service-account*.json
 # Local audit outputs (keep outside target repos; also ignore if created locally)
 aesa-out/
 aesa-out-smoke/
+aesa-out-test/
+aesa-out-demo/
 security-audit-report.md
 security-audit-summary.json
 audit-state.json

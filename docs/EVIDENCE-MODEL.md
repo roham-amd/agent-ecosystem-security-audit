@@ -20,6 +20,30 @@ The audit **report** is a serialization of these objects — not the source of t
 
 ---
 
+## Capability vs exposure vs finding
+
+Do **not** treat detection of a security-relevant capability as a vulnerability.
+
+| Concept | Question | Example |
+| --- | --- | --- |
+| **Capability** | What can it potentially do? | MCP server launches a local command |
+| **Exposure** | How reachable is that capability, and under which identity? | Remote endpoint; broad filesystem args |
+| **Security finding** | Is there an evidenced violation of a security property? | Local MCP inherits unrestricted production credentials |
+
+Capability origins (Guard 3.1.1+):
+
+| Origin | Meaning |
+| --- | --- |
+| `DECLARED` | Explicitly present in configuration / instructions |
+| `POTENTIAL` | Hint-derived; not independently verified |
+| `TYPE_DEFAULT` | Assumed from component type alone — never “effective” |
+| `EFFECTIVE` | Host/integration evidence of actual authority |
+| `VERIFIED` | Independently verified (authorized runtime test) |
+
+Finding classes emitted by rules: `CAPABILITY`, `EXPOSURE`, `SECURITY_FINDING`.
+
+---
+
 ## Evidence classes
 
 Never upgrade one class into another without new evidence.
@@ -89,6 +113,8 @@ Capability-first assessment is preferred over merely counting component types. S
 | `verification_status` | Status enum |
 | `limitations` | What this evidence cannot establish |
 | `summary` | Short description |
+
+Guard producers (3.1.1+) must populate `content_digest` and `source_commit` whenever the source file and git commit are available, and `line_start`/`line_end` when a configuration needle can be located. Findings reference evidence objects; AI claims must not invent evidence by restating observations.
 
 ### Freshness vs strength
 

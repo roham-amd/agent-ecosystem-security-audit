@@ -1,6 +1,6 @@
 # AESA Guard scan — operator guide
 
-This document describes the **primary product experience** introduced in release **3.1.0**: deterministic discovery plus evidence-backed security observations via `aesa scan`.
+This document describes the **primary product experience** introduced in release **3.1.0** and refined in **3.1.1**: deterministic discovery plus evidence-backed security observations via `aesa scan`, with explicit capability / exposure / finding separation.
 
 Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md).
 
@@ -72,12 +72,12 @@ TARGET=/path/to/target-repo docker compose run --rm aesa \
 
 ## Pipeline internals
 
-1. **Bounded inventory** — adapters walk the tree with file/depth/byte limits; refuse symlink escape; emit `inventory.json` + coverage matrix.
-2. **Capability extraction** — map component types and `priority_hints` to capability kinds (`execute_commands`, `access_network`, …).
-3. **Rule engine** — apply versioned rules `AESA-RULE-001`…`010` (see [`SECURITY-RULES.md`](SECURITY-RULES.md)).
-4. **Evidence registry** — each finding references evidence ids with class `SOURCE_STATIC` and explicit limitations.
-5. **Reporting** — terminal + Markdown + JSON + SARIF.
-6. **Optional baseline delta** — compare finding/component keys; set policy hints for CI.
+1. **Bounded inventory** — adapters walk the tree with file/depth/byte limits; refuse symlink escape; emit `inventory.json` + coverage matrix; attach content digests and fingerprints.
+2. **Capability extraction** — map hints/types to capability kinds with explicit `origin` (`DECLARED` / `POTENTIAL` / `TYPE_DEFAULT`; never claim effective host permissions from type defaults alone).
+3. **Rule engine** — apply versioned rules `AESA-RULE-001`…`010` classifying each hit as `CAPABILITY`, `EXPOSURE`, or `SECURITY_FINDING` (see [`SECURITY-RULES.md`](SECURITY-RULES.md)).
+4. **Evidence registry** — each finding references evidence with path, optional line span, content digest, and audited commit when known.
+5. **Reporting** — authority snapshot + Markdown + JSON + SARIF; `aesa explain` for one finding.
+6. **Optional baseline delta** — fingerprint-aware comparison; CI `--fail-on` ignores pure capability observations.
 
 ---
 

@@ -5,9 +5,9 @@ deterministic security observations, and CI-oriented change gate.
 
 | Item | Value |
 | --- | --- |
-| Product release | **3.1.0** |
+| Product release | **3.3.1** |
 | Procedure | **1.0** |
-| Tooling package | **0.4.0** |
+| Tooling package | **0.6.1** |
 | Primary command | `aesa scan` |
 
 Normative depth: [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md), [`GUARD-SCAN.md`](GUARD-SCAN.md), [`DOCUMENTATION-INDEX.md`](DOCUMENTATION-INDEX.md).

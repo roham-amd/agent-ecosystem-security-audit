@@ -9,6 +9,39 @@ from aesa.inventory.limits import CollectorLimits
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
+_SECRET_TOKEN_RE = re.compile(
+    r"\b(secrets?|api[_-]?key|apikey|password|token|credentials?|1password|op_service_account)\b",
+    re.IGNORECASE,
+)
+_NEGATION_RE = re.compile(
+    r"\b(no|not|without|never|don't|do not|avoid|forbid(?:den)?)\b",
+    re.IGNORECASE,
+)
+
+
+def _mentions_secret_handling(text: str) -> bool:
+    """True when secret-related tokens appear outside a short negation window.
+
+    Prevents false positives such as ``No credential handling``.
+    """
+    for match in _SECRET_TOKEN_RE.finditer(text):
+        start = max(0, match.start() - 48)
+        window = text[start : match.start()]
+        if _NEGATION_RE.search(window):
+            continue
+        return True
+    return False
+
+
+def _mentions_identity_workflow(text: str) -> bool:
+    if "service_account" in text or "op signin" in text:
+        start_idx = text.find("service_account")
+        if start_idx < 0:
+            start_idx = text.find("op signin")
+        window = text[max(0, start_idx - 48) : start_idx]
+        return not bool(_NEGATION_RE.search(window))
+    return False
+
 
 def discover_skills(
     root: Path,
@@ -43,21 +76,9 @@ def discover_skills(
             token in lowered for token in (".sh", ".ps1", "```python", "```bash", "```powershell")
         ):
             hints.append("script_reference")
-        if any(
-            token in lowered
-            for token in (
-                "secret",
-                "api_key",
-                "apikey",
-                "password",
-                "token",
-                "credential",
-                "1password",
-                "op_service_account",
-            )
-        ):
+        if _mentions_secret_handling(lowered):
             hints.append("secrets_or_credential_handling")
-        if "service_account" in lowered or "op signin" in lowered:
+        if _mentions_identity_workflow(lowered):
             hints.append("identity_or_auth_workflow")
         # Bundled helper scripts next to the skill raise authority questions.
         if any((path.parent / "scripts").glob("*")):

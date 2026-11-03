@@ -8,7 +8,19 @@ from typing import Any, cast
 
 from aesa.audit import ProfileName, run_audit
 from aesa.audit_diff import diff_graphs, diff_reports
+from aesa.benchmark.governance import verify_dataset_integrity
+from aesa.benchmark.intake import (
+    build_submitter_package,
+    collection_status,
+    list_external_intakes,
+    intake_submission_dir,
+    verify_evaluation_contract,
+)
+from aesa.benchmark.llm_runner import _load_dataset_manifest, run_llm_benchmark
+from aesa.benchmark.report import build_evaluation_report
 from aesa.benchmark.runner import run_benchmark
+from aesa.hosts.profiles import get_host_profile, list_host_profiles
+from aesa.rules_quality.runner import run_rule_quality
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
@@ -83,6 +95,8 @@ def dispatch(args: argparse.Namespace) -> int:
             return _cmd_diff(args)
         case "export":
             return _cmd_export(args)
+        case "hosts":
+            return _cmd_hosts(args)
         case "corpus":
             return _cmd_corpus()
         case "benchmark":
@@ -134,6 +148,7 @@ def _scan_from_findings_doc(doc: dict[str, Any]) -> ScanResult:
             recommended_action=str(f.get("recommended_action") or ""),
             exploitability=str(f.get("exploitability") or "UNKNOWN"),
             exposure=str(f.get("exposure") or "UNKNOWN"),
+            finding_class=f.get("finding_class") or "SECURITY_FINDING",  # type: ignore[arg-type]
         )
         for f in doc.get("findings") or []
     ]
@@ -358,6 +373,23 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_hosts(args: argparse.Namespace) -> int:
+    match args.hosts_cmd:
+        case "list":
+            print_json({"hosts": list_host_profiles()})
+            return 0
+        case "show":
+            profile = get_host_profile(args.host_id)
+            if profile is None:
+                print(f"Unknown host profile: {args.host_id}")
+                print("Known:", ", ".join(sorted(p["host_id"] for p in list_host_profiles())))
+                return 1
+            print_json(profile.to_dict())
+            return 0
+        case _:
+            return 2
+
+
 def _cmd_corpus() -> int:
     summary = run_corpus()
     print_json(summary)
@@ -365,10 +397,65 @@ def _cmd_corpus() -> int:
 
 
 def _cmd_benchmark(args: argparse.Namespace) -> int:
-    if args.benchmark_cmd != "run":
-        return 2
-    summary = run_benchmark()
+    match args.benchmark_cmd:
+        case "run":
+            summary = run_benchmark()
+        case "rules":
+            summary = run_rule_quality()
+        case "governance":
+            summary = verify_dataset_integrity(_load_dataset_manifest())
+            print_json(summary)
+            return 0 if summary.get("ok") else 1
+        case "contract":
+            if getattr(args, "contract_cmd", None) != "verify":
+                return 2
+            summary = verify_evaluation_contract()
+            print_json(summary)
+            return 0 if summary.get("ok") else 1
+        case "intake":
+            summary = intake_submission_dir(
+                args.source,
+                agent_id=args.agent_id,
+                provenance=args.provenance,
+                dry_run=bool(getattr(args, "dry_run", False)),
+            )
+            print_json(summary)
+            return 0 if summary.get("ok") else 1
+        case "intakes":
+            summary = list_external_intakes()
+            print_json(summary)
+            return 0
+        case "collection-status":
+            summary = collection_status()
+            print_json(summary)
+            return 0
+        case "submitter-package":
+            summary = build_submitter_package(args.output)
+            print_json(summary)
+            return 0 if summary.get("ok") else 1
+        case "llm":
+            if getattr(args, "report", False):
+                if not getattr(args, "submissions", None):
+                    print("--report requires --submissions DIR")
+                    return 2
+                summary = build_evaluation_report(
+                    submissions=args.submissions,
+                    split=getattr(args, "split", "all"),
+                    provenance=getattr(args, "provenance", "any"),
+                )
+                print_json(summary)
+                return 0 if summary.get("dataset_integrity", {}).get("ok") else 1
+            summary = run_llm_benchmark(
+                submissions=getattr(args, "submissions", None),
+                validate_only=bool(getattr(args, "validate_only", False)),
+                split=getattr(args, "split", "all"),
+            )
+        case _:
+            return 2
     print_json(summary)
+    # governance-style integrity failures are embedded for llm validate
+    if summary.get("dataset_integrity") and not summary["dataset_integrity"].get("ok"):
+        return 1
     return 0 if summary.get("failed", 0) == 0 else 1
 
 

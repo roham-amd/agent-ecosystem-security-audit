@@ -7,7 +7,7 @@ Deterministic Guard scan, unified audit profiles, report validation, passive inv
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.4.0** · Product: AESA Guard **3.1.0**
+Package: `aesa-tools` **0.6.1** · Product: AESA Guard **3.3.1**
 
 ---
 

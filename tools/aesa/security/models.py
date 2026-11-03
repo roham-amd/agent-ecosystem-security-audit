@@ -1,4 +1,10 @@
-"""Core AESA Guard objects: Component capabilities, evidence, findings, relationships."""
+"""Core AESA Guard objects: Component capabilities, evidence, findings, relationships.
+
+Strategic model (3.1.1+):
+- Capability: what a component can potentially do
+- Exposure: how reachable that capability is / under which identity
+- Security finding: evidenced violation of a defined security property
+"""
 
 from __future__ import annotations
 
@@ -26,6 +32,18 @@ VerificationStatus = Literal[
 
 Severity = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL"]
 
+# Capability vs exposure vs finding — keep these distinct in reports and policy.
+FindingClass = Literal["CAPABILITY", "EXPOSURE", "SECURITY_FINDING"]
+
+# How a capability was established. Type defaults are never "effective".
+CapabilityOrigin = Literal[
+    "DECLARED",  # Explicitly present in configuration / instructions
+    "POTENTIAL",  # Hint-derived or inferred; not independently verified
+    "TYPE_DEFAULT",  # Assumed from component type alone
+    "EFFECTIVE",  # Host/integration evidence of actual authority
+    "VERIFIED",  # Independently verified (e.g. authorized runtime test)
+]
+
 CapabilityKind = Literal[
     "read_files",
     "write_files",
@@ -48,6 +66,7 @@ class Capability:
     component_id: str
     evidence_ids: list[str] = field(default_factory=list)
     notes: str = ""
+    origin: CapabilityOrigin = "POTENTIAL"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -92,6 +111,7 @@ class Finding:
     recommended_action: str = ""
     exploitability: str = "UNKNOWN"
     exposure: str = "UNKNOWN"
+    finding_class: FindingClass = "SECURITY_FINDING"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

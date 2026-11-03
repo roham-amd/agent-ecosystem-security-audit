@@ -6,6 +6,109 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [3.3.1] — 2026-11-04
+
+### Added
+
+- Frozen AgentSecBench-LLM evaluation contract (`EVALUATION-CONTRACT-0.3.0.json`) and protocol.
+- External intake vault: `aesa benchmark contract|intake|intakes|submitter-package`.
+- Submitter package without ground truth; provenance classes (`external` / `pilot` / `sample` / `template`).
+- Honest external evaluation report documenting **N = 0** genuine external submissions.
+- `CANDIDATE-IMPROVEMENTS.md` for post-freeze feedback (no silent 0.3.0 edits).
+- Outreach kit: `PARTICIPATION.md`, `OUTREACH.md`, `COLLECTION-CRITERIA.md`, collection funnel log.
+- `aesa benchmark collection-status` — invitations ≠ responses ≠ valid intakes.
+- Untrusted-intake hardening: size/file/findings limits, symlink rejection, no execution, invalid payloads not vault-written.
+
+### Changed
+
+- Product **3.3.1**; tooling **0.6.1**.
+- Example submission relocated to `submissions/templates/` (not external evidence).
+
+### Notes
+
+- **N = 0** valid external intakes (correct until independent evidence arrives). Dataset **0.3.0** remains frozen.
+- Live model invocation, IDE/MCP, SaaS remain deferred.
+- Next meaningful achievement: first independent valid external intake.
+
+## [3.3.0] — 2026-11-04
+
+### Added
+
+- Baseline contract **1.3**: same-path content changes classified as `components_modified` (not unrelated fingerprint remove+add); clone path expansion remains fingerprint-stable.
+- AgentSecBench validation layer: dataset checksums, public/held-out splits, `aesa benchmark governance`, evaluation pins, offline `--report`.
+- Independent review process + sample blind reviews/adjudications (`tests/benchmark/llm/reviews/`).
+- External submission schema (`schemas/agentsecbench-submission.schema.json`) and external submitter guide.
+
+### Changed
+
+- Product **3.3.0**; tooling **0.6.0**; AgentSecBench-LLM dataset **0.3.0**.
+- Explicit policy: no definitive leaderboard from eight cases / maintainer pilots.
+
+### Notes
+
+- IDE/MCP/hosted surfaces remain deferred.
+
+## [3.2.1] — 2026-11-04
+
+### Added
+
+- Baseline contract **1.2**: fingerprint-first identity, path maps, rename/move detection without add/remove noise; finding keys prefer `rule_id:fingerprint`.
+- Fingerprint/baseline integration tests (rename, move, duplicates, clones, genuine change).
+- AgentSecBench-LLM **0.2.0**: eight reviewed ground-truth cases (positive / negative / ambiguous); dataset + rubric versions; multi-agent pilot submissions; separated detection / evidence / severity / unsupported-claim scores.
+
+### Changed
+
+- Product **3.2.1**; tooling **0.5.1**.
+- IDE/MCP interfaces remain deferred until scan + benchmark interfaces stay stable.
+
+### Notes
+
+- Local complete; not a published shared release until committed/tagged/pushed.
+- Offline LLM scoring is still not live model evaluation.
+
+## [3.2.0] — 2026-11-04
+
+### Added
+
+- **Rule-quality pack** (`tests/rules/`, `aesa benchmark rules`): positive / negative / ambiguous fixtures for AESA-RULE-001…010 with finding-class and severity calibration checks; `--fail-on` gates ignore pure CAPABILITY observations.
+- **AgentSecBench LLM runner** (`aesa benchmark llm`): model-agnostic offline scoring for precision, recall, evidence accuracy, severity calibration, and hallucinated claims; `--validate-only` for CI without submissions.
+- **Host profiles** (`aesa hosts list|show`, adapter `host_profiles`): Cursor and Claude Code PARTIAL; GitHub Copilot MANUAL_ONLY; declared vs effective permissions explicit.
+- Runtime validation **architecture** and **threat model** (`docs/runtime-validation/`); still disabled by default — no target execution in passive scan.
+
+### Changed
+
+- Product **3.2.0**; tooling **0.5.0**; AgentSecBench **0.3.0**; rule-quality pack **1.0.0**.
+- Skill secret-hint detection ignores short negation windows (fixes “No credential handling” false positive).
+- RULE-007 accepts `Automation / Workflow` and secret/credential hint aliases from CI adapters.
+
+### Notes
+
+- LLM runner never calls model providers.
+- Runtime harness remains design-only.
+
+## [3.1.1] — 2026-11-04
+
+### Added
+
+- Finding classes: `CAPABILITY`, `EXPOSURE`, `SECURITY_FINDING` — capability detection is no longer treated as a vulnerability by default.
+- Capability `origin`: `DECLARED` / `POTENTIAL` / `TYPE_DEFAULT` / `EFFECTIVE` / `VERIFIED`.
+- Evidence provenance on rule hits: `content_digest`, `source_commit`, `observed_at`, and line spans when locatable.
+- Stable component `fingerprint` fields; baseline contract **1.1** with fingerprint-aware risk deltas.
+- Authority-first terminal snapshot (components, authority, exposures, high-priority items, example path).
+- Canonical [`release-manifest.json`](canonical/release-manifest.json) as the single public product contract.
+
+### Changed
+
+- Product version **3.1.1**; tooling package **0.4.1**; rule pack **1.1**.
+- Rule severities recalibrated: local MCP / subagent / unattended / naming markers default to capability or exposure notes; HIGH/CRITICAL require exposure conditions (e.g. broad path args, env inheritance).
+- `--fail-on high|any` ignores pure `CAPABILITY` observations.
+- Findings contract **1.1** (`findings_version`).
+
+### Notes
+
+- AI deep assessment (`aesa audit` + auditor skill) remains optional.
+- AgentSecBench LLM precision/recall runner is still deferred.
+
 ## [3.1.0] — 2026-11-04
 
 ### Added

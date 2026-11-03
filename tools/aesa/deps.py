@@ -140,9 +140,29 @@ def check_outdated(*, packages: list[str] | None = None) -> list[PinStatus]:
     return results
 
 
+def _uv_executable() -> str:
+    """Resolve uv even when the install directory is not on PATH (common on Windows)."""
+    import shutil
+    from pathlib import Path
+
+    found = shutil.which("uv")
+    if found:
+        return found
+    candidates = [
+        Path.home() / ".local" / "bin" / "uv.exe",
+        Path.home() / ".local" / "bin" / "uv",
+        Path.home() / ".cargo" / "bin" / "uv.exe",
+        Path.home() / ".cargo" / "bin" / "uv",
+    ]
+    for path in candidates:
+        if path.is_file():
+            return str(path)
+    return "uv"
+
+
 def _run_uv(args: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["uv", *args],
+        [_uv_executable(), *args],
         cwd=tools_dir(),
         check=False,
         text=True,

@@ -1,32 +1,55 @@
-# AgentSecBench (v0.2.0)
+# AgentSecBench
 
-Measures **whether assessments find expected agent-ecosystem issues**, separate from the tooling corpus under `tests/corpus/`.
+Detection-quality benchmarks for agent-ecosystem security assessments.
 
-## Current scope
+**Release note:** suite versions are pinned in `canonical/versions.json`. LLM dataset/rubric versions and checksums live in `llm/DATASET.json`.
 
-`aesa benchmark run` checks:
+## Modes (keep separate)
 
-1. Deterministic inventory expectations against synthetic fixtures.
-2. Deterministic **AESA Guard rule** expectations (`expect_rule_ids` / `forbid_rule_ids`).
-3. Records expert-oriented `ground_truth_findings` stubs for future LLM scoring.
+| Command | What it measures | Invokes models? |
+| --- | --- | --- |
+| `aesa benchmark run` | Deterministic inventory + Guard rule smoke cases | No |
+| `aesa benchmark rules` | Per-rule positive/negative/ambiguous fixtures | No |
+| `aesa benchmark governance` | LLM dataset checksums + version pin | No |
+| `aesa benchmark contract verify` | Frozen evaluation contract + pins | No |
+| `aesa benchmark submitter-package -o DIR` | Task cards **without** ground truth | No |
+| `aesa benchmark intake DIR --agent-id ID` | Validate + vault preserve submissions (untrusted) | No |
+| `aesa benchmark intakes` | List vault registry / external evidence count | No |
+| `aesa benchmark collection-status` | Outreach funnel (invite ≠ intake) | No |
+| `aesa benchmark llm --validate-only` | GT contracts + integrity | No |
+| `aesa benchmark llm --submissions DIR [--split …]` | Offline scoring | No |
+| `aesa benchmark llm --submissions DIR --report [--provenance external]` | Transparent evaluation report (not a leaderboard) | No |
 
-It does **not** invoke Cursor, Claude, or other models yet. Do not cite pass rates as detection quality for AI auditors until a model runner and reviewed ground truth are wired.
+Do **not** cite deterministic pass rates as AI auditor accuracy. Do **not** publish a definitive leaderboard from maintainer pilots or eight cases alone. Templates and samples are **not** external evidence.
+
+## Dataset 0.3.0 governance
+
+- **Public:** LLM-001, 002, 003, 007 (development)
+- **Held-out:** LLM-004, 005, 006, 008 (evaluation; do not tune against)
+- Checksums: `llm/DATASET.json` → `case_checksums`
+- Review process: `llm/reviews/REVIEW-PROCESS.md`
+- Rubric: `llm/RUBRIC.md`
+- External submissions: `llm/submissions/external/` (vault under `external/vault/`)
+- Evaluation contract: `llm/EVALUATION-CONTRACT-0.3.0.json`
+- Protocol: `llm/EVALUATION-PROTOCOL.md`
+- External report: `llm/EXTERNAL-EVALUATION-REPORT-0.3.0.md`
+
+```bash
+aesa benchmark governance
+aesa benchmark contract verify
+aesa benchmark llm --validate-only --split all
+aesa benchmark submitter-package -o ../aesa-out/submitter-package-0.3.0
+aesa benchmark intakes
+aesa benchmark llm --submissions ../tests/benchmark/llm/submissions/pilots --split public --report
+```
 
 ## Layout
 
-- `fixtures/` — miniature repos (benign, injection, privilege path)
-- `cases/BENCH-*.json` — expectations + optional `ground_truth_findings`
-
-## Run
-
-```bash
-cd tools && uv sync --locked
-aesa benchmark run
-```
-
-## Ground-truth rules
-
-1. Expected inventory facts must be derivable from fixture bytes.
-2. Finding stubs must state attacker control → privileged effect and required evidence.
-3. Adversarial fixtures stay inert — no live exploits or real secrets.
-4. Keep tooling corpus (`tests/corpus`) separate from AgentSecBench detection cases.
+- `fixtures/` — miniature repos for deterministic cases
+- `cases/BENCH-*.json` — deterministic expectations
+- `llm/cases/LLM-*.json` — expert ground truth
+- `llm/reviews/` — independent reviews + adjudication
+- `llm/submissions/sample-*` — scorer fixtures (not external)
+- `llm/submissions/pilots/` — maintainer pilots (not external)
+- `llm/submissions/templates/` — schema examples (not external)
+- `llm/submissions/external/vault/` — append-only external intake storage

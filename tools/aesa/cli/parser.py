@@ -169,16 +169,106 @@ def build_parser() -> argparse.ArgumentParser:
     sarif_cmd.add_argument("report", type=Path)
     sarif_cmd.add_argument("-o", "--output", type=Path)
 
+    hosts = sub.add_parser("hosts", help="List or show agent-host assessment profiles")
+    hosts_sub = hosts.add_subparsers(dest="hosts_cmd", required=True)
+    hosts_sub.add_parser("list", help="List built-in host profiles")
+    hosts_show = hosts_sub.add_parser("show", help="Show one host profile")
+    hosts_show.add_argument("host_id", help="Host id such as cursor or claude-code")
+
     corp = sub.add_parser("corpus", help="Security regression corpus harness")
     corp_sub = corp.add_subparsers(dest="corpus_cmd", required=True)
     corp_sub.add_parser("run", help="Run all corpus cases")
 
     bench = sub.add_parser(
         "benchmark",
-        help="AgentSecBench: detection quality benchmark (fixtures + scoring stubs)",
+        help="AgentSecBench: deterministic + LLM detection-quality benchmarks",
     )
     bench_sub = bench.add_subparsers(dest="benchmark_cmd", required=True)
-    bench_sub.add_parser("run", help="Run benchmark pack cases")
+    bench_sub.add_parser(
+        "run",
+        help="Deterministic inventory + Guard rule expectations (no models)",
+    )
+    bench_sub.add_parser(
+        "rules",
+        help="Rule-quality pack: positive/negative/ambiguous fixtures per rule",
+    )
+    bench_llm = bench_sub.add_parser(
+        "llm",
+        help="Score model-agnostic agent submission JSON against ground truth",
+    )
+    bench_llm.add_argument(
+        "--submissions",
+        type=Path,
+        help="Directory of agent submission *.json files (required for scoring)",
+    )
+    bench_llm.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="Validate LLM case/ground-truth fixtures without scoring submissions",
+    )
+    bench_llm.add_argument(
+        "--split",
+        choices=["public", "held_out", "all"],
+        default="all",
+        help="Score/validate only public, held-out, or all cases (default: all)",
+    )
+    bench_llm.add_argument(
+        "--report",
+        action="store_true",
+        help="Emit a transparent per-agent/per-case evaluation report (requires --submissions)",
+    )
+    bench_llm.add_argument(
+        "--provenance",
+        choices=["external", "pilot", "sample", "template", "any"],
+        default="any",
+        help="Label the report's provenance class (default: any). Use external for credibility reports.",
+    )
+    bench_sub.add_parser(
+        "governance",
+        help="Verify AgentSecBench-LLM dataset checksums and pinned versions",
+    )
+    bench_contract = bench_sub.add_parser(
+        "contract",
+        help="Verify the frozen AgentSecBench-LLM evaluation contract",
+    )
+    contract_sub = bench_contract.add_subparsers(dest="contract_cmd", required=True)
+    contract_sub.add_parser("verify", help="Verify pins, freeze flag, and dataset integrity")
+    bench_intake = bench_sub.add_parser(
+        "intake",
+        help="Validate and preserve a submission directory into the external vault",
+    )
+    bench_intake.add_argument("source", type=Path, help="Directory of LLM-*.json submission files")
+    bench_intake.add_argument("--agent-id", required=True, help="Submitter / agent identifier")
+    bench_intake.add_argument(
+        "--provenance",
+        choices=["external", "pilot", "sample", "template"],
+        default="external",
+        help="Provenance class (only external counts as external evidence)",
+    )
+    bench_intake.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate without writing to the vault",
+    )
+    bench_sub.add_parser(
+        "intakes",
+        help="List vault registry entries and valid external evidence counts",
+    )
+    bench_sub.add_parser(
+        "collection-status",
+        help="Honest outreach funnel: invitations vs responses vs valid intakes",
+    )
+    bench_pkg = bench_sub.add_parser(
+        "submitter-package",
+        help="Build task cards without ground truth for external submitters",
+    )
+    bench_pkg.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        required=True,
+        help="Output directory for the submitter package",
+    )
 
     deps = sub.add_parser(
         "deps",

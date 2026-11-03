@@ -1,6 +1,6 @@
 # AESA Guard CLI reference
 
-Complete reference for the `aesa` console script (package `aesa-tools` **0.4.0**).
+Complete reference for the `aesa` console script (package `aesa-tools` **0.6.1**).
 
 Install:
 
@@ -231,15 +231,43 @@ aesa build [all|schemas|prompts] [--write]
 
 ---
 
+## `aesa hosts`
+
+```bash
+aesa hosts list
+aesa hosts show cursor
+aesa hosts show claude-code
+```
+
+Lists built-in host assessment profiles. Profiles describe **declared** configuration surfaces; effective permissions remain NOT VERIFIED without host/runtime evidence.
+
+---
+
 ## `aesa corpus` / `aesa benchmark`
 
 ```bash
 aesa corpus run
 aesa benchmark run
+aesa benchmark rules
+aesa benchmark governance
+aesa benchmark contract verify
+aesa benchmark submitter-package -o DIR
+aesa benchmark intake DIR --agent-id ID [--provenance external|pilot|sample|template] [--dry-run]
+aesa benchmark intakes
+aesa benchmark collection-status
+aesa benchmark llm --validate-only [--split public|held_out|all]
+aesa benchmark llm --submissions DIR [--split …] [--report] [--provenance external|any|…]
 ```
 
 - **Corpus:** deterministic tooling regression (`tests/corpus/`, CORPUS-001…010).
-- **Benchmark (AgentSecBench):** inventory + Guard rule expectations (`tests/benchmark/`). Does **not** invoke LLMs.
+- **`benchmark run`:** inventory + Guard rule smoke cases (`tests/benchmark/cases`).
+- **`benchmark rules`:** per-rule positive/negative/ambiguous quality pack (`tests/rules/`).
+- **`benchmark governance`:** LLM dataset checksums and version pins.
+- **`benchmark contract`:** frozen evaluation contract verification.
+- **`benchmark submitter-package`:** task cards without ground truth for external submitters.
+- **`benchmark intake` / `intakes`:** validate, checksum, and preserve submissions as untrusted data (never execute); list external evidence.
+- **`benchmark collection-status`:** invitations vs responses vs valid intakes (zeros until outreach yields evidence).
+- **`benchmark llm`:** offline scoring / transparent report (never calls model APIs). Templates/pilots are not external evidence.
 
 Exit `0` if all cases pass, `1` otherwise.
 

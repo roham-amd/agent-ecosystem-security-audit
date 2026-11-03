@@ -72,10 +72,17 @@ def run_scan(
         payload["baseline_saved"] = str(save_baseline_path)
 
     if fail_on == "high":
-        sev = scan.findings_by_severity()
-        if sev.get("CRITICAL", 0) or sev.get("HIGH", 0):
+        # Gate on security/exposure findings only — capability observations are inventory.
+        blocking = [
+            f
+            for f in scan.findings
+            if f.severity in {"CRITICAL", "HIGH"}
+            and f.finding_class in {"SECURITY_FINDING", "EXPOSURE"}
+        ]
+        if blocking:
             exit_code = 1
-    elif fail_on == "any" and scan.findings:
-        exit_code = 1
+    elif fail_on == "any":
+        if any(f.finding_class in {"SECURITY_FINDING", "EXPOSURE"} for f in scan.findings):
+            exit_code = 1
 
     return scan, payload, exit_code

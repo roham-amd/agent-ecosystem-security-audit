@@ -6,4 +6,4 @@ Public entry points:
   ``aesa.inventory.collector.collect_inventory``
 """
 
-__version__ = "0.4.0"
+__version__ = "0.6.1"

@@ -8,6 +8,7 @@ from aesa.inventory.adapters.host_components import (
     discover_plugins,
     discover_subagents,
 )
+from aesa.inventory.adapters.hosts import discover_host_profiles
 from aesa.inventory.adapters.mcp import discover_mcp_configs
 from aesa.inventory.adapters.rules_a2a import discover_agent_cards, discover_instruction_rules
 from aesa.inventory.adapters.skills import discover_skills
@@ -25,4 +26,5 @@ DISCOVERY_ADAPTERS: tuple[DiscoveryAdapter, ...] = (
     discover_subagents,
     discover_automations,
     discover_github_workflows,
+    discover_host_profiles,
 )

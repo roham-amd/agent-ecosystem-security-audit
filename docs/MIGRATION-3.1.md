@@ -1,17 +1,18 @@
 # Migrating to AESA Guard 3.1
 
-From **3.0.x** to **3.1.0**.
+From **3.0.x** to **3.1.x** (current: **3.1.1**).
 
 ## What changed
 
-| Area | 3.0.x | 3.1.0 |
+| Area | 3.0.x | 3.1.x |
 | --- | --- | --- |
 | Primary command | `aesa audit --profile quick` | **`aesa scan`** |
 | Product name | AESA / AESA Gate | **AESA Guard** (project still AESA) |
 | Deterministic findings | Inventory hints only | Rules `AESA-RULE-001`…`010` + SARIF |
 | CI Action | Inventory + path diff | Scan mode, `--fail-on`, baseline risk delta, env-safe inputs |
 | Auditor skill | Multi-doc attach | Guard-first single workflow + structured claims |
-| Versions | Often drifted | `3.1.0` / tooling `0.4.0` aligned |
+| Versions | Often drifted | `3.1.1` / tooling `0.4.1` aligned via release manifest |
+| Finding model | Capability ≈ warning | `CAPABILITY` / `EXPOSURE` / `SECURITY_FINDING` |
 
 Procedure version remains **1.0**. Audit report JSON schema remains **1.0**.
 

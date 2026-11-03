@@ -1,24 +1,31 @@
-"""Extract security-relevant capabilities from inventory component records."""
+"""Extract security-relevant capabilities from inventory component records.
+
+Capability origins:
+- DECLARED / POTENTIAL from configuration hints
+- TYPE_DEFAULT from component type alone (never treat as effective permission)
+- EFFECTIVE / VERIFIED require host or runtime evidence (not produced here)
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
-from aesa.security.models import Capability, CapabilityKind, VerificationStatus
+from aesa.security.models import Capability, CapabilityKind, CapabilityOrigin, VerificationStatus
 
-_HINT_TO_CAPABILITY: dict[str, tuple[CapabilityKind, VerificationStatus]] = {
-    "possible_code_execution_reference": ("execute_commands", "POTENTIAL"),
-    "script_reference": ("execute_commands", "POTENTIAL"),
-    "bundled_scripts_directory": ("execute_commands", "OBSERVED"),
-    "local_command_transport": ("execute_commands", "OBSERVED"),
-    "possible_execution_boundary": ("execute_commands", "POTENTIAL"),
-    "inherits_or_sets_environment": ("access_secrets", "POTENTIAL"),
-    "secrets_or_credential_handling": ("access_secrets", "POTENTIAL"),
-    "identity_or_auth_workflow": ("access_secrets", "POTENTIAL"),
-    "external_url_reference": ("access_network", "POTENTIAL"),
-    "remote_endpoint": ("access_network", "OBSERVED"),
-    "pre_execution_lifecycle": ("modify_approvals", "POTENTIAL"),
-    "mcp_server_source": ("invoke_tools", "OBSERVED"),
+_HINT_TO_CAPABILITY: dict[str, tuple[CapabilityKind, VerificationStatus, CapabilityOrigin]] = {
+    "possible_code_execution_reference": ("execute_commands", "POTENTIAL", "POTENTIAL"),
+    "script_reference": ("execute_commands", "POTENTIAL", "POTENTIAL"),
+    "bundled_scripts_directory": ("execute_commands", "OBSERVED", "DECLARED"),
+    "local_command_transport": ("execute_commands", "OBSERVED", "DECLARED"),
+    "possible_execution_boundary": ("execute_commands", "POTENTIAL", "POTENTIAL"),
+    "inherits_or_sets_environment": ("access_secrets", "POTENTIAL", "POTENTIAL"),
+    "secrets_or_credential_handling": ("access_secrets", "POTENTIAL", "POTENTIAL"),
+    "identity_or_auth_workflow": ("access_secrets", "POTENTIAL", "POTENTIAL"),
+    "external_url_reference": ("access_network", "POTENTIAL", "POTENTIAL"),
+    "remote_endpoint": ("access_network", "OBSERVED", "DECLARED"),
+    "pre_execution_lifecycle": ("modify_approvals", "POTENTIAL", "POTENTIAL"),
+    "mcp_server_source": ("invoke_tools", "OBSERVED", "DECLARED"),
+    "broad_or_relative_path_args": ("read_files", "POTENTIAL", "POTENTIAL"),
 }
 
 
@@ -71,7 +78,7 @@ def extract_capabilities(components: list[dict[str, Any]]) -> list[Capability]:
             mapped = _HINT_TO_CAPABILITY.get(hint)
             if not mapped:
                 continue
-            kind, status = mapped
+            kind, status, origin = mapped
             if kind in seen:
                 continue
             seen.add(kind)
@@ -82,6 +89,7 @@ def extract_capabilities(components: list[dict[str, Any]]) -> list[Capability]:
                     component_id=cid,
                     evidence_ids=[f"E-INV-{cid}"],
                     notes=f"Derived from priority hint `{hint}`.",
+                    origin=origin,
                 )
             )
 
@@ -96,6 +104,7 @@ def extract_capabilities(components: list[dict[str, Any]]) -> list[Capability]:
                     component_id=cid,
                     evidence_ids=[f"E-INV-{cid}"],
                     notes=notes,
+                    origin="TYPE_DEFAULT",
                 )
             )
     return caps
