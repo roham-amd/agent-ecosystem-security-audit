@@ -1,6 +1,6 @@
-name: AESA Gate
+name: AESA Guard
 description: >-
-  Passive agent-ecosystem inventory and optional baseline diff for pull requests.
+  Passive agent-ecosystem Guard scan with optional baseline risk delta and policy fail.
   Does not execute target application code or contact MCP endpoints.
 
 inputs:
@@ -9,13 +9,27 @@ inputs:
     required: false
     default: "."
   profile:
-    description: Audit profile (quick|standard|deployment)
+    description: >-
+      Legacy audit profile (quick|standard|deployment). Ignored when mode=scan
+      (default). Kept for consumers migrating from aesa audit.
     required: false
     default: "quick"
+  mode:
+    description: scan (Guard rules) or audit (inventory handoff only)
+    required: false
+    default: "scan"
   baseline-inventory:
-    description: Optional path to previous inventory.json for diff annotation
+    description: Optional path to previous inventory.json for component-path diff
     required: false
     default: ""
+  baseline:
+    description: Optional path to previous baseline.json for risk delta
+    required: false
+    default: ""
+  fail-on:
+    description: never | high | any — exit non-zero on matching new/current findings
+    required: false
+    default: "never"
   output-dir:
     description: Output directory for AESA artifacts
     required: false
@@ -24,6 +38,10 @@ inputs:
     description: Path to AESA tools/ directory containing pyproject.toml
     required: false
     default: "tools"
+  upload-sarif:
+    description: If true, print path to findings.sarif.json for workflow upload
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -42,20 +60,44 @@ runs:
         uv sync --locked --no-dev
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
-    - name: Run AESA audit (passive)
+    - name: Run AESA Guard scan (passive)
+      if: inputs.mode == 'scan'
       shell: bash
+      env:
+        AESA_PATH: ${{ inputs.path }}
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
+        AESA_BASELINE: ${{ inputs.baseline }}
+        AESA_FAIL_ON: ${{ inputs.fail-on }}
       run: |
         set -euo pipefail
-        aesa audit "${{ inputs.path }}" --profile "${{ inputs.profile }}" -o "${{ inputs.output-dir }}"
+        args=(scan "$AESA_PATH" -o "$AESA_OUTPUT_DIR" --fail-on "$AESA_FAIL_ON")
+        if [[ -n "${AESA_BASELINE}" ]]; then
+          args+=(--baseline "$AESA_BASELINE")
+        fi
+        aesa "${args[@]}"
+
+    - name: Run AESA audit (legacy profile handoff)
+      if: inputs.mode == 'audit'
+      shell: bash
+      env:
+        AESA_PATH: ${{ inputs.path }}
+        AESA_PROFILE: ${{ inputs.profile }}
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        set -euo pipefail
+        aesa audit "$AESA_PATH" --profile "$AESA_PROFILE" -o "$AESA_OUTPUT_DIR"
 
     - name: Diff against baseline inventory (optional)
       if: inputs.baseline-inventory != ''
       shell: bash
+      env:
+        AESA_BASE_INVENTORY: ${{ inputs.baseline-inventory }}
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
       run: |
         set -euo pipefail
-        BASE="${{ inputs.baseline-inventory }}"
-        CUR="${{ inputs.output-dir }}/inventory.json"
-        OUT="${{ inputs.output-dir }}/inventory-delta.json"
+        BASE="$AESA_BASE_INVENTORY"
+        CUR="$AESA_OUTPUT_DIR/inventory.json"
+        OUT="$AESA_OUTPUT_DIR/inventory-delta.json"
         if [[ ! -f "$BASE" ]]; then
           echo "Baseline inventory not found; skipping diff."
           exit 0
@@ -74,6 +116,43 @@ runs:
         print('Removed (%d): %s' % (len(removed), ', '.join(removed) or '(none)'))
         out.write_text(json.dumps({'added': added, 'removed': removed}, indent=2) + '\n', encoding='utf-8')
         " "$BASE" "$CUR" "$OUT"
+
+    - name: Report incomplete coverage
+      shell: bash
+      env:
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        set -euo pipefail
+        INV="$AESA_OUTPUT_DIR/inventory.json"
+        if [[ ! -f "$INV" ]]; then
+          echo "No inventory.json; skipping coverage report."
+          exit 0
+        fi
+        python -c "
+        import json, pathlib, sys
+        inv = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8'))
+        cov = inv.get('coverage') or {}
+        print('## AESA coverage')
+        print('Deterministic discoveries:', cov.get('deterministically_discovered'))
+        print('NOT VERIFIED:')
+        for item in cov.get('not_verified') or []:
+            print('-', item)
+        print('Incomplete coverage must not be treated as a clean security result.')
+        " "$INV"
+
+    - name: Note SARIF path
+      if: inputs.upload-sarif == 'true' && inputs.mode == 'scan'
+      shell: bash
+      env:
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        set -euo pipefail
+        SARIF="$AESA_OUTPUT_DIR/findings.sarif.json"
+        if [[ -f "$SARIF" ]]; then
+          echo "SARIF ready for upload: $SARIF"
+        else
+          echo "SARIF not produced."
+        fi
 
     - name: Upload AESA artifacts
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

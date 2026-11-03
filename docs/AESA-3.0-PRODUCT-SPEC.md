@@ -1,8 +1,10 @@
 # AESA 3.0 Product Specification
 
-**Status:** Normative for release **3.0.0**  
-**Date:** 2026-11-03  
-**Supersedes (positioning):** AESA Gate notes in 2.3.x (`docs/AESA-GATE.md` remains a short operator primer)
+**Status:** Normative methodology for 3.0.x; product experience updated in **3.1.0** (AESA Guard / `aesa scan`)  
+**Date:** 2026-11-04  
+**Supersedes (positioning):** AESA Gate notes in 2.3.x (`docs/AESA-GATE.md` is the short Guard primer)
+
+**3.1 companion docs (authoritative for Guard UX):** [`DOCUMENTATION-INDEX.md`](DOCUMENTATION-INDEX.md), [`GUARD-SCAN.md`](GUARD-SCAN.md), [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md), [`MIGRATION-3.1.md`](MIGRATION-3.1.md).
 
 ## 1. Product identity
 
@@ -240,13 +242,13 @@ Procedure stages 0–8 remain under `prompts/`. Profiles select **how far** the 
 
 ## 11. Versioning
 
-| Stream | 3.0.0 value |
+| Stream | 3.1.0 value |
 | --- | --- |
-| `VERSION` / `aesa_product` | `3.0.0` |
+| `VERSION` / `aesa_product` | `3.1.0` |
 | Audit procedure | `1.0` |
 | Report / graph / manifest schemas | `1.0` |
-| `aesa-tools` package | `0.3.0` |
+| `aesa-tools` package | `0.4.0` |
 | Tooling corpus | `0.3.0` |
-| Agent benchmark pack | `0.1.0` |
+| AgentSecBench | `0.2.0` |
 
 Breaking product UX (unified `audit`, Assessment naming, Action packaging) justifies the major version. Report JSON contract stays 1.0.

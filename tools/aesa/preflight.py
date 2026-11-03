@@ -123,7 +123,7 @@ def build_audit_context_md(result: InventoryResult, *, commit: str | None) -> st
     coverage = result.coverage or {}
     counts = coverage.get("component_counts_by_type") or {}
     lines = [
-        "# AESA Gate — Audit Context (Preflight)",
+        "# AESA Guard — Audit Context (Preflight)",
         "",
         f"- Repository: `{result.repository_path}`",
         f"- Commit: `{commit or 'unknown'}`",
@@ -195,7 +195,7 @@ def render_preflight_text(result: InventoryResult, *, commit: str | None, out_di
     coverage = result.coverage or {}
     counts = coverage.get("component_counts_by_type") or {}
     lines = [
-        "AESA Gate — Agent Ecosystem Preflight",
+        "AESA Guard — Agent Ecosystem Preflight",
         f"Repository: {Path(result.repository_path).name}",
         f"Commit: {commit or 'unknown'}",
         "",

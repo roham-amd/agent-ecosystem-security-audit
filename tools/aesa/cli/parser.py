@@ -1,4 +1,4 @@
-"""Argparse construction for the AESA CLI (separated from dispatch)."""
+"""Argparse construction for the AESA Guard CLI."""
 
 from __future__ import annotations
 
@@ -9,9 +9,67 @@ from pathlib import Path
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aesa",
-        description="AESA — agent ecosystem assessment (inventory, audit profiles, validation)",
+        description=(
+            "AESA Guard — discover what AI-agent ecosystems can access, execute, and trust"
+        ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    scan = sub.add_parser(
+        "scan",
+        help="One-command Guard scan: inventory + deterministic security findings",
+    )
+    scan.add_argument("path", type=Path, nargs="?", default=Path("."))
+    scan.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Output directory (default: <path>/aesa-out)",
+    )
+    scan.add_argument(
+        "--baseline",
+        type=Path,
+        help="Prior baseline.json for risk delta",
+    )
+    scan.add_argument(
+        "--save-baseline",
+        type=Path,
+        help="Write baseline.json after scan",
+    )
+    scan.add_argument(
+        "--fail-on",
+        choices=["never", "high", "any"],
+        default="never",
+        help="Exit non-zero when findings match policy (default: never)",
+    )
+
+    explain = sub.add_parser("explain", help="Explain a finding from a prior scan")
+    explain.add_argument("finding_id", help="Finding id such as F-001")
+    explain.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=Path("aesa-out"),
+        help="Directory containing findings.json (default: aesa-out)",
+    )
+
+    baseline = sub.add_parser("baseline", help="Save or show Guard baselines")
+    baseline_sub = baseline.add_subparsers(dest="baseline_cmd", required=True)
+    b_save = baseline_sub.add_parser("save", help="Save baseline from findings.json")
+    b_save.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=Path("aesa-out"),
+        help="Scan output directory containing findings.json",
+    )
+    b_save.add_argument(
+        "--path",
+        type=Path,
+        help="Baseline destination (default: <output-dir>/baseline.json)",
+    )
+    b_show = baseline_sub.add_parser("show", help="Print a baseline.json")
+    b_show.add_argument("path", type=Path, nargs="?", default=Path("aesa-out/baseline.json"))
 
     build = sub.add_parser("build", help="Run build and consistency checks")
     build.add_argument(
@@ -35,6 +93,8 @@ def build_parser() -> argparse.ArgumentParser:
     graph = val_sub.add_parser("graph", help="Validate ecosystem graph JSON")
     graph.add_argument("path", type=Path)
     graph.add_argument("--no-semantic", action="store_true")
+    claim = val_sub.add_parser("claim", help="Validate a structured agent claim JSON object")
+    claim.add_argument("path", type=Path)
 
     graph_cmd = sub.add_parser("graph", help="Graph utilities")
     graph_sub = graph_cmd.add_subparsers(dest="graph_cmd", required=True)
@@ -94,6 +154,12 @@ def build_parser() -> argparse.ArgumentParser:
     diff_gr = diff_sub.add_parser("graph", help="Diff two ecosystem graph JSON files")
     diff_gr.add_argument("base", type=Path)
     diff_gr.add_argument("target", type=Path)
+    diff_risk = diff_sub.add_parser(
+        "risk",
+        help="Diff current findings.json against a baseline.json",
+    )
+    diff_risk.add_argument("baseline", type=Path)
+    diff_risk.add_argument("findings", type=Path)
 
     export = sub.add_parser("export", help="Export interoperable formats")
     export_sub = export.add_subparsers(dest="export_cmd", required=True)
@@ -109,7 +175,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     bench = sub.add_parser(
         "benchmark",
-        help="Agent detection quality benchmark (fixtures + scoring stubs)",
+        help="AgentSecBench: detection quality benchmark (fixtures + scoring stubs)",
     )
     bench_sub = bench.add_subparsers(dest="benchmark_cmd", required=True)
     bench_sub.add_parser("run", help="Run benchmark pack cases")

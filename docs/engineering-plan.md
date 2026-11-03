@@ -41,8 +41,25 @@ Tracks implementation against independent assessments and the [AESA 3.0 product 
 | PyPI published package | Not started |
 | Hosted web workspace | Deferred |
 
+## Milestone E — AESA Guard (3.1.0)
+
+| Item | Status |
+| --- | --- |
+| Version consistency + supported 3.x | Done |
+| `aesa scan` one-command UX | Done |
+| Deterministic rules AESA-RULE-001…010 | Done |
+| Capabilities / evidence / findings model | Done |
+| Baselines + risk delta + `--fail-on` | Done |
+| Action env-var hardening + SARIF note | Done |
+| Structured claim validation | Done |
+| AgentSecBench rule expectations (0.2.0) | Done |
+| Host / memory / models / browser / CI modules | Done |
+| LLM model runner for AgentSecBench | Next |
+| PyPI / `uv tool install` distribution | Next |
+| Marketplace / SaaS | Deferred |
+
 ## Breaking change policy
 
-- Report contract `audit_version: "1.0"` unchanged in 3.0.0.
-- Product major 3.0 reflects UX/packaging (unified audit, Assessment framing, Action).
+- Report contract `audit_version: "1.0"` unchanged through 3.1.0.
+- Product 3.1 introduces Guard scan without breaking the audit report schema.
 - Semantic validation may reject dangling references.

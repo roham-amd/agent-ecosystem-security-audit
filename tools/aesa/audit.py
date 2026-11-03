@@ -14,6 +14,7 @@ from aesa.preflight import (
     render_preflight_text,
     resolve_git_commit,
 )
+from aesa.versioning import product_version
 
 ProfileName = Literal["quick", "standard", "deployment"]
 
@@ -211,13 +212,16 @@ def render_audit_summary(
 ) -> str:
     spec = PROFILES[profile]
     body = summary_text.replace(
+        "AESA Guard — Agent Ecosystem Preflight",
+        f"AESA Guard — Agent Ecosystem Assessment ({spec.label})",
+    ).replace(
         "AESA Gate — Agent Ecosystem Preflight",
-        f"AESA — Agent Ecosystem Assessment ({spec.label})",
+        f"AESA Guard — Agent Ecosystem Assessment ({spec.label})",
     )
     if body.startswith("AESA —"):
         return body
     header = [
-        f"AESA — Agent Ecosystem Assessment ({spec.label} profile)",
+        f"AESA Guard — Agent Ecosystem Assessment ({spec.label} profile)",
         f"Purpose: {spec.purpose}",
         "",
     ]
@@ -258,13 +262,14 @@ def run_audit(
 
     profile_doc = {
         "aesa_audit_profile": profile,
-        "product": "AESA",
-        "product_version_hint": "3.0.0",
+        "product": "AESA Guard",
+        "product_version": product_version(),
+        "product_version_hint": product_version(),
         **spec.as_public_dict(),
         "suggested_modules": modules,
         "limitations": [
-            "Deterministic phase does not perform semantic vulnerability detection.",
-            "Deep review requires an AI agent or human following the procedure.",
+            "Deterministic phase emits inventory and optional Guard rule findings via `aesa scan`.",
+            "Deep semantic review requires an AI agent or human following the procedure.",
             "Inventory coverage is partial; see inventory.json coverage.adapter_matrix.",
         ],
     }

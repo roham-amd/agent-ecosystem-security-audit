@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [3.1.0] — 2026-11-04
+
+### Added
+
+- **AESA Guard** product identity: one-command `aesa scan` with terminal report, `findings.json`, SARIF, capabilities extraction, and versioned deterministic rules (`AESA-RULE-001`…`010`).
+- `aesa explain`, `aesa baseline save|show`, `aesa diff risk`, `aesa validate claim`.
+- Structured claim schema (`schemas/structured-claim.schema.json`) for AI auditor intermediate objects.
+- Modules: agent-host, memory-rag, models-providers, browser-agents, ci-cd; threat scenario backbone (`docs/threat-scenarios.md`).
+- AgentSecBench **0.2.0**: Guard rule expectations on BENCH fixtures (LLM scoring still deferred).
+- CI Action hardening: inputs via env vars; `mode=scan|audit`; `--fail-on`; coverage report; SARIF note.
+- Documentation suite: `docs/DOCUMENTATION-INDEX.md`, `GUARD-SCAN.md`, `CLI-REFERENCE.md`, `SECURITY-RULES.md`, `EVIDENCE-MODEL.md`, `MIGRATION-3.1.md`, `modules/README.md`, `schemas/README.md`; Guard-aligned README/usage/tools/operator guides.
+
+### Changed
+
+- Product version **3.1.0**; tooling package **0.4.0**.
+- README / SECURITY / skill / Gate primer repositioned around Guard; supported release line **3.x**.
+- Version hints in audit/SARIF resolve from `VERSION` / `canonical/versions.json` (no hard-coded 3.0.0 drift).
+
+### Notes
+
+- Report schema / procedure versions remain **1.0**.
+- Guard findings are OBSERVED/POTENTIAL; incomplete coverage is never a clean bill of health.
+
 ## [3.0.1] — 2026-11-04
 
 ### Added

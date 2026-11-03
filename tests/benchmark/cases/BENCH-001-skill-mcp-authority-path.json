@@ -8,6 +8,7 @@
     "types_any_of": ["Skill", "MCP Server Registration"],
     "names_any_of": ["untrusted-helper", "filesystem-broad"]
   },
+  "expect_rule_ids": ["AESA-RULE-002"],
   "ground_truth_findings": [
     {
       "finding_id": "GT-001",

@@ -14,6 +14,13 @@ For Skills, Plugins, MCP, Hooks, Subagents, and Automations, use the **full chec
 | Automations | [`../modules/automations.md`](../modules/automations.md) |
 | A2A (Agent-to-Agent) | [`../modules/a2a.md`](../modules/a2a.md) |
 | Multimodal / cross-modal | [`../modules/multimodal.md`](../modules/multimodal.md) |
+| Agent host | [`../modules/agent-host.md`](../modules/agent-host.md) |
+| Memory / RAG | [`../modules/memory-rag.md`](../modules/memory-rag.md) |
+| Models / providers | [`../modules/models-providers.md`](../modules/models-providers.md) |
+| Browser agents | [`../modules/browser-agents.md`](../modules/browser-agents.md) |
+| CI/CD | [`../modules/ci-cd.md`](../modules/ci-cd.md) |
+
+Capability-first threat scenarios: [`../docs/threat-scenarios.md`](../docs/threat-scenarios.md).
 
 ---
 

@@ -8,10 +8,12 @@
     "types_any_of": ["Skill"],
     "names_any_of": ["readonly-note"]
   },
+  "forbid_rule_ids": ["AESA-RULE-002", "AESA-RULE-003", "AESA-RULE-001"],
   "ground_truth_findings": [],
   "llm_scoring": "deferred",
   "notes": [
     "Agents must not invent MCP privilege findings for this fixture.",
-    "Absence of findings is the correct outcome for CRITICAL/HIGH privilege claims."
+    "Absence of findings is the correct outcome for CRITICAL/HIGH privilege claims.",
+    "Guard rules for MCP command transport and skill scripts must not fire."
   ]
 }

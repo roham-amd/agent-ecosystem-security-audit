@@ -1,16 +1,20 @@
-# Contributing to AESA
+# Contributing to AESA Guard
 
-Thank you for helping improve the Agent Ecosystem Security Audit framework.
+Thank you for helping improve the Agent Ecosystem Security Assessment framework
+(AESA Guard).
+
+**Docs map:** [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md)
 
 ## Ways to contribute
 
 - Clarify audit procedure language without weakening evidence gates
-- Improve specialized modules (`modules/`)
+- Improve specialized modules (`modules/`) — update `modules/README.md` and skill tables
+- Extend Guard rules (`tools/aesa/security/rules.py`) — update [`docs/SECURITY-RULES.md`](docs/SECURITY-RULES.md) and AgentSecBench expectations
 - Extend or harden the JSON Schema (`canonical/schemas/` → `aesa build schemas`)
-- Add corpus cases (`tests/corpus/`) and validation fixtures
+- Add corpus cases (`tests/corpus/`) and AgentSecBench cases (`tests/benchmark/`)
 - Improve tooling adapters (`tools/aesa/inventory/`)
 - Add anonymized examples under `examples/`
-- Improve usage docs and translator notes
+- Improve usage docs (keep English; sync CLI changes to `docs/CLI-REFERENCE.md`)
 - Report documentation defects that could cause unsafe auditor behavior (see `SECURITY.md`)
 
 ## Contribution principles
@@ -46,12 +50,15 @@ Stack: **uv + pyproject.toml + uv.lock + Ruff + Pytest + mypy** (no Poetry / pip
 ## Pull request checklist
 
 - [ ] Change targets the correct procedure version under `prompts/`
-- [ ] `aesa build all` and `aesa corpus run` pass when tooling changes are included
-- [ ] Schema and example updates remain consistent with Section 22 enums
-- [ ] New modules state applicability and `N/A` / `NOT VERIFIED` rules
+- [ ] `aesa build all`, `aesa corpus run`, and (when relevant) `aesa benchmark run` pass
+- [ ] New CLI surface documented in `docs/CLI-REFERENCE.md` + `tools/README.md` + `DOCUMENTATION-INDEX.md`
+- [ ] New Guard rules documented in `docs/SECURITY-RULES.md` with bench expectations
+- [ ] Schema and example updates remain consistent with report enums
+- [ ] New modules listed in `modules/README.md`, `prompts/02-modules.md`, and the auditor skill
 - [ ] Docs do not market AESA as an automated scanner or certification
 - [ ] No production credentials, customer data, or live exploit payloads
 - [ ] Dependabot / pin PRs leave `pyproject.toml` + `uv.lock` consistent (`uv sync --locked`); Docker digests still build
+- [ ] Version streams stay aligned (`VERSION`, `canonical/versions.json`, package metadata)
 
 ## Procedure versioning
 

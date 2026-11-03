@@ -3,7 +3,7 @@
 #
 # This file is documentation only (not executed by this repository's CI).
 
-name: AESA consumer gate (example)
+name: AESA Guard consumer gate (example)
 
 on:
   pull_request:
@@ -21,11 +21,18 @@ jobs:
           path: .aesa-kit
           ref: main
 
-      - name: AESA Gate
+      - name: AESA Guard
         uses: ./.aesa-kit/.github/actions/aesa-gate
         with:
           path: .
-          profile: quick
+          mode: scan
+          fail-on: high
           install-tools-from: .aesa-kit/tools
+          baseline: .aesa/baseline.json
           baseline-inventory: .aesa/baseline-inventory.json
           output-dir: aesa-out
+
+      # Optional: upload SARIF to code scanning if GITHUB_TOKEN permissions allow
+      # - uses: github/codeql-action/upload-sarif@...
+      #   with:
+      #     sarif_file: aesa-out/findings.sarif.json
