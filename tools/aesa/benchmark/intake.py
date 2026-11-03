@@ -360,7 +360,9 @@ def collection_status() -> dict[str, Any]:
         "funnel": funnel,
         "minimum_evidence_met": minimum_met,
         "external_run_ids": intakes.get("external_run_ids"),
-        "criteria_doc": str(criteria_path.relative_to(repo_root())) if criteria_path.is_file() else None,
+        "criteria_doc": str(criteria_path.relative_to(repo_root()))
+        if criteria_path.is_file()
+        else None,
         "notes": [
             "An invitation is not a submission; a submission is not a valid intake.",
             "Zeros are correct until independent valid intakes exist.",
@@ -380,7 +382,11 @@ def build_submitter_package(output_dir: Path) -> dict[str, Any]:
     for path in sorted(cases_dir.glob("LLM-*.json")):
         case = read_json(path)
         case_id = str(case.get("id"))
-        split = "held_out" if case_id in set(manifest.get("splits", {}).get("held_out") or []) else "public"
+        split = (
+            "held_out"
+            if case_id in set(manifest.get("splits", {}).get("held_out") or [])
+            else "public"
+        )
         card = {
             "case_id": case_id,
             "title": case.get("title"),

@@ -13,7 +13,14 @@ def test_llm_validate_only():
 
 
 def test_llm_score_good_submissions():
-    root = Path(__file__).resolve().parents[1] / "tests" / "benchmark" / "llm" / "submissions" / "sample-good"
+    root = (
+        Path(__file__).resolve().parents[1]
+        / "tests"
+        / "benchmark"
+        / "llm"
+        / "submissions"
+        / "sample-good"
+    )
     summary = run_llm_benchmark(submissions=root)
     assert summary["failed"] == 0
     assert summary["mode"] == "score_submissions"

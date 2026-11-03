@@ -36,8 +36,10 @@ def compute_case_checksums() -> dict[str, str]:
 
 
 def verify_dataset_integrity(manifest: dict[str, Any] | None = None) -> dict[str, Any]:
-    manifest = manifest if manifest is not None else json.loads(
-        dataset_manifest_path().read_text(encoding="utf-8")
+    manifest = (
+        manifest
+        if manifest is not None
+        else json.loads(dataset_manifest_path().read_text(encoding="utf-8"))
     )
     expected = dict(manifest.get("case_checksums") or {})
     actual = compute_case_checksums()

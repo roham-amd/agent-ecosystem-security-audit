@@ -36,4 +36,6 @@ def test_evaluation_report_is_transparent():
     assert "overall" in report
     assert report["sample_size"]["cases_in_split"] == 4
     assert "leaderboard" not in report["kind"]
-    assert any("leaderboard" in lim.lower() or "small" in lim.lower() for lim in report["limitations"])
+    assert any(
+        "leaderboard" in lim.lower() or "small" in lim.lower() for lim in report["limitations"]
+    )

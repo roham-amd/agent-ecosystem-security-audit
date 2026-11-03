@@ -6,7 +6,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from aesa.benchmark.governance import evaluation_pin, filter_cases_by_split, verify_dataset_integrity
+from aesa.benchmark.governance import (
+    evaluation_pin,
+    filter_cases_by_split,
+    verify_dataset_integrity,
+)
 from aesa.benchmark.llm_runner import (
     _load_dataset_manifest,
     _load_llm_cases,
@@ -86,7 +90,9 @@ def build_evaluation_report(
         by_case[str(row.get("id") or "unknown")].append(row)
 
     def dim_means(rows: list[dict[str, Any]]) -> dict[str, Any]:
-        det_p = [float((r.get("scores") or {}).get("precision") or 0) for r in rows if r.get("scores")]
+        det_p = [
+            float((r.get("scores") or {}).get("precision") or 0) for r in rows if r.get("scores")
+        ]
         det_r = [float((r.get("scores") or {}).get("recall") or 0) for r in rows if r.get("scores")]
         evid = [
             float((r.get("scores") or {}).get("evidence_accuracy") or 0)
@@ -175,9 +181,7 @@ def build_evaluation_report(
             "cases_in_split": len(cases),
             "submission_rows": len(results),
             "agents": sorted(by_agent.keys()),
-            "valid_external_agents": (
-                len(by_agent) if provenance == "external" else None
-            ),
+            "valid_external_agents": (len(by_agent) if provenance == "external" else None),
         },
         "per_agent": per_agent,
         "per_case": per_case,

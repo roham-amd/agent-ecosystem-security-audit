@@ -64,9 +64,7 @@ def _check_case(case: dict[str, Any]) -> list[str]:
                 {allowed_classes} if isinstance(allowed_classes, str) else set(allowed_classes)
             )
             if finding.finding_class not in allowed:
-                errors.append(
-                    f"finding_class {finding.finding_class} not in {sorted(allowed)}"
-                )
+                errors.append(f"finding_class {finding.finding_class} not in {sorted(allowed)}")
         allowed_sev = expect.get("severity")
         if allowed_sev:
             allowed = {allowed_sev} if isinstance(allowed_sev, str) else set(allowed_sev)
@@ -74,9 +72,7 @@ def _check_case(case: dict[str, Any]) -> list[str]:
                 errors.append(f"severity {finding.severity} not in {sorted(allowed)}")
         allowed_conf = expect.get("confidence")
         if allowed_conf:
-            allowed = (
-                {allowed_conf} if isinstance(allowed_conf, str) else set(allowed_conf)
-            )
+            allowed = {allowed_conf} if isinstance(allowed_conf, str) else set(allowed_conf)
             if finding.confidence not in allowed:
                 errors.append(f"confidence {finding.confidence} not in {sorted(allowed)}")
         forbid_classes = set(expect.get("forbid_finding_class") or [])
@@ -95,7 +91,9 @@ def _check_case(case: dict[str, Any]) -> list[str]:
 
     fail_on = expect.get("fail_on")
     if fail_on:
-        _scan, _payload, code = run_scan(fixture, output_dir=fixture / "aesa-out-test", fail_on=fail_on)
+        _scan, _payload, code = run_scan(
+            fixture, output_dir=fixture / "aesa-out-test", fail_on=fail_on
+        )
         expected_code = int(expect.get("fail_on_exit_code", 0))
         if code != expected_code:
             errors.append(f"fail_on={fail_on} exit {code}, expected {expected_code}")

@@ -12,23 +12,23 @@ from aesa.benchmark.governance import verify_dataset_integrity
 from aesa.benchmark.intake import (
     build_submitter_package,
     collection_status,
-    list_external_intakes,
     intake_submission_dir,
+    list_external_intakes,
     verify_evaluation_contract,
 )
 from aesa.benchmark.llm_runner import _load_dataset_manifest, run_llm_benchmark
 from aesa.benchmark.report import build_evaluation_report
 from aesa.benchmark.runner import run_benchmark
-from aesa.hosts.profiles import get_host_profile, list_host_profiles
-from aesa.rules_quality.runner import run_rule_quality
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
 from aesa.export.sarif import report_to_sarif
+from aesa.hosts.profiles import get_host_profile, list_host_profiles
 from aesa.inventory.collector import collect_inventory, inventory_to_json
 from aesa.jsonio import print_json, read_json, write_json
 from aesa.lint import run_ruff
 from aesa.prompt_build import write_monolith
+from aesa.rules_quality.runner import run_rule_quality
 from aesa.security.baseline import (
     baseline_path,
     diff_against_baseline,

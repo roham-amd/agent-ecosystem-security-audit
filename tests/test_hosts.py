@@ -26,7 +26,11 @@ def test_discover_cursor_host_declared_only():
 
 def test_discover_claude_code_host():
     root = (
-        Path(__file__).resolve().parents[1] / "tests" / "hosts" / "fixtures" / "claude-code-declared"
+        Path(__file__).resolve().parents[1]
+        / "tests"
+        / "hosts"
+        / "fixtures"
+        / "claude-code-declared"
     )
     inv = collect_inventory(root)
     hosts = [c for c in inv.components if c.get("type") == "Agent Host"]

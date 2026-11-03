@@ -26,8 +26,9 @@ def test_submitter_package_omits_ground_truth(tmp_path: Path):
     card = (out / "LLM-004.task.json").read_text(encoding="utf-8")
     assert "ground_truth" not in card
     package = (out / "PACKAGE.json").read_text(encoding="utf-8")
-    assert '"includes_ground_truth": false' in package or '"includes_ground_truth":false' in package.replace(
-        " ", ""
+    assert (
+        '"includes_ground_truth": false' in package
+        or '"includes_ground_truth":false' in package.replace(" ", "")
     )
 
 

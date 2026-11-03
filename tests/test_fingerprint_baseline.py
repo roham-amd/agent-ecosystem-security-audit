@@ -153,9 +153,7 @@ def test_baseline_content_change_is_modification_not_unrelated_churn(tmp_path: P
     _write_skill(root, "helper", "Version one.\n", name="helper")
     scan1 = run_security_scan(root)
     baseline = save_baseline(scan1, tmp_path / "baseline.json")
-    path = next(
-        c["repository_path"] for c in scan1.inventory["components"] if c["type"] == "Skill"
-    )
+    path = next(c["repository_path"] for c in scan1.inventory["components"] if c["type"] == "Skill")
 
     _write_skill(root, "helper", "Version two — different bytes.\n", name="helper")
     scan2 = run_security_scan(root)
@@ -190,9 +188,9 @@ def test_baseline_clone_preserves_fingerprint_identity(tmp_path: Path):
 
 
 def test_finding_key_ignores_component_id_reshuffle():
-    assert finding_key("AESA-RULE-002", fingerprint="abcd1234abcd1234", component_ids=["C-001"]) == (
-        finding_key("AESA-RULE-002", fingerprint="abcd1234abcd1234", component_ids=["C-099"])
-    )
+    assert finding_key(
+        "AESA-RULE-002", fingerprint="abcd1234abcd1234", component_ids=["C-001"]
+    ) == (finding_key("AESA-RULE-002", fingerprint="abcd1234abcd1234", component_ids=["C-099"]))
 
 
 def test_digest_backed_fingerprint_ignores_path():

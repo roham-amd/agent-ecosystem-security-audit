@@ -22,15 +22,14 @@ def component_fingerprint(component: dict[str, Any]) -> str:
     name = str(component.get("name") or "").strip().lower()
     path = str(component.get("repository_path") or "").strip().replace("\\", "/")
 
-    if digest:
-        material = f"{ctype}|{adapter}|{digest}"
-    else:
-        material = f"{ctype}|{adapter}|{name}|{path}"
+    material = f"{ctype}|{adapter}|{digest}" if digest else f"{ctype}|{adapter}|{name}|{path}"
 
     return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
 
 
-def finding_key(rule_id: str, fingerprint: str | None = None, component_ids: list[str] | None = None) -> str:
+def finding_key(
+    rule_id: str, fingerprint: str | None = None, component_ids: list[str] | None = None
+) -> str:
     """Stable finding identity for risk deltas.
 
     Prefer rule + content fingerprint so renames / component_id reshuffles do not

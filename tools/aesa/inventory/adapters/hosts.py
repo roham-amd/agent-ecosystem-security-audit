@@ -19,9 +19,7 @@ def _cursor_markers(path: Path, root: Path) -> bool:
     name = path.name.lower()
     if name in {".cursorrules", "agents.md"}:
         return True
-    if rel == ".cursor/mcp.json" or rel.startswith(".cursor/"):
-        return True
-    return False
+    return bool(rel == ".cursor/mcp.json" or rel.startswith(".cursor/"))
 
 
 def _claude_markers(path: Path, root: Path) -> bool:
@@ -29,9 +27,7 @@ def _claude_markers(path: Path, root: Path) -> bool:
     name = path.name.lower()
     if name in {"claude.md", ".mcp.json"}:
         return True
-    if rel.startswith(".claude/"):
-        return True
-    return False
+    return bool(rel.startswith(".claude/"))
 
 
 def _copilot_markers(path: Path, root: Path) -> bool:
@@ -74,9 +70,7 @@ def discover_host_profiles(
         # Touch one file so limits/events stay consistent with other adapters.
         sample = root / paths[0]
         if sample.is_file():
-            safe_read_text(
-                sample, root=root, limits=limits, events=events, adapter="host_profiles"
-            )
+            safe_read_text(sample, root=root, limits=limits, events=events, adapter="host_profiles")
         results.append(
             {
                 "name": profile.display_name,

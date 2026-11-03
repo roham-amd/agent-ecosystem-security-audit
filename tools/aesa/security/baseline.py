@@ -23,9 +23,7 @@ BASELINE_VERSION = "1.3"
 
 
 def _finding_identity(finding: Any, inventory: dict[str, Any]) -> str:
-    comps_by_id = {
-        str(c.get("component_id") or ""): c for c in inventory.get("components") or []
-    }
+    comps_by_id = {str(c.get("component_id") or ""): c for c in inventory.get("components") or []}
     fingerprints: list[str] = []
     for cid in finding.component_ids:
         comp = comps_by_id.get(cid)
@@ -172,7 +170,11 @@ def diff_against_baseline(scan: ScanResult, baseline: dict[str, Any]) -> dict[st
     normalized_base: set[str] = set()
     for key in base_findings:
         parts = str(key).split(":")
-        if len(parts) >= 2 and len(parts[1]) == 16 and all(c in "0123456789abcdef" for c in parts[1]):
+        if (
+            len(parts) >= 2
+            and len(parts[1]) == 16
+            and all(c in "0123456789abcdef" for c in parts[1])
+        ):
             normalized_base.add(f"{parts[0]}:{parts[1]}")
         else:
             normalized_base.add(str(key))

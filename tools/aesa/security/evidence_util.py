@@ -47,9 +47,7 @@ def locate_needle_lines(text: str, needle: str | None) -> tuple[int | None, int 
     return start_line, end_line
 
 
-def component_content_digest(
-    root: Path | None, component: dict[str, Any]
-) -> str | None:
+def component_content_digest(root: Path | None, component: dict[str, Any]) -> str | None:
     path = resolve_source_file(root, component.get("repository_path"))
     if path is None:
         return None

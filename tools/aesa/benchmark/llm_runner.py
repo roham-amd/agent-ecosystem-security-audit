@@ -116,9 +116,7 @@ def _score_submission(case: dict[str, Any], submission: dict[str, Any]) -> dict[
     fn = max(0, len(gt) - len(matched_gt))
     precision = tp / (tp + fp) if (tp + fp) else 1.0
     recall = tp / (tp + fn) if (tp + fn) else 1.0
-    f1 = (
-        (2 * precision * recall / (precision + recall)) if (precision + recall) else 1.0
-    )
+    f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 1.0
     evidence_acc = evidence_ok / evidence_checked if evidence_checked else 1.0
     severity_cal = severity_ok / severity_checked if severity_checked else 1.0
 
@@ -231,9 +229,7 @@ def _score_agent_dir(
         if scores["evidence_accuracy"] < float(floors.get("evidence_accuracy", 0.0)):
             errors.append(f"evidence_accuracy {scores['evidence_accuracy']} below floor")
         if scores["severity_calibration"] < float(floors.get("severity_calibration", 0.0)):
-            errors.append(
-                f"severity_calibration {scores['severity_calibration']} below floor"
-            )
+            errors.append(f"severity_calibration {scores['severity_calibration']} below floor")
         ok = not errors
         if not ok:
             failed += 1

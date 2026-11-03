@@ -206,11 +206,7 @@ def rule_mcp_local_command(
         missing_controls=[
             "Exact artifact digest of the launched binary/package",
             "Host-side authorization binding for tool arguments",
-            *(
-                ["Verified restriction of inherited environment / secrets"]
-                if inherits_env
-                else []
-            ),
+            *(["Verified restriction of inherited environment / secrets"] if inherits_env else []),
             *(["Least-privilege filesystem binding"] if broad_args else []),
         ],
         recommended_action=(
