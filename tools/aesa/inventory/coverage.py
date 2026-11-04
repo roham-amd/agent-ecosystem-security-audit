@@ -66,9 +66,33 @@ ADAPTER_COVERAGE: list[dict[str, str | None]] = [
     },
     {
         "family": "Host effective permissions",
+        "adapter": "host_profiles",
+        "maturity": "PARTIAL",
+        "notes": "Host profile markers only; effective runtime permissions stay MANUAL_ONLY.",
+    },
+    {
+        "family": "Browser agents",
         "adapter": None,
         "maturity": "MANUAL_ONLY",
-        "notes": "Requires host configuration evidence outside repository files.",
+        "notes": "Assessment module exists; no dedicated discovery adapter.",
+    },
+    {
+        "family": "Memory / RAG",
+        "adapter": None,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; tenant isolation not auto-discovered.",
+    },
+    {
+        "family": "Model providers",
+        "adapter": None,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; endpoint/model config discovery not automated.",
+    },
+    {
+        "family": "Multimodal artifacts",
+        "adapter": None,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; no artifact inspection adapters.",
     },
     {
         "family": "Runtime behavior",

@@ -2,11 +2,18 @@
 # .github/workflows/aesa-gate.yml after checking out the AESA kit.
 #
 # This file is documentation only (not executed by this repository's CI).
+#
+# IMPORTANT: Pin an immutable AESA release tag or commit SHA.
+# Floating `ref: main` lets scanner changes silently alter your CI gate.
 
 name: AESA Guard consumer gate (example)
 
 on:
   pull_request:
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
   aesa:
@@ -19,20 +26,24 @@ jobs:
         with:
           repository: roham-amd/agent-ecosystem-security-audit
           path: .aesa-kit
-          ref: main
+          # Pin an immutable AESA release tag (or full commit SHA).
+          ref: v3.4.0
 
       - name: AESA Guard
         uses: ./.aesa-kit/.github/actions/aesa-gate
         with:
           path: .
           mode: scan
+          # Leave fail-on empty to honor .aesa.yml; set explicitly to override.
           fail-on: high
+          # policy: .aesa.yml   # optional; auto-loaded when present at path/
+          annotate: true
           install-tools-from: .aesa-kit/tools
           baseline: .aesa/baseline.json
           baseline-inventory: .aesa/baseline-inventory.json
           output-dir: aesa-out
 
-      # Optional: upload SARIF to code scanning if GITHUB_TOKEN permissions allow
+      # Optional: upload SARIF to code scanning
       # - uses: github/codeql-action/upload-sarif@...
       #   with:
       #     sarif_file: aesa-out/findings.sarif.json

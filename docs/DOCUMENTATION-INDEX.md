@@ -1,6 +1,6 @@
 # AESA documentation index
 
-Complete map of project documentation for **AESA Guard 3.3.1** (procedure **1.0**, tooling **0.6.1**).
+Complete map of project documentation for **AESA Guard 3.4.0** (procedure **1.0**, tooling **0.7.0**).
 
 Use this file as the table of contents. Prefer the **primary** doc for each topic; secondary docs add depth or history.
 
@@ -25,6 +25,9 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | --- | --- |
 | [`../README.md`](../README.md) | Product identity, first experience, layout, principles, versioning |
 | [`AESA-GATE.md`](AESA-GATE.md) | Short Guard primer: discover / assess / govern |
+| [`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md) | 3.4 productization backlog and acceptance criteria |
+| [`POLICY.md`](POLICY.md) | `.aesa.yml` policy contract |
+| [`COVERAGE-MATRIX.md`](COVERAGE-MATRIX.md) | Automated vs manual coverage |
 | [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md) | Normative 3.0 product contract (Guard UX added in 3.1) |
 | [`GUARD-SCAN.md`](GUARD-SCAN.md) | `aesa scan` end-to-end: artifacts, profiles vs scan, baselines |
 | [`MIGRATION-2.0.md`](MIGRATION-2.0.md) | 1.x → 2.x migration |
@@ -41,7 +44,10 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | --- | --- |
 | [`usage.md`](usage.md) | Scope, Guard scan, audit profiles, kit load order, continuous use |
 | [`CLI-REFERENCE.md`](CLI-REFERENCE.md) | Every `aesa` command, flags, exit codes, examples |
+| [`INSTALL.md`](INSTALL.md) | `uv tool install` / PyPI / clone install |
 | [`../tools/README.md`](../tools/README.md) | Install (uv), Docker, quality gates, package layout |
+| [`pilots/README.md`](pilots/README.md) | Pilot-repository scan harness |
+| [`INTAKE-CHANNEL.md`](INTAKE-CHANNEL.md) | AgentSecBench external intake (N tracking) |
 | [`docker-agent-audit.md`](docker-agent-audit.md) | Docker discovery + Cursor / Claude / Codex deep review |
 | [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml) | Example GitHub Actions consumer workflow |
 | [`recipes/README.md`](recipes/README.md) | Scenario recipes index |
@@ -49,6 +55,7 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | [`recipes/small-repo-deep-audit.md`](recipes/small-repo-deep-audit.md) | Small repo deep assessment |
 | [`recipes/source-only-review.md`](recipes/source-only-review.md) | Source-only constraints |
 | [`recipes/staging-boundary.md`](recipes/staging-boundary.md) | Staging / runtime authorization boundary |
+| [`recipes/guard-first-assessment.md`](recipes/guard-first-assessment.md) | Default Guard-first assessment recipe |
 
 ---
 
@@ -62,6 +69,7 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | [`../prompts/03-report-contract.md`](../prompts/03-report-contract.md) | JSON report contract and enums |
 | [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) | Mandatory passive-audit safety rules |
 | [`../prompts/audit.md`](../prompts/audit.md) | Kit entry pointer |
+| [`../prompts/scan-triage.md`](../prompts/scan-triage.md) | Lightweight scan + triage (default agent path) |
 | [`../prompts/audit.full.md`](../prompts/audit.full.md) | Generated monolithic procedure |
 | [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) | Evidence classes, findings, claims, capabilities |
 | [`SECURITY-RULES.md`](SECURITY-RULES.md) | Deterministic Guard rules AESA-RULE-001…010 |
@@ -144,6 +152,7 @@ Canonical report schema source: [`../canonical/schemas/audit-report.schema.json`
 | [`architecture/ADR-001-canonical-sources.md`](architecture/ADR-001-canonical-sources.md) | Canonical schemas / versions |
 | [`architecture/ADR-002-semantic-validation.md`](architecture/ADR-002-semantic-validation.md) | Semantic validation beyond JSON Schema |
 | [`architecture/ADR-003-monolith-generation.md`](architecture/ADR-003-monolith-generation.md) | Prompt kit → `audit.full.md` |
+| [`architecture/ADR-004-gating-and-policy.md`](architecture/ADR-004-gating-and-policy.md) | Gate classes, `.aesa.yml`, exit codes |
 
 ---
 

@@ -46,14 +46,67 @@ class ScanResult:
             counts[finding.finding_class] = counts.get(finding.finding_class, 0) + 1
         return counts
 
-    def policy_findings(self) -> list[Finding]:
-        """Findings that should drive fail-on / gate policy (not pure capability notes)."""
-        return [
-            f
-            for f in self.findings
-            if f.finding_class in {"SECURITY_FINDING", "EXPOSURE"}
-            and f.severity in {"CRITICAL", "HIGH", "MEDIUM"}
+    @classmethod
+    def from_findings_doc(cls, doc: dict[str, Any]) -> ScanResult:
+        """Rebuild a ScanResult from ``findings.json`` (explain / risk-diff helpers)."""
+        findings = [
+            Finding(
+                finding_id=str(f.get("finding_id") or ""),
+                rule_id=str(f.get("rule_id") or ""),
+                title=str(f.get("title") or ""),
+                severity=f.get("severity") or "INFORMATIONAL",  # type: ignore[arg-type]
+                confidence=f.get("confidence") or "POTENTIAL",  # type: ignore[arg-type]
+                description=str(f.get("description") or ""),
+                component_ids=list(f.get("component_ids") or []),
+                evidence_ids=list(f.get("evidence_ids") or []),
+                capabilities=list(f.get("capabilities") or []),
+                attacker_control=str(f.get("attacker_control") or ""),
+                entry_point=str(f.get("entry_point") or ""),
+                trust_boundary=str(f.get("trust_boundary") or ""),
+                impact=str(f.get("impact") or ""),
+                missing_controls=list(f.get("missing_controls") or []),
+                recommended_action=str(f.get("recommended_action") or ""),
+                exploitability=str(f.get("exploitability") or "UNKNOWN"),
+                exposure=str(f.get("exposure") or "UNKNOWN"),
+                finding_class=f.get("finding_class") or "SECURITY_FINDING",  # type: ignore[arg-type]
+            )
+            for f in doc.get("findings") or []
         ]
+        evidences = [
+            Evidence(
+                evidence_id=str(e.get("evidence_id") or ""),
+                component_id=e.get("component_id"),
+                evidence_class=e.get("evidence_class") or "SOURCE_STATIC",  # type: ignore[arg-type]
+                verification_status=e.get("verification_status") or "OBSERVED",  # type: ignore[arg-type]
+                file_path=e.get("file_path"),
+                line_start=e.get("line_start"),
+                line_end=e.get("line_end"),
+                content_digest=e.get("content_digest"),
+                collection_method=str(e.get("collection_method") or "deterministic_rule"),
+                source_commit=e.get("source_commit"),
+                observed_at=e.get("observed_at"),
+                limitations=list(e.get("limitations") or []),
+                summary=str(e.get("summary") or ""),
+            )
+            for e in doc.get("evidence_registry") or []
+        ]
+        summary = doc.get("summary") or {}
+        return cls(
+            repository_path=str(doc.get("repository") or ""),
+            commit=doc.get("audited_commit"),
+            collected_at_utc=str(doc.get("collected_at_utc") or ""),
+            inventory={"components": []},
+            graph={},
+            capabilities=[],
+            evidences=evidences,
+            findings=findings,
+            coverage=doc.get("coverage") or {},
+            authority_bearing_count=int(summary.get("authority_bearing_components") or 0),
+            external_destination_count=int(summary.get("external_data_destinations") or 0),
+            product_version=str(doc.get("product_version") or ""),
+            package_version=str(doc.get("package_version") or ""),
+            rules_applied=list(doc.get("rules_applied") or []),
+        )
 
     def to_findings_doc(self) -> dict[str, Any]:
         by_class = self.findings_by_class()

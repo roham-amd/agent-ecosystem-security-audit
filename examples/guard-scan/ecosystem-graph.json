@@ -1,0 +1,103 @@
+{
+  "graph_version": "1.0",
+  "audit_id": "scan-guard",
+  "scope": {
+    "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\tests\\benchmark\\fixtures\\skill-to-mcp-path",
+    "audited_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+    "tree_sha": null
+  },
+  "nodes": [
+    {
+      "node_id": "N-host",
+      "kind": "AgentHost",
+      "label": "skill-to-mcp-path",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ]
+    },
+    {
+      "node_id": "N-001",
+      "kind": "Skill",
+      "label": "untrusted-helper",
+      "component_id": "C-001",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ]
+    },
+    {
+      "node_id": "N-002",
+      "kind": "McpClient",
+      "label": "filesystem-broad",
+      "component_id": "C-002",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ]
+    },
+    {
+      "node_id": "N-003",
+      "kind": "Package",
+      "label": "Cursor",
+      "component_id": "C-003",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "E-001",
+      "kind": "loads",
+      "from_node_id": "N-host",
+      "to_node_id": "N-001",
+      "direction": "directed",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ],
+      "limitations": [
+        "Structural inventory edge only; host binding not independently verified.",
+        "source_path=SKILL.md"
+      ]
+    },
+    {
+      "edge_id": "E-002",
+      "kind": "loads",
+      "from_node_id": "N-host",
+      "to_node_id": "N-002",
+      "direction": "directed",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ],
+      "limitations": [
+        "Structural inventory edge only; host binding not independently verified.",
+        "source_path=.cursor/mcp.json"
+      ]
+    },
+    {
+      "edge_id": "E-003",
+      "kind": "loads",
+      "from_node_id": "N-host",
+      "to_node_id": "N-003",
+      "direction": "directed",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ],
+      "limitations": [
+        "Structural inventory edge only; host binding not independently verified.",
+        "source_path=.cursor/mcp.json"
+      ]
+    }
+  ],
+  "attack_paths": [],
+  "limitations": [
+    "Preflight/audit graph is structural inventory only \u2014 not an attack-path proof.",
+    "All edges use synthetic evidence id E-INV from deterministic discovery.",
+    "Deep audit must replace INFERRED edges with CONFIRMED evidence where claimed."
+  ]
+}

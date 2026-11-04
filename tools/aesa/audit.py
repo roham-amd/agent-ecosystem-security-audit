@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from aesa.inventory.collector import collect_inventory, inventory_to_json
 from aesa.jsonio import write_json, write_text
+from aesa.paths import resolve_default_output_dir
 from aesa.preflight import (
     build_audit_context_md,
     inventory_to_graph,
@@ -239,7 +240,7 @@ def run_audit(
     spec = PROFILES[profile]
 
     target = target.resolve()
-    out_dir = (output_dir or (target / "aesa-out")).resolve()
+    out_dir = (output_dir or resolve_default_output_dir()).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     result = collect_inventory(target)

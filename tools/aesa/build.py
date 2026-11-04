@@ -102,6 +102,29 @@ def check_version_metadata() -> None:
             f"canonical build_tool package version ({expected_pkg})"
         )
 
+    # Release-blocking: release-manifest must agree with VERSION + package version.
+    manifest_path = repo_root() / "canonical" / "release-manifest.json"
+    if not manifest_path.is_file():
+        raise SystemExit("Missing canonical/release-manifest.json")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("product_version") != product:
+        raise SystemExit(
+            f"release-manifest product_version ({manifest.get('product_version')}) != "
+            f"VERSION ({product})"
+        )
+    if expected_pkg and manifest.get("package_version") != expected_pkg:
+        raise SystemExit(
+            f"release-manifest package_version ({manifest.get('package_version')}) != "
+            f"canonical build_tool package version ({expected_pkg})"
+        )
+    for key in ("findings_contract", "baseline_contract", "rule_pack"):
+        if key in versions and manifest.get("contracts", {}).get(key) != versions.get(key):
+            raise SystemExit(
+                f"release-manifest contracts.{key} "
+                f"({manifest.get('contracts', {}).get(key)}) != "
+                f"versions.json {key} ({versions.get(key)})"
+            )
+
 
 def validate_json_schema_document() -> None:
     path = canonical_schema_path()

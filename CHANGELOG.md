@@ -6,7 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [3.4.0] — 2026-11-05
+
+### Added
+
+- `.aesa.yml` repository policy (fail_on, baseline, output_dir, justified suppressions).
+- `docs/POLICY.md`, `docs/COVERAGE-MATRIX.md`, `docs/GUARD-3.4-BACKLOG.md`, `docs/INSTALL.md`.
+- Lightweight agent workflow `prompts/scan-triage.md`.
+- Decision-oriented scan report sections (authority surfaces, residual risk, adapter coverage).
+- Sample policy `examples/aesa.policy.example.yml` and Guard scan sample under `examples/guard-scan/`.
+- Release-manifest version consistency enforced by `aesa build`.
+- Manual-only coverage rows for browser, memory/RAG, model providers, multimodal.
+- `aesa annotate` — GitHub Actions PR file annotations from findings evidence spans.
+- `aesa-gate` Action: auto-load `.aesa.yml`, optional `policy` / empty `fail-on`, annotate step.
+- `aesa pilots run` + `docs/pilots/` adoption harness.
+- PyPI trusted-publishing workflow (`.github/workflows/publish-pypi.yml`) + package metadata.
+- AgentSecBench intake channel docs + GitHub issue template (`docs/INTAKE-CHANNEL.md`).
+
+### Changed
+
+- Product **3.4.0**; tooling **0.7.0**.
+- Default scan/audit output is cwd `./aesa-out` (not `<target>/aesa-out`).
+- Inventory skips `aesa-out*` directories.
+- README / release-manifest north-star: Agent Ecosystem Security Gate.
+- Consumer gate example pins `ref: v3.3.1` instead of floating `main`.
+- Auditor skill defaults to scan+triage; full core prompt is opt-in (`deep`).
+- Primary install path documented as `uv tool install` from Git (PyPI on tagged release).
+- Architecture cleanup: `security/gating.py` single gate semantics; removed dead
+  `policy_findings` / `StructuredClaim`; `ScanResult.from_findings_doc`;
+  deterministic policy YAML (no optional PyYAML); suppression `expires` enforced;
+  `fail_on=any` baseline deltas use `gated_findings_added` (not CAPABILITY keys).
+
+### Notes
+
+- External AgentSecBench **N remains 0** until an independent valid intake arrives; channel is open.
+- SaaS, marketplace, MCP server, and runtime harness remain deferred.
+
 ## [3.3.1] — 2026-11-04
+
 
 ### Added
 

@@ -24,7 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-o",
         "--output-dir",
         type=Path,
-        help="Output directory (default: <path>/aesa-out)",
+        help="Output directory (default: ./aesa-out in the current working directory)",
     )
     scan.add_argument(
         "--baseline",
@@ -39,8 +39,18 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument(
         "--fail-on",
         choices=["never", "high", "any"],
-        default="never",
-        help="Exit non-zero when findings match policy (default: never)",
+        default=None,
+        help="Exit non-zero when findings match policy (default: never, or .aesa.yml)",
+    )
+    scan.add_argument(
+        "--policy",
+        type=Path,
+        help="Path to .aesa.yml (default: discover from target upward)",
+    )
+    scan.add_argument(
+        "--no-policy",
+        action="store_true",
+        help="Ignore .aesa.yml even if present",
     )
 
     explain = sub.add_parser("explain", help="Explain a finding from a prior scan")
@@ -120,7 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-o",
         "--output-dir",
         type=Path,
-        help="Output directory (default: <path>/aesa-out)",
+        help="Output directory (default: ./aesa-out in the current working directory)",
     )
 
     pre = sub.add_parser(
@@ -132,7 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-o",
         "--output-dir",
         type=Path,
-        help="Output directory (default: <path>/aesa-out)",
+        help="Output directory (default: ./aesa-out in the current working directory)",
     )
 
     verify = sub.add_parser("verify", help="Supply-chain verification helpers")
@@ -168,6 +178,51 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sarif_cmd.add_argument("report", type=Path)
     sarif_cmd.add_argument("-o", "--output", type=Path)
+
+    annotate = sub.add_parser(
+        "annotate",
+        help="Emit CI annotations from findings.json (GitHub Actions workflow commands)",
+    )
+    annotate.add_argument(
+        "findings",
+        type=Path,
+        nargs="?",
+        default=Path("aesa-out/findings.json"),
+        help="Path to findings.json (default: aesa-out/findings.json)",
+    )
+    annotate.add_argument(
+        "--format",
+        choices=["github", "text"],
+        default="github",
+        dest="annotate_format",
+        help="Annotation format (default: github)",
+    )
+
+    pilots = sub.add_parser("pilots", help="Run curated pilot-repository Guard scans")
+    pilots_sub = pilots.add_subparsers(dest="pilots_cmd", required=True)
+    pilots_run = pilots_sub.add_parser("run", help="Scan all enabled pilots in the manifest")
+    pilots_run.add_argument(
+        "--manifest",
+        type=Path,
+        help="Pilot manifest path (default: docs/pilots/manifest.json)",
+    )
+    pilots_run.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Results directory (default: docs/pilots/results)",
+    )
+    pilots_run.add_argument(
+        "--only",
+        nargs="+",
+        help="Optional pilot ids to run",
+    )
+    pilots_list = pilots_sub.add_parser("list", help="List pilots from the manifest")
+    pilots_list.add_argument(
+        "--manifest",
+        type=Path,
+        help="Pilot manifest path (default: docs/pilots/manifest.json)",
+    )
 
     hosts = sub.add_parser("hosts", help="List or show agent-host assessment profiles")
     hosts_sub = hosts.add_subparsers(dest="hosts_cmd", required=True)

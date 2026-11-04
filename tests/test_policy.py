@@ -1,0 +1,78 @@
+from pathlib import Path
+
+from aesa.policy import apply_policy_defaults, load_policy
+from aesa.security.scan import run_scan
+
+SAMPLE = """
+version: 1
+policy:
+  mode: enforce
+  fail_on: high
+  output_dir: aesa-out
+  baseline: .aesa/baseline.json
+  require_review:
+    - remote_mcp_endpoint
+  ignore:
+    - rule: AESA-RULE-002
+      path: "**/*"
+      justification: "Test suppression for fixture"
+      owner: tests
+"""
+
+
+def test_load_policy_simple_yaml(tmp_path: Path):
+    path = tmp_path / ".aesa.yml"
+    path.write_text(SAMPLE, encoding="utf-8")
+    policy = load_policy(path)
+    assert policy.mode == "enforce"
+    assert policy.fail_on == "high"
+    assert policy.require_review == ["remote_mcp_endpoint"]
+    assert len(policy.suppressions) == 1
+    assert policy.suppressions[0].rule == "AESA-RULE-002"
+    assert policy.suppressions[0].justification.startswith("Test suppression")
+
+
+def test_apply_policy_defaults_cli_wins():
+    path_policy = None
+    assert (
+        apply_policy_defaults(policy=path_policy, fail_on="high", fail_on_from_cli=True) == "high"
+    )
+    assert apply_policy_defaults(policy=path_policy, fail_on="never", fail_on_from_cli=True) is None
+
+
+def test_suppression_filters_findings(tmp_path: Path):
+    root = (
+        Path(__file__).resolve().parents[1]
+        / "tests"
+        / "benchmark"
+        / "fixtures"
+        / "skill-to-mcp-path"
+    )
+    policy_path = tmp_path / ".aesa.yml"
+    policy_path.write_text(SAMPLE, encoding="utf-8")
+    policy = load_policy(policy_path)
+    out = tmp_path / "out"
+    scan, payload, code = run_scan(root, output_dir=out, policy=policy, fail_on=None)
+    assert code == 0
+    assert not any(f.rule_id == "AESA-RULE-002" for f in scan.findings)
+    assert payload.get("suppressions")
+    assert (out / "suppressions.json").is_file()
+
+
+def test_default_output_not_under_target(tmp_path: Path, monkeypatch):
+    root = (
+        Path(__file__).resolve().parents[1]
+        / "tests"
+        / "benchmark"
+        / "fixtures"
+        / "benign-skill-only"
+    )
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    monkeypatch.chdir(cwd)
+    scan, payload, code = run_scan(root)
+    assert code == 0
+    out = Path(payload["output_dir"])
+    assert out == (cwd / "aesa-out").resolve()
+    assert not (root / "aesa-out").exists()
+    assert scan.findings is not None

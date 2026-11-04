@@ -7,7 +7,21 @@ from typing import Any
 
 from aesa.inventory.limits import CollectorLimits
 
-_SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".tox", "dist", "build"}
+_SKIP_DIRS = {
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".tox",
+    "dist",
+    "build",
+    # Guard/self outputs — never re-inventory scanner artifacts as target content
+    "aesa-out",
+    "aesa-out-smoke",
+    "aesa-out-test",
+    "aesa-out-demo",
+}
 
 
 def is_under_root(path: Path, root: Path) -> bool:

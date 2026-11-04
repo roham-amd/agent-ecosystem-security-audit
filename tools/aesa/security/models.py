@@ -119,27 +119,14 @@ class Finding:
 
 @dataclass(slots=True)
 class Relationship:
+    """Component-to-component link for ecosystem graphs (extensibility surface)."""
+
     relationship_id: str
     kind: str
     from_component_id: str
     to_component_id: str
     evidence_ids: list[str] = field(default_factory=list)
     status: VerificationStatus = "POTENTIAL"
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-@dataclass(slots=True)
-class StructuredClaim:
-    """Intermediate agent claim that a deterministic validator can check."""
-
-    claim: str
-    status: VerificationStatus
-    evidence_ids: list[str]
-    impact: str = ""
-    missing_evidence: list[str] = field(default_factory=list)
-    component_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

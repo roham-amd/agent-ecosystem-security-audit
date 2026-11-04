@@ -134,6 +134,27 @@ Authoritative release contract: [`../canonical/release-manifest.json`](../canoni
 | Diverse set meeting closure minimum (≥3 configs) | Open |
 | Feature / IDE / MCP / SaaS release | Deferred until evidence warrants |
 
+## Milestone L — AESA Guard productization (3.4.0)
+
+North-star: local-first scanner + PR change gate. Detailed backlog:
+[`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md).
+
+| Item | Status |
+| --- | --- |
+| Product identity as Agent Ecosystem Security Gate | Done (3.4.0) |
+| Default output outside target tree | Done |
+| `.aesa.yml` policy + suppressions | Done |
+| Coverage matrix doc + report adapter table | Done |
+| Release-manifest version gate in `aesa build` | Done |
+| Pin consumer Action example to release tag | Done |
+| Scan-triage prompt + skill simplification | Done |
+| Sample Guard scan artifacts | Done |
+| `uv tool install` from Git + PyPI OIDC workflow | Done (git) / PyPI awaits trusted publisher |
+| Action auto-load `.aesa.yml` + PR annotations | Done |
+| Pilot harness (`aesa pilots run`) | Done |
+| First external AgentSecBench intake | Channel open; N=0 |
+| Hosted SaaS / marketplace / MCP server | Deferred |
+
 ### Deliberately avoided (next 90 days)
 
 - SaaS dashboard / marketplace / certification badges
@@ -141,10 +162,12 @@ Authoritative release contract: [`../canonical/release-manifest.json`](../canoni
 - Tooling stack rewrite
 - Treating every capability observation as a vulnerability
 - Claiming comprehensive security coverage or certification
+- Expanding the prompt framework as the primary investment
 
 ## Breaking change policy
 
-- Report contract `audit_version: "1.0"` unchanged through 3.1.x.
+- Report contract `audit_version: "1.0"` unchanged through 3.x.
 - Findings contract **1.1** adds `finding_class` and richer evidence fields (additive).
 - Baseline contract **1.1** adds fingerprints (backward compatible with path keys).
-- Product 3.1.x keeps Guard `scan` as primary; `audit` remains optional deep assessment.
+- Product 3.4 keeps Guard `scan` as primary; `audit` remains optional deep assessment.
+- Default output directory moves from `<target>/aesa-out` to cwd `./aesa-out` (breaking for scripts that assumed target-relative defaults without `-o`).

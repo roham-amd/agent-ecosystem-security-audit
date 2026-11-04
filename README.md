@@ -1,25 +1,79 @@
 # AESA Guard
 
-**Agent Ecosystem Security Assessment — Guard**
+**Agent Ecosystem Security Gate**
 
-Local-first security intelligence and change gate for AI-agent ecosystems.
+Find and gate risky changes to what your AI agents can access, execute,
+communicate with, and delegate.
 
 > **Trust Nothing. Verify Everything. Secure Every Agent.**
 
-AESA Guard discovers what your agents can access, execute, and trust; emits
-evidence-backed deterministic observations; and gates dangerous changes in CI.
-Deep semantic review remains optional via an AI coding agent under hard
-passive-audit guardrails.
+AESA Guard is a local-first security scanner and PR change gate for AI-agent
+ecosystems. It discovers authority surfaces, emits evidence-backed deterministic
+observations, and blocks dangerous changes in CI. Deep semantic review remains
+optional via an AI coding agent under hard passive-audit guardrails.
 
-**Product positioning (3.1):** One primary command (`aesa scan`), deterministic
-security rules, baselines/risk diffs, SARIF, and a CI gate — plus the existing
-methodology, modules, schemas, and auditor skill.
+**Product positioning (3.4):** One primary command (`aesa scan`), deterministic
+security rules, `.aesa.yml` policy, baselines/risk diffs, SARIF, and a CI gate —
+plus the existing methodology, modules, schemas, and optional auditor skill.
 
 It is **not** a certification authority, marketplace badge, runtime sandbox, or
 substitute for organizational risk acceptance. Deterministic findings are
 `OBSERVED`/`POTENTIAL` evidence, not confirmed exploits.
 
 **Documentation map:** [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md)
+
+---
+
+## Job to be done
+
+> Before I install, merge, deploy, or upgrade an AI-agent integration, tell me
+> what authority it introduces, who receives that authority, what data can flow
+> through it, and what materially changed.
+
+---
+
+## 10-minute first experience
+
+```bash
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@main#subdirectory=tools
+aesa scan /path/to/target-repo
+```
+
+Or from a clone: `cd tools && uv sync --locked && uv run aesa scan /path/to/target-repo`.
+
+Full install options: [`docs/INSTALL.md`](docs/INSTALL.md).
+
+Artifacts default to **`./aesa-out`** in your current working directory (not
+inside the target repository), keeping the target tree read-only by default.
+
+You get a terminal security summary: authority surfaces, external destinations,
+deterministic findings with evidence paths, adapter coverage, and explicit
+`NOT VERIFIED` gaps.
+
+| Artifact | Purpose |
+| --- | --- |
+| `findings.json` | Guard findings + evidence registry + capabilities |
+| `findings.sarif.json` | SARIF 2.1.0 for CI |
+| `inventory.json` | Component inventory + coverage |
+| `ecosystem-graph.json` | Structural graph seed |
+| `scan-summary.txt` / `scan-report.md` | Human decision reports |
+| `profile.json` | Scan metadata |
+
+```bash
+uv run aesa explain F-001 -o aesa-out
+uv run aesa baseline save -o aesa-out
+```
+
+| Next step | Doc |
+| --- | --- |
+| Scan pipeline details | [`docs/GUARD-SCAN.md`](docs/GUARD-SCAN.md) |
+| Coverage matrix | [`docs/COVERAGE-MATRIX.md`](docs/COVERAGE-MATRIX.md) |
+| Policy file | [`docs/POLICY.md`](docs/POLICY.md) |
+| Rule catalog | [`docs/SECURITY-RULES.md`](docs/SECURITY-RULES.md) |
+| CLI flags | [`docs/CLI-REFERENCE.md`](docs/CLI-REFERENCE.md) |
+| Optional AI deep review | [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md) |
+| Short primer | [`docs/AESA-GATE.md`](docs/AESA-GATE.md) |
+| 3.4 productization backlog | [`docs/GUARD-3.4-BACKLOG.md`](docs/GUARD-3.4-BACKLOG.md) |
 
 ---
 
@@ -48,43 +102,6 @@ A positive answer to one question does **not** imply the others.
 
 ---
 
-## 10-minute first experience
-
-```bash
-cd tools && uv sync --locked
-uv run aesa scan /path/to/target-repo
-```
-
-You get a terminal security summary: components, authority-bearing surfaces,
-external destinations, deterministic findings with evidence paths, and coverage
-gaps. Artifacts land in `aesa-out/`:
-
-| Artifact | Purpose |
-| --- | --- |
-| `findings.json` | Guard findings + evidence registry + capabilities |
-| `findings.sarif.json` | SARIF 2.1.0 for CI |
-| `inventory.json` | Component inventory + coverage |
-| `ecosystem-graph.json` | Structural graph seed |
-| `scan-summary.txt` / `scan-report.md` | Human reports |
-| `profile.json` | Scan metadata |
-
-```bash
-uv run aesa explain F-001 -o aesa-out
-uv run aesa baseline save -o aesa-out
-```
-
-| Next step | Doc |
-| --- | --- |
-| Scan pipeline details | [`docs/GUARD-SCAN.md`](docs/GUARD-SCAN.md) |
-| Rule catalog | [`docs/SECURITY-RULES.md`](docs/SECURITY-RULES.md) |
-| CLI flags | [`docs/CLI-REFERENCE.md`](docs/CLI-REFERENCE.md) |
-| Optional AI deep review | [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md) |
-| Short primer | [`docs/AESA-GATE.md`](docs/AESA-GATE.md) |
-| Product contract | [`docs/AESA-3.0-PRODUCT-SPEC.md`](docs/AESA-3.0-PRODUCT-SPEC.md) |
-| 3.0 → 3.1 migration | [`docs/MIGRATION-3.1.md`](docs/MIGRATION-3.1.md) |
-
----
-
 ## Repository layout
 
 ```text
@@ -94,37 +111,19 @@ agent-ecosystem-security-audit/
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 ├── CHANGELOG.md
-├── VERSION                      # product version (3.3.1)
-├── Dockerfile                   # python:3.15.2-slim-trixie@sha256 + uv
+├── VERSION                      # product version (3.4.0)
+├── Dockerfile
 ├── docker-compose.yml
-├── canonical/                   # versions.json, schemas, prompt manifest
+├── canonical/                   # versions.json, schemas, release-manifest
 ├── tools/                       # aesa CLI (scan, audit, validate, …)
 ├── skills/                      # Cursor / Claude Code auditor skill
 ├── tests/                       # corpus + AgentSecBench + pytest
 ├── control-packs/               # control crosswalks (pilot)
 ├── prompts/                     # procedure kit (load on demand)
-│   ├── 00-OPERATOR-GUIDE.md
-│   ├── 01-core-prompt.md
-│   ├── 02-modules.md
-│   ├── 03-report-contract.md
-│   ├── 04-passive-guardrails.md
-│   ├── audit.md
-│   └── audit.full.md            # generated monolith
-├── modules/                     # specialized checklists (see modules/README.md)
-├── schemas/                     # published JSON Schemas (see schemas/README.md)
-├── examples/
+├── modules/                     # specialized checklists
+├── schemas/                     # published JSON Schemas
+├── examples/                    # sample audit + Guard scan artifacts
 ├── docs/                        # see docs/DOCUMENTATION-INDEX.md
-│   ├── DOCUMENTATION-INDEX.md
-│   ├── GUARD-SCAN.md
-│   ├── CLI-REFERENCE.md
-│   ├── SECURITY-RULES.md
-│   ├── EVIDENCE-MODEL.md
-│   ├── AESA-GATE.md
-│   ├── usage.md
-│   ├── docker-agent-audit.md
-│   ├── threat-scenarios.md
-│   ├── recipes/
-│   └── architecture/
 └── .github/actions/aesa-gate/   # CI Guard Action
 ```
 
@@ -136,66 +135,36 @@ agent-ecosystem-security-audit/
 
 1. `uv sync --locked` in `tools/`, then `aesa scan <target>`.
 2. Review `aesa-out/scan-summary.txt` and `findings.json`.
-3. Attach [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md) + [`prompts/04-passive-guardrails.md`](prompts/04-passive-guardrails.md).
-4. Load only matching [`modules/`](modules/) (index: [`modules/README.md`](modules/README.md)).
-5. Emit structured claims; validate with `aesa validate claim`.
-6. Produce narrative + JSON; validate with `aesa validate report`.
+3. Optionally add `.aesa.yml` policy (see [`docs/POLICY.md`](docs/POLICY.md)).
+4. Attach [`skills/aesa-auditor/SKILL.md`](skills/aesa-auditor/SKILL.md) + [`prompts/04-passive-guardrails.md`](prompts/04-passive-guardrails.md) for deeper review.
+5. Load only matching [`modules/`](modules/) (index: [`modules/README.md`](modules/README.md)).
+6. Emit structured claims; validate with `aesa validate claim`.
+7. Produce narrative + JSON; validate with `aesa validate report`.
 
 Operator guide: [`docs/usage.md`](docs/usage.md). Evidence rules: [`docs/EVIDENCE-MODEL.md`](docs/EVIDENCE-MODEL.md).
 
 ### B. Kit-only (no Python)
 
 1. Read [`docs/usage.md`](docs/usage.md) and [`prompts/00-OPERATOR-GUIDE.md`](prompts/00-OPERATOR-GUIDE.md).
-2. Attach guardrails + core prompt; fill `KIT_DIR` / `WORK_DIR`.
-3. For a single file, use [`prompts/audit.full.md`](prompts/audit.full.md).
+2. Attach guardrails + [`prompts/scan-triage.md`](prompts/scan-triage.md) for scan-first triage.
+3. For full deep procedure, use [`prompts/01-core-prompt.md`](prompts/01-core-prompt.md) or [`prompts/audit.full.md`](prompts/audit.full.md).
 
 ### C. Audit profiles (agent handoff package)
 
 ```bash
-uv run aesa audit /path/to/target --profile quick|standard|deployment
+uv run aesa audit /path/to/target --profile standard
 ```
 
 Use when you need `audit-context.md` stage checklists; prefer **scan** for security observations first.
-
-### Tooling commands
-
-Stack: **uv + pyproject.toml + uv.lock + Ruff + Pytest + mypy** — [`tools/README.md`](tools/README.md).  
-Full CLI: [`docs/CLI-REFERENCE.md`](docs/CLI-REFERENCE.md).
-
-```bash
-cd tools && uv sync --locked
-uv run aesa scan /path/to/target-repo
-uv run aesa explain F-001 -o ../aesa-out
-uv run aesa baseline save -o ../aesa-out
-uv run aesa audit /path/to/target-repo --profile standard
-uv run aesa inventory /path/to/target-repo
-uv run aesa validate report ../examples/sample-audit-summary.json
-uv run aesa validate claim path/to/claim.json
-uv run aesa diff risk baseline.json findings.json
-uv run aesa export sarif findings.json
-uv run aesa corpus run
-uv run aesa benchmark run
-uv run --locked pytest -q ../tests
-```
-
-### Docker + AI agent (Cursor, Claude Code, Codex, …)
-
-Walkthrough: [`docs/docker-agent-audit.md`](docs/docker-agent-audit.md).
-
-```bash
-docker compose build
-TARGET=/path/to/target-repo docker compose run --rm aesa \
-  scan /work -o /work/aesa-out
-```
-
-Then attach the auditor skill and hand the agent `aesa-out/`.
 
 ### CI gate
 
 Composite Action [`.github/actions/aesa-gate`](.github/actions/aesa-gate) + example
 [`docs/aesa-consumer-gate.example.yml`](docs/aesa-consumer-gate.example.yml).
 
-Supports `mode=scan`, `fail-on`, baseline risk delta, coverage reporting, and SARIF path notes. Inputs are passed via environment variables (shell-injection hardened).
+**Pin an immutable AESA release tag or commit** — do not float on `main`.
+
+Supports `mode=scan`, `fail-on`, baseline risk delta, coverage reporting, and SARIF path notes.
 
 ### Workflow modes
 
@@ -205,8 +174,6 @@ Supports `mode=scan`, `fail-on`, baseline risk delta, coverage reporting, and SA
 | Quick inventory / audit quick | Catalog / first look handoff | Stages 0–2 |
 | Standard assessment | Selected authorized components | Stages 0–8 as evidence allows |
 | Deployment suitability | Host + data sensitivity declared | Full gate worksheet |
-
-**Important:** A single GitHub URL does **not** authorize deep audit of every linked project.
 
 ---
 
@@ -219,12 +186,10 @@ Supports `mode=scan`, `fail-on`, baseline risk delta, coverage reporting, and SA
 - Prefer `INSUFFICIENT EVIDENCE` over unsupported assurance or unsupported accusation.
 - Never execute, install, or contact target-controlled services during a passive audit.
 - Never request or expose production secrets.
-- Narrative audit reports use **English** (`REPORT_LANGUAGE: English`).
 - Do not approve sensitive production use while a material hard gate is `FAIL` or `NOT VERIFIED`.
 - Inventory / scan without coverage context is **not** a security clearance.
 - Do not invent a single numeric trust score; keep severity, confidence, and coverage separate.
-
-Procedure kit: [`prompts/`](prompts/). Threat scenarios: [`docs/threat-scenarios.md`](docs/threat-scenarios.md). Toolchain threats: [`docs/toolchain-threat-model.md`](docs/toolchain-threat-model.md).
+- The AI auditor explains and investigates; it is never the evidence source of truth.
 
 ---
 
@@ -233,13 +198,11 @@ Procedure kit: [`prompts/`](prompts/). Threat scenarios: [`docs/threat-scenarios
 | Claim | Status |
 | --- | --- |
 | Automated vulnerability scanner that proves systems are safe | No |
-| Validated LLM detection benchmark (precision/recall across models) | No (AgentSecBench fixtures only; LLM runner deferred) |
+| Validated LLM detection benchmark (precision/recall across models) | No (AgentSecBench fixtures only; live models deferred; external N=0) |
 | Runtime malware detonation sandbox | No |
 | Compliance certification (SOC 2, ISO, HIPAA, GDPR, …) | No |
 | Marketplace “certified secure” badge | No |
 | Replacement for host IAM, network policy, or risk acceptance | No |
-
-AESA helps humans and audit agents produce **evidence-bounded** decisions about exact identities, refs, versions, artifacts, hosts, and data contexts.
 
 ---
 
@@ -247,8 +210,8 @@ AESA helps humans and audit agents produce **evidence-bounded** decisions about 
 
 | Kind | Current | Meaning |
 | --- | --- | --- |
-| Project / package release | **3.3.1** | AESA Guard product release (`VERSION`) |
-| Tooling (`aesa-tools`) | **0.6.1** | CLI / collectors / Guard rules / hosts |
+| Project / package release | **3.4.0** | AESA Guard product line (`VERSION`) |
+| Tooling (`aesa-tools`) | **0.7.0** | CLI / collectors / Guard rules / policy |
 | Audit procedure | **1.0** (`prompts/`) | Methodology / prompt / JSON contract |
 | AgentSecBench | **0.3.0** / LLM **0.3.0** | Deterministic + governed offline LLM scoring |
 | Report / graph schemas | **1.0** | See [`schemas/README.md`](schemas/README.md) |
@@ -272,9 +235,8 @@ See [`SECURITY.md`](SECURITY.md).
 ## Citation
 
 ```text
-AESA Guard — Agent Ecosystem Security Assessment
-Project: 3.3.1
+AESA Guard — Agent Ecosystem Security Gate
+Project: 3.4.0
 Procedure: 1.0
 https://github.com/roham-amd/agent-ecosystem-security-audit
-Tag: v3.3.1
 ```

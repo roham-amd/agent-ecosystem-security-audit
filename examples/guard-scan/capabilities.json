@@ -1,0 +1,44 @@
+{
+  "capabilities": [
+    {
+      "kind": "modify_agent_instructions",
+      "status": "OBSERVED",
+      "component_id": "C-001",
+      "evidence_ids": [
+        "E-INV-C-001"
+      ],
+      "notes": "Skills inject instructions into the agent.",
+      "origin": "TYPE_DEFAULT"
+    },
+    {
+      "kind": "execute_commands",
+      "status": "OBSERVED",
+      "component_id": "C-002",
+      "evidence_ids": [
+        "E-INV-C-002"
+      ],
+      "notes": "Derived from priority hint `local_command_transport`.",
+      "origin": "DECLARED"
+    },
+    {
+      "kind": "read_files",
+      "status": "POTENTIAL",
+      "component_id": "C-002",
+      "evidence_ids": [
+        "E-INV-C-002"
+      ],
+      "notes": "Derived from priority hint `broad_or_relative_path_args`.",
+      "origin": "POTENTIAL"
+    },
+    {
+      "kind": "invoke_tools",
+      "status": "OBSERVED",
+      "component_id": "C-002",
+      "evidence_ids": [
+        "E-INV-C-002"
+      ],
+      "notes": "MCP registration exposes tool surface to the host agent.",
+      "origin": "TYPE_DEFAULT"
+    }
+  ]
+}

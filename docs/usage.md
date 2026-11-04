@@ -2,7 +2,7 @@
 
 AESA Guard is an **evidence-first security intelligence toolkit** for AI-agent ecosystems: deterministic discovery and security rules, a versioned assessment procedure, specialized modules, report schemas, CI gating, and an optional AI auditor skill.
 
-Release **3.3.1** centers on **`aesa scan`**. Profile-based `aesa audit` remains for agent handoff packages. AESA is **not** a certification authority. Deterministic findings are `OBSERVED`/`POTENTIAL` evidence observations classified as capability, exposure, or security finding; judgment belongs to a human-authorized reviewer.
+Release **3.4.0** centers on **`aesa scan`** as the Agent Ecosystem Security Gate. Profile-based `aesa audit` remains for agent handoff packages. Optional `.aesa.yml` sets fail-on / baseline / suppressions. AESA is **not** a certification authority. Deterministic findings are `OBSERVED`/`POTENTIAL` evidence observations classified as capability, exposure, or security finding; judgment belongs to a human-authorized reviewer.
 
 | Doc | Role |
 | --- | --- |

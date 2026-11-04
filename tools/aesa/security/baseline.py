@@ -181,12 +181,18 @@ def diff_against_baseline(scan: ScanResult, baseline: dict[str, Any]) -> dict[st
     added_findings = sorted(current_findings - normalized_base)
     removed_findings = sorted(normalized_base - current_findings)
 
+    from aesa.security.gating import is_gate_finding, is_high_gate_finding
+
+    added_set = set(added_findings)
     high_new = [
         f.to_dict()
         for f in scan.findings
-        if _finding_identity(f, scan.inventory) in set(added_findings)
-        and f.severity in {"CRITICAL", "HIGH"}
-        and f.finding_class in {"SECURITY_FINDING", "EXPOSURE"}
+        if _finding_identity(f, scan.inventory) in added_set and is_high_gate_finding(f)
+    ]
+    gated_new = [
+        f.to_dict()
+        for f in scan.findings
+        if _finding_identity(f, scan.inventory) in added_set and is_gate_finding(f)
     ]
 
     return {
@@ -208,6 +214,7 @@ def diff_against_baseline(scan: ScanResult, baseline: dict[str, Any]) -> dict[st
             "components_modified": len(modified),
             "findings_added": len(added_findings),
             "findings_removed": len(removed_findings),
+            "gated_findings_added": len(gated_new),
             "high_or_critical_findings_added": len(high_new),
             "path_keys_added": len(
                 {

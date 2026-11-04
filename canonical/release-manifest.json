@@ -1,12 +1,12 @@
 {
   "manifest_version": "1.0",
   "product": "AESA Guard",
-  "product_version": "3.3.1",
+  "product_version": "3.4.0",
   "package_name": "aesa-tools",
-  "package_version": "0.6.1",
+  "package_version": "0.7.0",
   "primary_command": "aesa scan",
-  "north_star": "Continuous Agent Authority Security Gate",
-  "positioning": "Know what your AI agents can access, execute, and trust. Detect dangerous changes before they reach production.",
+  "north_star": "Agent Ecosystem Security Gate",
+  "positioning": "Find and gate risky changes to what your AI agents can access, execute, communicate with, and delegate.",
   "release_status": "released",
   "contracts": {
     "audit_procedure": "1.0",
@@ -17,17 +17,20 @@
     "rule_quality_pack": "1.0.0",
     "agent_benchmark": "0.3.0",
     "agent_benchmark_llm": "0.3.0",
-    "host_profiles": "1.0.0"
+    "host_profiles": "1.0.0",
+    "policy_contract": "1.0"
   },
   "interfaces": {
     "cli": true,
     "github_action": true,
+    "policy_file": true,
     "prompt_kit": "optional_deep_assessment",
     "host_profiles": true,
     "ide": "deferred",
     "mcp_server": "deferred",
     "runtime_validation": "design_only",
-    "hosted_saas": "deferred"
+    "hosted_saas": "deferred",
+    "pypi": "git_installable_oidc_workflow_ready"
   },
   "assessment_model": {
     "capability": "What a component can potentially do",

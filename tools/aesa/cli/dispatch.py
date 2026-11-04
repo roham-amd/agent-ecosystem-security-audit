@@ -22,11 +22,14 @@ from aesa.benchmark.runner import run_benchmark
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
+from aesa.export.annotate import render_github_annotations, render_text_annotations
 from aesa.export.sarif import report_to_sarif
 from aesa.hosts.profiles import get_host_profile, list_host_profiles
 from aesa.inventory.collector import collect_inventory, inventory_to_json
 from aesa.jsonio import print_json, read_json, write_json
 from aesa.lint import run_ruff
+from aesa.pilots.runner import load_manifest, run_pilots
+from aesa.policy import apply_policy_defaults, discover_policy_file, load_policy
 from aesa.prompt_build import write_monolith
 from aesa.rules_quality.runner import run_rule_quality
 from aesa.security.baseline import (
@@ -36,7 +39,6 @@ from aesa.security.baseline import (
     save_baseline,
 )
 from aesa.security.engine import ScanResult, run_security_scan
-from aesa.security.models import Finding
 from aesa.security.report import render_finding_explanation
 from aesa.security.scan import run_scan
 from aesa.supply_chain.digest import sha256_file, verify_file_digest
@@ -95,6 +97,10 @@ def dispatch(args: argparse.Namespace) -> int:
             return _cmd_diff(args)
         case "export":
             return _cmd_export(args)
+        case "annotate":
+            return _cmd_annotate(args)
+        case "pilots":
+            return _cmd_pilots(args)
         case "hosts":
             return _cmd_hosts(args)
         case "corpus":
@@ -110,88 +116,43 @@ def dispatch(args: argparse.Namespace) -> int:
 
 
 def _cmd_scan(args: argparse.Namespace) -> int:
-    fail_on = None if args.fail_on == "never" else args.fail_on
+    policy = None
+    if not getattr(args, "no_policy", False):
+        policy_path = getattr(args, "policy", None) or discover_policy_file(args.path)
+        if policy_path is not None:
+            policy = load_policy(policy_path)
+
+    fail_on = apply_policy_defaults(
+        policy=policy,
+        fail_on=args.fail_on,
+        fail_on_from_cli=args.fail_on is not None,
+    )
+    output_dir = args.output_dir
+    if output_dir is None and policy is not None and policy.output_dir is not None:
+        output_dir = policy.output_dir
+    baseline = args.baseline
+    if baseline is None and policy is not None and policy.baseline is not None:
+        baseline = policy.baseline
+
     _scan, payload, code = run_scan(
         args.path,
-        output_dir=args.output_dir,
-        baseline=args.baseline,
+        output_dir=output_dir,
+        baseline=baseline,
         save_baseline_path=args.save_baseline,
         fail_on=fail_on,
+        policy=policy,
     )
     print(payload["summary"])
     if payload.get("risk_delta"):
         print_json({"risk_delta": payload["risk_delta"]})
     if payload.get("baseline_saved"):
         print(f"Baseline saved: {payload['baseline_saved']}")
+    if payload.get("policy_path"):
+        print(f"Policy: {payload['policy_path']}")
+    if payload.get("suppressions"):
+        print(f"Suppressions applied: {len(payload['suppressions'])}")
     print(f"Artifacts: {payload['output_dir']}")
     return code
-
-
-def _scan_from_findings_doc(doc: dict[str, Any]) -> ScanResult:
-    """Rebuild a minimal ScanResult for explain from findings.json."""
-    findings = [
-        Finding(
-            finding_id=str(f.get("finding_id") or ""),
-            rule_id=str(f.get("rule_id") or ""),
-            title=str(f.get("title") or ""),
-            severity=f.get("severity") or "INFORMATIONAL",  # type: ignore[arg-type]
-            confidence=f.get("confidence") or "POTENTIAL",  # type: ignore[arg-type]
-            description=str(f.get("description") or ""),
-            component_ids=list(f.get("component_ids") or []),
-            evidence_ids=list(f.get("evidence_ids") or []),
-            capabilities=list(f.get("capabilities") or []),
-            attacker_control=str(f.get("attacker_control") or ""),
-            entry_point=str(f.get("entry_point") or ""),
-            trust_boundary=str(f.get("trust_boundary") or ""),
-            impact=str(f.get("impact") or ""),
-            missing_controls=list(f.get("missing_controls") or []),
-            recommended_action=str(f.get("recommended_action") or ""),
-            exploitability=str(f.get("exploitability") or "UNKNOWN"),
-            exposure=str(f.get("exposure") or "UNKNOWN"),
-            finding_class=f.get("finding_class") or "SECURITY_FINDING",  # type: ignore[arg-type]
-        )
-        for f in doc.get("findings") or []
-    ]
-    from aesa.security.models import Evidence
-
-    evidences = [
-        Evidence(
-            evidence_id=str(e.get("evidence_id") or ""),
-            component_id=e.get("component_id"),
-            evidence_class=e.get("evidence_class") or "SOURCE_STATIC",  # type: ignore[arg-type]
-            verification_status=e.get("verification_status") or "OBSERVED",  # type: ignore[arg-type]
-            file_path=e.get("file_path"),
-            line_start=e.get("line_start"),
-            line_end=e.get("line_end"),
-            content_digest=e.get("content_digest"),
-            collection_method=str(e.get("collection_method") or "deterministic_rule"),
-            source_commit=e.get("source_commit"),
-            observed_at=e.get("observed_at"),
-            limitations=list(e.get("limitations") or []),
-            summary=str(e.get("summary") or ""),
-        )
-        for e in doc.get("evidence_registry") or []
-    ]
-    return ScanResult(
-        repository_path=str(doc.get("repository") or ""),
-        commit=doc.get("audited_commit"),
-        collected_at_utc=str(doc.get("collected_at_utc") or ""),
-        inventory={"components": []},
-        graph={},
-        capabilities=[],
-        evidences=evidences,
-        findings=findings,
-        coverage=doc.get("coverage") or {},
-        authority_bearing_count=int(
-            (doc.get("summary") or {}).get("authority_bearing_components") or 0
-        ),
-        external_destination_count=int(
-            (doc.get("summary") or {}).get("external_data_destinations") or 0
-        ),
-        product_version=str(doc.get("product_version") or ""),
-        package_version=str(doc.get("package_version") or ""),
-        rules_applied=list(doc.get("rules_applied") or []),
-    )
 
 
 def _cmd_explain(args: argparse.Namespace) -> int:
@@ -200,7 +161,7 @@ def _cmd_explain(args: argparse.Namespace) -> int:
         print(f"Missing findings.json at {findings_path}. Run `aesa scan` first.")
         return 1
     doc = read_json(findings_path)
-    scan = _scan_from_findings_doc(doc)
+    scan = ScanResult.from_findings_doc(doc)
     finding = scan.finding_by_id(args.finding_id)
     if finding is None:
         print(f"Finding {args.finding_id} not found in {findings_path}")
@@ -217,7 +178,9 @@ def _cmd_baseline(args: argparse.Namespace) -> int:
                 print(f"Missing {findings_path}; run `aesa scan` first.")
                 return 1
             doc = read_json(findings_path)
-            scan = run_security_scan(Path(doc.get("repository") or args.output_dir.parent))
+            # Prefer re-scan of the recorded repository so fingerprints stay current.
+            repo = Path(str(doc.get("repository") or ""))
+            scan = run_security_scan(repo) if repo.is_dir() else ScanResult.from_findings_doc(doc)
             dest = args.path or baseline_path(args.output_dir)
             saved = save_baseline(scan, dest)
             print(
@@ -349,11 +312,11 @@ def _cmd_diff(args: argparse.Namespace) -> int:
             return 0
         case "risk":
             findings = read_json(args.findings)
-            scan = _scan_from_findings_doc(findings)
-            # Prefer re-scan if repository path exists for richer component keys.
             repo = findings.get("repository")
             if repo and Path(repo).is_dir():
                 scan = run_security_scan(Path(repo))
+            else:
+                scan = ScanResult.from_findings_doc(findings)
             print_json(diff_against_baseline(scan, load_baseline(args.baseline)))
             return 0
         case _:
@@ -371,6 +334,69 @@ def _cmd_export(args: argparse.Namespace) -> int:
     else:
         print_json(sarif_doc)
     return 0
+
+
+def _cmd_annotate(args: argparse.Namespace) -> int:
+    if not args.findings.is_file():
+        print(f"Findings not found: {args.findings}")
+        return 1
+    doc = read_json(args.findings)
+    if args.annotate_format == "text":
+        text = render_text_annotations(doc)
+    else:
+        text = render_github_annotations(doc)
+    if text:
+        print(text, end="" if text.endswith("\n") else "\n")
+    else:
+        print("No SECURITY_FINDING/EXPOSURE annotations.")
+    return 0
+
+
+def _cmd_pilots(args: argparse.Namespace) -> int:
+    match args.pilots_cmd:
+        case "list":
+            manifest = load_manifest(args.manifest)
+            print_json(
+                {
+                    "pilots": [
+                        {
+                            "id": p.get("id"),
+                            "path": p.get("path"),
+                            "kind": p.get("kind"),
+                            "enabled": p.get("enabled", True),
+                            "notes": p.get("notes"),
+                        }
+                        for p in manifest.get("pilots") or []
+                    ]
+                }
+            )
+            return 0
+        case "run":
+            report = run_pilots(
+                manifest_path=args.manifest,
+                output_dir=args.output_dir,
+                only=args.only,
+            )
+            print_json(
+                {
+                    "ok_count": report["ok_count"],
+                    "pilot_count": report["pilot_count"],
+                    "summary": report.get("summary_md"),
+                    "results": [
+                        {
+                            "id": r.get("id"),
+                            "status": r.get("status"),
+                            "finding_count": r.get("finding_count"),
+                            "component_count": r.get("component_count"),
+                        }
+                        for r in report["results"]
+                    ],
+                }
+            )
+            hard_fail = {"missing", "error"}
+            return 1 if any(r.get("status") in hard_fail for r in report["results"]) else 0
+        case _:
+            return 2
 
 
 def _cmd_hosts(args: argparse.Namespace) -> int:

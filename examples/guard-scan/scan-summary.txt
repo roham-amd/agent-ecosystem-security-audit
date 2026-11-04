@@ -1,0 +1,87 @@
+AESA Guard — Agent Ecosystem Security Gate
+Product: AESA Guard 3.4.0  (tooling 0.7.0)
+Repository: C:\Users\rohaa\Projects\agent-ecosystem-security-audit\tests\benchmark\fixtures\skill-to-mcp-path
+Commit: 26fd1f25f13e10f091b96afe026963d6cfb6bf6f
+
+DECISION SUMMARY
+  Components discovered              3
+  Authority-bearing components       1
+  External connections               0
+  High-priority review items         1
+  Unverified control surfaces        4
+
+OBSERVATION CLASSES
+  Security findings                  1
+  Exposure observations              0
+  Capability observations            0
+
+AUTHORITY SURFACES (review required)
+  [HIGH] F-001  MCP local command with broad filesystem arguments
+      class: SECURITY_FINDING  confidence: POTENTIAL
+      evidence: .cursor/mcp.json:4
+      action: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+
+EXAMPLE AUTHORITY PATH
+  .cursor/mcp.json
+  → Host agent → MCP child process
+  → Tool calls execute under the MCP process identity with host-granted access
+  [SECURITY_FINDING] F-001: MCP local command with broad filesystem arguments
+  Next: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+
+COMPONENTS BY TYPE
+  Agent Host               1
+  MCP Server Registration  1
+  Skill                    1
+
+ALL FINDINGS
+  CRITICAL 0  HIGH 1  MEDIUM 0  LOW 0  INFO 0
+  [SECURITY_FINDING/HIGH/POTENTIAL] F-001 MCP local command with broad filesystem arguments
+      evidence: .cursor/mcp.json:4
+      action: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+
+COVERAGE
+  Deterministically discovered  3
+  Adapter maturity              {'SUPPORTED': 1, 'PARTIAL': 2, 'MANUAL_ONLY': 0, 'UNSUPPORTED': 0}
+
+ADAPTER COVERAGE
+  Skill                        SUPPORTED    skill_md
+  MCP                          PARTIAL      mcp_config
+  MCP server source            PARTIAL      mcp_server_source
+  A2A                          PARTIAL      a2a_agent_card
+  Instruction rules            SUPPORTED    instruction_rules
+  Hook                         PARTIAL      hooks
+  Plugin                       PARTIAL      plugins
+  Subagent                     PARTIAL      subagents
+  Automation                   PARTIAL      automations
+  CI / GitHub Actions          PARTIAL      github_workflows
+  Host effective permissions   PARTIAL      host_profiles
+  Browser agents               MANUAL_ONLY  —
+  Memory / RAG                 MANUAL_ONLY  —
+  Model providers              MANUAL_ONLY  —
+  Multimodal artifacts         MANUAL_ONLY  —
+  Runtime behavior             UNSUPPORTED  —
+  Publisher / artifact provenance MANUAL_ONLY  —
+
+NOT VERIFIED
+  - Runtime behavior
+  - Publisher identity
+  - Effective host permissions
+  - Credential isolation
+  Manual-only / unsupported families:
+    - Browser agents
+    - Memory / RAG
+    - Model providers
+    - Multimodal artifacts
+    - Runtime behavior
+    - Publisher / artifact provenance
+
+RESIDUAL RISK / NEXT ACTIONS
+  1. Review AUTHORITY SURFACES above before install/merge/deploy.
+  2. `aesa explain F-00N` for evidence, attack path, and remediation.
+  3. `aesa baseline save` then gate PRs with the GitHub Action + .aesa.yml.
+  4. Optional AI deep review: skills/aesa-auditor (consumes this evidence).
+
+IMPORTANT
+  Capability ≠ vulnerability. Exposure ≠ confirmed exploit.
+  Incomplete coverage never equals safety.
+  Observed / Potential / Not verified remain distinct from Verified impact.

@@ -1,7 +1,8 @@
 name: AESA Guard
 description: >-
-  Passive agent-ecosystem Guard scan with optional baseline risk delta and policy fail.
-  Does not execute target application code or contact MCP endpoints.
+  Passive agent-ecosystem Guard scan with optional baseline risk delta, .aesa.yml
+  policy auto-load, and PR annotations. Does not execute target application code
+  or contact MCP endpoints.
 
 inputs:
   path:
@@ -23,13 +24,26 @@ inputs:
     required: false
     default: ""
   baseline:
-    description: Optional path to previous baseline.json for risk delta
+    description: >-
+      Optional path to previous baseline.json for risk delta.
+      When empty, .aesa.yml policy.baseline is used if present.
     required: false
     default: ""
   fail-on:
-    description: never | high | any — exit non-zero on matching new/current findings
+    description: >-
+      never | high | any. Leave empty to defer to .aesa.yml (or never when no policy).
+      Explicit values always override the policy file.
     required: false
-    default: "never"
+    default: ""
+  policy:
+    description: >-
+      Path to .aesa.yml. Leave empty to auto-discover from the scan path upward.
+    required: false
+    default: ""
+  no-policy:
+    description: If true, ignore .aesa.yml even when present
+    required: false
+    default: "false"
   output-dir:
     description: Output directory for AESA artifacts
     required: false
@@ -40,6 +54,10 @@ inputs:
     default: "tools"
   upload-sarif:
     description: If true, print path to findings.sarif.json for workflow upload
+    required: false
+    default: "true"
+  annotate:
+    description: If true (scan mode), emit GitHub Actions annotations from findings
     required: false
     default: "true"
 
@@ -68,13 +86,43 @@ runs:
         AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
         AESA_BASELINE: ${{ inputs.baseline }}
         AESA_FAIL_ON: ${{ inputs.fail-on }}
+        AESA_POLICY: ${{ inputs.policy }}
+        AESA_NO_POLICY: ${{ inputs.no-policy }}
       run: |
         set -euo pipefail
-        args=(scan "$AESA_PATH" -o "$AESA_OUTPUT_DIR" --fail-on "$AESA_FAIL_ON")
+        args=(scan "$AESA_PATH" -o "$AESA_OUTPUT_DIR")
+        if [[ "${AESA_NO_POLICY}" == "true" ]]; then
+          args+=(--no-policy)
+        elif [[ -n "${AESA_POLICY}" ]]; then
+          args+=(--policy "$AESA_POLICY")
+        elif [[ -f "${AESA_PATH}/.aesa.yml" ]]; then
+          args+=(--policy "${AESA_PATH}/.aesa.yml")
+          echo "Auto-loaded policy: ${AESA_PATH}/.aesa.yml"
+        elif [[ -f .aesa.yml ]]; then
+          args+=(--policy .aesa.yml)
+          echo "Auto-loaded policy: .aesa.yml"
+        fi
+        if [[ -n "${AESA_FAIL_ON}" ]]; then
+          args+=(--fail-on "$AESA_FAIL_ON")
+        fi
         if [[ -n "${AESA_BASELINE}" ]]; then
           args+=(--baseline "$AESA_BASELINE")
         fi
         aesa "${args[@]}"
+
+    - name: Annotate pull request findings
+      if: inputs.mode == 'scan' && inputs.annotate == 'true'
+      shell: bash
+      env:
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: |
+        set -euo pipefail
+        FINDINGS="$AESA_OUTPUT_DIR/findings.json"
+        if [[ ! -f "$FINDINGS" ]]; then
+          echo "No findings.json; skipping annotations."
+          exit 0
+        fi
+        aesa annotate "$FINDINGS" --format github
 
     - name: Run AESA audit (legacy profile handoff)
       if: inputs.mode == 'audit'

@@ -1,6 +1,6 @@
 # AESA Guard CLI reference
 
-Complete reference for the `aesa` console script (package `aesa-tools` **0.6.1**).
+Complete reference for the `aesa` console script (package `aesa-tools` **0.7.0**).
 
 Install:
 
@@ -42,16 +42,19 @@ Entry points: `aesa` (console script) and `python -m aesa`.
 One-command Guard assessment.
 
 ```bash
-aesa scan [PATH] [-o OUTPUT_DIR] [--baseline PATH] [--save-baseline PATH] [--fail-on never|high|any]
+aesa scan [PATH] [-o OUTPUT_DIR] [--baseline PATH] [--save-baseline PATH]
+         [--fail-on never|high|any] [--policy PATH] [--no-policy]
 ```
 
 | Argument | Default | Description |
 | --- | --- | --- |
 | `PATH` | `.` | Target repository root (read-only traversal) |
-| `-o` / `--output-dir` | `<PATH>/aesa-out` | Artifact directory |
-| `--baseline` | — | Prior `baseline.json` for risk delta |
+| `-o` / `--output-dir` | `./aesa-out` (cwd) | Artifact directory (not under target by default) |
+| `--baseline` | — / `.aesa.yml` | Prior `baseline.json` for risk delta |
 | `--save-baseline` | — | Write baseline after scan |
-| `--fail-on` | `never` | Exit `1` when policy matches |
+| `--fail-on` | `never` or `.aesa.yml` | Exit `1` when policy matches |
+| `--policy` | discover upward | Explicit `.aesa.yml` path |
+| `--no-policy` | off | Ignore `.aesa.yml` |
 
 ### Exit codes
 
@@ -203,6 +206,34 @@ aesa export sarif REPORT_OR_FINDINGS.json [-o OUT.sarif.json]
 Accepts audit-report JSON or Guard `findings.json`. Tool name in SARIF: **AESA Guard**.
 
 Note: `aesa scan` already writes `findings.sarif.json`.
+
+---
+
+## `aesa annotate`
+
+```bash
+aesa annotate [FINDINGS.json] [--format github|text]
+```
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `FINDINGS.json` | `aesa-out/findings.json` | Guard findings document |
+| `--format` | `github` | `github` = Actions workflow commands; `text` = plain lines |
+
+Emits annotations only for `SECURITY_FINDING` / `EXPOSURE` (never pure `CAPABILITY`).
+The GitHub Action runs this after scan when `annotate: true`.
+
+---
+
+## `aesa pilots`
+
+```bash
+aesa pilots list [--manifest PATH]
+aesa pilots run [--manifest PATH] [-o OUT_DIR] [--only ID ...]
+```
+
+Runs curated adoption scans from [`pilots/manifest.json`](pilots/manifest.json).
+Pilot results are **not** AgentSecBench external evidence. See [`pilots/README.md`](pilots/README.md).
 
 ---
 

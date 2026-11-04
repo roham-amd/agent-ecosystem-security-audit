@@ -7,7 +7,7 @@ Deterministic Guard scan, unified audit profiles, report validation, passive inv
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.6.1** · Product: AESA Guard **3.3.1**
+Package: `aesa-tools` **0.7.0** · Product: AESA Guard **3.4.0**
 
 ---
 
@@ -29,7 +29,18 @@ Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
 
 ---
 
-## Install (local)
+## Install
+
+**User tool (recommended):**
+
+```bash
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@main#subdirectory=tools
+aesa scan /path/to/target-repo
+```
+
+Details / PyPI: [`../docs/INSTALL.md`](../docs/INSTALL.md).
+
+**Local development:**
 
 ```bash
 # https://docs.astral.sh/uv/getting-started/installation/
@@ -41,6 +52,7 @@ uv run aesa scan /path/to/target-repo
 
 Primary command: **`aesa scan`** (inventory + deterministic security findings + SARIF).  
 Profiles via `aesa audit --profile quick|standard|deployment` remain for agent handoff.
+`aesa annotate` emits PR annotations; `aesa pilots run` exercises curated targets.
 
 `.python-version` selects the **minor** interpreter (`3.15`). Patch pins belong in CI (`uv python install 3.15.2`) and the Docker base image.
 

@@ -11,7 +11,7 @@
 
 The bundled audit procedure version (`prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
-Tooling package version (`aesa-tools`, currently **0.6.1**) is tracked in `canonical/versions.json` as `build_tool` and must stay aligned with `tools/pyproject.toml` and `tools/aesa/__init__.py`.
+Tooling package version (`aesa-tools`, currently **0.7.0**) is tracked in `canonical/versions.json` as `build_tool` and must stay aligned with `tools/pyproject.toml` and `tools/aesa/__init__.py`.
 
 ## What this project is
 

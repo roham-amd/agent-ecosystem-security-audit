@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from aesa.security.engine import ScanResult
+from aesa.security.gating import HIGH_SEVERITIES, is_gate_finding, is_high_gate_finding
 from aesa.security.models import Finding
 
 
@@ -21,16 +22,47 @@ def _evidence_path(scan: ScanResult, finding: Finding) -> str:
     return ""
 
 
-def _authority_path_example(scan: ScanResult) -> list[str]:
+def _ordered_findings(findings: list[Finding]) -> list[Finding]:
+    return sorted(
+        findings,
+        key=lambda f: (
+            {"SECURITY_FINDING": 0, "EXPOSURE": 1, "CAPABILITY": 2}.get(f.finding_class, 9),
+            {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFORMATIONAL": 4}.get(
+                f.severity, 9
+            ),
+        ),
+    )
+
+
+def _authority_surfaces(scan: ScanResult, ordered: list[Finding]) -> list[str]:
+    """Top authority-bearing findings as decision-oriented surface cards."""
+    lines: list[str] = []
+    surfaces = [f for f in ordered if is_gate_finding(f)][:5]
+    if not surfaces:
+        return [
+            "",
+            "AUTHORITY SURFACES",
+            "  No high-priority SECURITY_FINDING or EXPOSURE observations.",
+            "  Capability inventory may still require human review.",
+        ]
+    lines.extend(["", "AUTHORITY SURFACES (review required)"])
+    for finding in surfaces:
+        path = _evidence_path(scan, finding)
+        lines.append(f"  [{finding.severity}] {finding.finding_id}  {finding.title}")
+        lines.append(f"      class: {finding.finding_class}  confidence: {finding.confidence}")
+        if path:
+            lines.append(f"      evidence: {path}")
+        lines.append(f"      action: {finding.recommended_action}")
+    return lines
+
+
+def _authority_path_example(scan: ScanResult, ordered: list[Finding]) -> list[str]:
     """First high-value finding rendered as a short authority path."""
     candidates = [
-        f
-        for f in scan.findings
-        if f.finding_class in {"SECURITY_FINDING", "EXPOSURE"}
-        and f.severity in {"CRITICAL", "HIGH", "MEDIUM"}
+        f for f in ordered if is_gate_finding(f) and f.severity in (*HIGH_SEVERITIES, "MEDIUM")
     ]
     if not candidates:
-        candidates = list(scan.findings[:1])
+        candidates = list(ordered[:1])
     if not candidates:
         return []
     finding = candidates[0]
@@ -46,24 +78,35 @@ def _authority_path_example(scan: ScanResult) -> list[str]:
     ]
 
 
+def _adapter_maturity_lines(scan: ScanResult) -> list[str]:
+    matrix = scan.coverage.get("adapter_matrix") or []
+    if not matrix:
+        return []
+    lines = ["", "ADAPTER COVERAGE"]
+    for row in matrix:
+        family = row.get("family") or "?"
+        maturity = row.get("maturity") or "?"
+        adapter = row.get("adapter") or "—"
+        lines.append(f"  {str(family).ljust(28)} {str(maturity).ljust(12)} {adapter}")
+    return lines
+
+
 def render_terminal_report(scan: ScanResult) -> str:
     counts = scan.inventory.get("coverage", {}).get("component_counts_by_type") or {}
     sev = scan.findings_by_severity()
     by_class = scan.findings_by_class()
+    ordered = _ordered_findings(scan.findings)
     high_priority = sum(
-        1
-        for f in scan.findings
-        if f.severity in {"CRITICAL", "HIGH"}
-        and f.finding_class in {"SECURITY_FINDING", "EXPOSURE"}
+        1 for f in scan.findings if f.severity in HIGH_SEVERITIES and is_gate_finding(f)
     )
     unverified = len(scan.coverage.get("not_verified") or [])
     lines = [
-        "AESA Guard — Continuous Agent Ecosystem Security",
+        "AESA Guard — Agent Ecosystem Security Gate",
         f"Product: AESA Guard {scan.product_version}  (tooling {scan.package_version})",
         f"Repository: {scan.repository_path}",
         f"Commit: {scan.commit or 'unknown'}",
         "",
-        "AUTHORITY SNAPSHOT",
+        "DECISION SUMMARY",
         f"  Components discovered              {len(scan.inventory.get('components') or [])}",
         f"  Authority-bearing components       {scan.authority_bearing_count}",
         f"  External connections               {scan.external_destination_count}",
@@ -75,7 +118,8 @@ def render_terminal_report(scan: ScanResult) -> str:
         f"  Exposure observations              {by_class.get('EXPOSURE', 0)}",
         f"  Capability observations            {by_class.get('CAPABILITY', 0)}",
     ]
-    lines.extend(_authority_path_example(scan))
+    lines.extend(_authority_surfaces(scan, ordered))
+    lines.extend(_authority_path_example(scan, ordered))
 
     lines.extend(
         [
@@ -93,7 +137,7 @@ def render_terminal_report(scan: ScanResult) -> str:
     lines.extend(
         [
             "",
-            "FINDINGS",
+            "ALL FINDINGS",
             f"  CRITICAL {sev.get('CRITICAL', 0)}  HIGH {sev.get('HIGH', 0)}  "
             f"MEDIUM {sev.get('MEDIUM', 0)}  LOW {sev.get('LOW', 0)}  "
             f"INFO {sev.get('INFORMATIONAL', 0)}",
@@ -102,16 +146,6 @@ def render_terminal_report(scan: ScanResult) -> str:
     if not scan.findings:
         lines.append("  No deterministic rule findings. This is NOT a clean bill of health.")
     else:
-        # Show security findings first, then exposures, then capabilities.
-        ordered = sorted(
-            scan.findings,
-            key=lambda f: (
-                {"SECURITY_FINDING": 0, "EXPOSURE": 1, "CAPABILITY": 2}.get(f.finding_class, 9),
-                {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFORMATIONAL": 4}.get(
-                    f.severity, 9
-                ),
-            ),
-        )
         for finding in ordered[:12]:
             lines.append(
                 f"  [{finding.finding_class}/{finding.severity}/{finding.confidence}] "
@@ -129,21 +163,36 @@ def render_terminal_report(scan: ScanResult) -> str:
             "COVERAGE",
             f"  Deterministically discovered  {coverage.get('deterministically_discovered', 0)}",
             f"  Adapter maturity              {coverage.get('component_counts_by_maturity')}",
+        ]
+    )
+    lines.extend(_adapter_maturity_lines(scan))
+    lines.extend(
+        [
             "",
             "NOT VERIFIED",
         ]
     )
     for item in coverage.get("not_verified") or ["(see inventory coverage)"]:
         lines.append(f"  - {item}")
+    manual = coverage.get("manual_review_families") or []
+    if manual:
+        lines.append("  Manual-only / unsupported families:")
+        for family in manual:
+            lines.append(f"    - {family}")
 
     lines.extend(
         [
             "",
+            "RESIDUAL RISK / NEXT ACTIONS",
+            "  1. Review AUTHORITY SURFACES above before install/merge/deploy.",
+            "  2. `aesa explain F-00N` for evidence, attack path, and remediation.",
+            "  3. `aesa baseline save` then gate PRs with the GitHub Action + .aesa.yml.",
+            "  4. Optional AI deep review: skills/aesa-auditor (consumes this evidence).",
+            "",
             "IMPORTANT",
             "  Capability ≠ vulnerability. Exposure ≠ confirmed exploit.",
-            "  Incomplete coverage never equals safety. Use `aesa explain F-00N` for detail.",
-            "  Save a baseline (`aesa baseline save`) then gate PRs with the GitHub Action.",
-            "  Optional AI deep review: attach skills/aesa-auditor after this scan.",
+            "  Incomplete coverage never equals safety.",
+            "  Observed / Potential / Not verified remain distinct from Verified impact.",
             "",
         ]
     )
@@ -206,9 +255,9 @@ def render_finding_explanation(scan: ScanResult, finding: Finding) -> str:
             "",
             finding.recommended_action or "(none)",
             "",
-            "## Next steps",
+            "## Verification requirements",
             "",
-            "- Do not promote this to CONFIRMED without independent verification.",
+            "- Do not promote this to CONFIRMED / Verified impact without independent evidence.",
             "- Optional: load matching `modules/*.md` and investigate with the auditor skill.",
             "",
         ]
@@ -216,37 +265,68 @@ def render_finding_explanation(scan: ScanResult, finding: Finding) -> str:
     return "\n".join(lines)
 
 
-def render_markdown_summary(scan: ScanResult) -> str:
-    terminal = render_terminal_report(scan)
+def render_markdown_summary(scan: ScanResult, *, terminal: str | None = None) -> str:
+    summary = terminal if terminal is not None else render_terminal_report(scan)
+    ordered = _ordered_findings(scan.findings)
     lines = [
-        "# AESA Guard scan summary",
+        "# AESA Guard — decision report",
+        "",
+        "Decision-oriented scan summary. Capability observations are not vulnerabilities.",
+        "Absence of findings is not evidence of safety when coverage is incomplete.",
         "",
         "```text",
-        terminal.rstrip(),
+        summary.rstrip(),
         "```",
         "",
-        "## Top findings",
+        "## Critical / high findings",
         "",
     ]
+    critical = [f for f in ordered if is_high_gate_finding(f)]
+    if not critical:
+        lines.append("None at CRITICAL/HIGH for SECURITY_FINDING or EXPOSURE.")
+    else:
+        for finding in critical:
+            lines.append(
+                f"- **{finding.finding_id}** "
+                f"[{finding.finding_class}/{finding.severity}/{finding.confidence}] "
+                f"{finding.title}"
+            )
+            lines.append(f"  - Evidence: `{_evidence_path(scan, finding) or 'n/a'}`")
+            lines.append(f"  - Action: {finding.recommended_action}")
+
+    lines.extend(["", "## All findings", ""])
     if not scan.findings:
         lines.append("No deterministic findings.")
     else:
-        for finding in scan.findings:
+        for finding in ordered:
             lines.append(
                 f"- **{finding.finding_id}** "
                 f"[{finding.finding_class}/{finding.severity}/{finding.confidence}] "
                 f"{finding.title}"
             )
             lines.append(f"  - {finding.recommended_action}")
+
     lines.extend(
         [
             "",
-            "## Executive questions (still require human judgment)",
+            "## Unverified areas",
             "",
-            "1. What can agents in this repository access, execute, and trust?",
-            "2. Which combinations create dangerous authority paths?",
-            "3. What changed since the last baseline?",
-            "4. What remains unverified before deployment?",
+        ]
+    )
+    for item in scan.coverage.get("not_verified") or []:
+        lines.append(f"- {item}")
+    for family in scan.coverage.get("manual_review_families") or []:
+        lines.append(f"- Manual-only family: {family}")
+
+    lines.extend(
+        [
+            "",
+            "## Residual risk questions (human judgment required)",
+            "",
+            "1. What authority does this ecosystem introduce, and who receives it?",
+            "2. What newly changed since the baseline?",
+            "3. What must be fixed before install / merge / deploy?",
+            "4. What remains unverified and must be explicitly accepted?",
             "",
         ]
     )

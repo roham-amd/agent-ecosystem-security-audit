@@ -1,6 +1,6 @@
 # Operator guide: AESA Kit (procedure 1.0) + Guard tooling
 
-This guide orients humans who run AESA engagements. Product release **3.3.1** centers on **AESA Guard** (`aesa scan`); the audit **procedure version remains 1.0**.
+This guide orients humans who run AESA engagements. Product release **3.4.0** centers on **AESA Guard** (`aesa scan`); the audit **procedure version remains 1.0**.
 
 Full documentation map: [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md).
 
@@ -42,7 +42,7 @@ Guard scan adds **deterministic** security observations. Those observations are 
 
 ---
 
-## Recommended execution steps (3.1)
+## Recommended execution steps (Guard-first)
 
 0. **Guard scan (deterministic):**
 
