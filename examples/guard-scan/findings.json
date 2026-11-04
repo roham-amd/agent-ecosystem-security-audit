@@ -1,0 +1,347 @@
+{
+  "findings_version": "1.1",
+  "product": "AESA Guard",
+  "product_version": "3.4.0",
+  "package_version": "0.7.0",
+  "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\tests\\benchmark\\fixtures\\skill-to-mcp-path",
+  "audited_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+  "collected_at_utc": "2026-11-04T21:27:15Z",
+  "rules_applied": [
+    "AESA-RULE-001",
+    "AESA-RULE-002",
+    "AESA-RULE-003",
+    "AESA-RULE-004",
+    "AESA-RULE-005",
+    "AESA-RULE-006",
+    "AESA-RULE-007",
+    "AESA-RULE-008",
+    "AESA-RULE-009",
+    "AESA-RULE-010"
+  ],
+  "summary": {
+    "component_count": 3,
+    "authority_bearing_components": 1,
+    "external_data_destinations": 0,
+    "finding_count": 1,
+    "by_severity": {
+      "CRITICAL": 0,
+      "HIGH": 1,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "INFORMATIONAL": 0
+    },
+    "by_finding_class": {
+      "CAPABILITY": 0,
+      "EXPOSURE": 0,
+      "SECURITY_FINDING": 1
+    },
+    "security_findings": 1,
+    "exposure_observations": 0,
+    "capability_observations": 0
+  },
+  "capabilities": [
+    {
+      "kind": "modify_agent_instructions",
+      "status": "OBSERVED",
+      "component_id": "C-001",
+      "evidence_ids": [
+        "E-INV-C-001"
+      ],
+      "notes": "Skills inject instructions into the agent.",
+      "origin": "TYPE_DEFAULT"
+    },
+    {
+      "kind": "execute_commands",
+      "status": "OBSERVED",
+      "component_id": "C-002",
+      "evidence_ids": [
+        "E-INV-C-002"
+      ],
+      "notes": "Derived from priority hint `local_command_transport`.",
+      "origin": "DECLARED"
+    },
+    {
+      "kind": "read_files",
+      "status": "POTENTIAL",
+      "component_id": "C-002",
+      "evidence_ids": [
+        "E-INV-C-002"
+      ],
+      "notes": "Derived from priority hint `broad_or_relative_path_args`.",
+      "origin": "POTENTIAL"
+    },
+    {
+      "kind": "invoke_tools",
+      "status": "OBSERVED",
+      "component_id": "C-002",
+      "evidence_ids": [
+        "E-INV-C-002"
+      ],
+      "notes": "MCP registration exposes tool surface to the host agent.",
+      "origin": "TYPE_DEFAULT"
+    }
+  ],
+  "evidence_registry": [
+    {
+      "evidence_id": "E-001",
+      "component_id": "C-002",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": ".cursor/mcp.json",
+      "line_start": 4,
+      "line_end": 4,
+      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
+      "collection_method": "deterministic_rule",
+      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+      "observed_at": "2026-11-04T21:27:15Z",
+      "limitations": [
+        "Static configuration observation only; host effective permissions not verified."
+      ],
+      "summary": "MCP registration launches local command `npx`."
+    },
+    {
+      "evidence_id": "E-INV-C-001",
+      "component_id": "C-001",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": "SKILL.md",
+      "line_start": null,
+      "line_end": null,
+      "content_digest": "sha256:0f961825ffbe557afe16f654fc4b89709db7631cd0c1c9432b290779e3245d53",
+      "collection_method": "inventory_adapter",
+      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+      "observed_at": "2026-11-04T21:27:15Z",
+      "limitations": [
+        "Discovery only; does not prove runtime loading."
+      ],
+      "summary": "Component discovered by adapter `skill_md`."
+    },
+    {
+      "evidence_id": "E-INV-C-002",
+      "component_id": "C-002",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": ".cursor/mcp.json",
+      "line_start": null,
+      "line_end": null,
+      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
+      "collection_method": "inventory_adapter",
+      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+      "observed_at": "2026-11-04T21:27:15Z",
+      "limitations": [
+        "Discovery only; does not prove runtime loading."
+      ],
+      "summary": "Component discovered by adapter `mcp_config`."
+    },
+    {
+      "evidence_id": "E-INV-C-003",
+      "component_id": "C-003",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": ".cursor/mcp.json",
+      "line_start": null,
+      "line_end": null,
+      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
+      "collection_method": "inventory_adapter",
+      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+      "observed_at": "2026-11-04T21:27:15Z",
+      "limitations": [
+        "Discovery only; does not prove runtime loading."
+      ],
+      "summary": "Component discovered by adapter `host_profiles`."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "rule_id": "AESA-RULE-002",
+      "title": "MCP local command with broad filesystem arguments",
+      "severity": "HIGH",
+      "confidence": "POTENTIAL",
+      "description": "MCP server `filesystem-broad` is registered with a local command transport. Environment inheritance or broad path arguments elevate this beyond a simple capability observation.",
+      "component_ids": [
+        "C-002"
+      ],
+      "evidence_ids": [
+        "E-001"
+      ],
+      "capabilities": [
+        "execute_commands",
+        "invoke_tools",
+        "read_files"
+      ],
+      "attacker_control": "Compromised MCP server binary/package or tool-poisoned metadata",
+      "entry_point": ".cursor/mcp.json",
+      "trust_boundary": "Host agent \u2192 MCP child process",
+      "impact": "Tool calls execute under the MCP process identity with host-granted access",
+      "missing_controls": [
+        "Exact artifact digest of the launched binary/package",
+        "Host-side authorization binding for tool arguments",
+        "Least-privilege filesystem binding"
+      ],
+      "recommended_action": "Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.",
+      "exploitability": "UNKNOWN",
+      "exposure": "BROAD_PATH_ARGS",
+      "finding_class": "SECURITY_FINDING"
+    }
+  ],
+  "coverage": {
+    "adapter_matrix": [
+      {
+        "family": "Skill",
+        "adapter": "skill_md",
+        "maturity": "SUPPORTED",
+        "notes": "Discovers SKILL.md manifests; does not verify runtime behavior."
+      },
+      {
+        "family": "MCP",
+        "adapter": "mcp_config",
+        "maturity": "PARTIAL",
+        "notes": "Client registration JSON including mcp_example.json; effective host binding is MANUAL_ONLY."
+      },
+      {
+        "family": "MCP server source",
+        "adapter": "mcp_server_source",
+        "maturity": "PARTIAL",
+        "notes": "Heuristic discovery of MCP server implementations; tool authz not verified."
+      },
+      {
+        "family": "A2A",
+        "adapter": "a2a_agent_card",
+        "maturity": "PARTIAL",
+        "notes": "Agent card JSON identity; message trust and delegation are MANUAL_ONLY."
+      },
+      {
+        "family": "Instruction rules",
+        "adapter": "instruction_rules",
+        "maturity": "SUPPORTED",
+        "notes": "AGENTS.md, CLAUDE.md, and Cursor rules pack paths."
+      },
+      {
+        "family": "Hook",
+        "adapter": "hooks",
+        "maturity": "PARTIAL",
+        "notes": "Common hooks.json / hooks/ layouts; host-specific formats may be missed."
+      },
+      {
+        "family": "Plugin",
+        "adapter": "plugins",
+        "maturity": "PARTIAL",
+        "notes": "Manifest heuristics only; publisher and OAuth scopes are MANUAL_ONLY."
+      },
+      {
+        "family": "Subagent",
+        "adapter": "subagents",
+        "maturity": "PARTIAL",
+        "notes": "agents/ and subagents/ definitions; inherited permissions need deep review."
+      },
+      {
+        "family": "Automation",
+        "adapter": "automations",
+        "maturity": "PARTIAL",
+        "notes": "Workflow and automation manifests; effective credentials are NOT VERIFIED."
+      },
+      {
+        "family": "CI / GitHub Actions",
+        "adapter": "github_workflows",
+        "maturity": "PARTIAL",
+        "notes": "Discovers .github/workflows; does not evaluate runner trust or secret exfil paths."
+      },
+      {
+        "family": "Host effective permissions",
+        "adapter": "host_profiles",
+        "maturity": "PARTIAL",
+        "notes": "Host profile markers only; effective runtime permissions stay MANUAL_ONLY."
+      },
+      {
+        "family": "Browser agents",
+        "adapter": null,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; no dedicated discovery adapter."
+      },
+      {
+        "family": "Memory / RAG",
+        "adapter": null,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; tenant isolation not auto-discovered."
+      },
+      {
+        "family": "Model providers",
+        "adapter": null,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; endpoint/model config discovery not automated."
+      },
+      {
+        "family": "Multimodal artifacts",
+        "adapter": null,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Assessment module exists; no artifact inspection adapters."
+      },
+      {
+        "family": "Runtime behavior",
+        "adapter": null,
+        "maturity": "UNSUPPORTED",
+        "notes": "No runtime harness in passive mode."
+      },
+      {
+        "family": "Publisher / artifact provenance",
+        "adapter": null,
+        "maturity": "MANUAL_ONLY",
+        "notes": "Digest helpers exist; full signature/SBOM verification is not shipped."
+      }
+    ],
+    "component_counts_by_type": {
+      "Skill": 1,
+      "MCP Server Registration": 1,
+      "Agent Host": 1
+    },
+    "component_counts_by_maturity": {
+      "SUPPORTED": 1,
+      "PARTIAL": 2,
+      "MANUAL_ONLY": 0,
+      "UNSUPPORTED": 0
+    },
+    "deterministically_discovered": 3,
+    "manual_review_families": [
+      "Browser agents",
+      "Memory / RAG",
+      "Model providers",
+      "Multimodal artifacts",
+      "Runtime behavior",
+      "Publisher / artifact provenance"
+    ],
+    "high_priority_review_areas": [
+      {
+        "component_id": "C-002",
+        "name": "filesystem-broad",
+        "type": "MCP Server Registration",
+        "repository_path": ".cursor/mcp.json",
+        "hints": [
+          "local_command_transport",
+          "broad_or_relative_path_args"
+        ]
+      },
+      {
+        "component_id": "C-003",
+        "name": "Cursor",
+        "type": "Agent Host",
+        "repository_path": ".cursor/mcp.json",
+        "hints": [
+          "host_declared_configuration"
+        ]
+      }
+    ],
+    "not_verified": [
+      "Runtime behavior",
+      "Publisher identity",
+      "Effective host permissions",
+      "Credential isolation"
+    ]
+  },
+  "limitations": [
+    "Deterministic rules produce OBSERVED/POTENTIAL findings, not confirmed exploits.",
+    "CAPABILITY observations are not vulnerabilities; SECURITY_FINDING requires exposure conditions and missing controls.",
+    "Host effective permissions and runtime behavior remain NOT VERIFIED.",
+    "Incomplete adapter coverage means absence of findings is not evidence of safety."
+  ]
+}

@@ -33,6 +33,7 @@ repository-inventory.json
 component-inventory.json
 component-assessments/
 findings.json
+!examples/guard-scan/findings.json
 evidence-registry.json
 external-source-registry.json
 tool-capability-matrix.json
