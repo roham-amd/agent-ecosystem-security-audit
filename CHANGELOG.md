@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
 
+## [3.5.0] — 2026-11-05
+
+### Added
+
+- **`aesa doctor`** — host authority map for Cursor / Claude Code / VS Code configs.
+- **`aesa vet`** — pre-install verdict for local paths or GitHub URLs (safe shallow clone:
+  hooks disabled, no submodules, no LFS smudge).
+- **`aesa init-gate`** — writes starter `.aesa.yml` + consumer workflow stub.
+- Rule pack **1.2**: AESA-RULE-011…016 (unpinned launchers, literal MCP secrets,
+  cleartext HTTP MCP, hidden Unicode, curl\|sh, `pull_request_target` + agent).
+- Finding fields `evidence_strength`, `verify_in_60s`, `fix_snippet` (findings contract **1.2**).
+- Action `trusted-policy` (default true): load `.aesa.yml` from PR **base ref**; fail on
+  policy-file edits; refuse accidental `uv sync` of PR-controlled `./tools`.
+
+### Changed
+
+- Product **3.5.0**; tooling **0.8.0**; north-star repositioned as **Authority Diff**.
+- Policy discovery no longer walks above the scan target (policy contract **1.1**).
+- README collapsed to one path: doctor → vet → init-gate → scan.
+- Auditor skill is self-contained via `uv tool install` / `uvx` (no kit `uv sync` required).
+- Consumer gate example pins `v3.5.0` and documents trusted policy.
+- Dead pre-`uv.lock` pin parsers removed; unused `build_tool_tag` / `lock_version_for` dropped.
+- `init-gate` templates live under `tools/aesa/templates/` (packaged data).
+- Graph path defaults shared via `DEFAULT_UNTRUSTED_TO_EXTERNAL`.
+- Docs/examples aligned to Authority Diff branding and rule pack 1.2.
+
+### Notes
+
+- PyPI publish remains a follow-up after the GitHub Release tag.
+- Python floor remains **3.15** (tracked for possible lower bound later).
+
 ## [3.4.0] — 2026-11-05
 
 ### Added

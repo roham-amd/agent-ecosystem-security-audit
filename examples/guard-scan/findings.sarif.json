@@ -6,14 +6,35 @@
       "tool": {
         "driver": {
           "name": "AESA Guard",
-          "version": "3.4.0",
+          "version": "3.5.0",
           "informationUri": "https://github.com/roham-amd/agent-ecosystem-security-audit",
           "rules": [
             {
-              "id": "AESA-RULE-002",
-              "name": "MCP local command with broad filesystem arguments",
+              "id": "AESA-RULE-005",
+              "name": "Skill references external URLs",
               "shortDescription": {
-                "text": "MCP local command with broad filesystem arguments"
+                "text": "Skill references external URLs"
+              }
+            },
+            {
+              "id": "AESA-RULE-002",
+              "name": "MCP server launched via local command",
+              "shortDescription": {
+                "text": "MCP server launched via local command"
+              }
+            },
+            {
+              "id": "AESA-RULE-011",
+              "name": "MCP server launched via unpinned package installer",
+              "shortDescription": {
+                "text": "MCP server launched via unpinned package installer"
+              }
+            },
+            {
+              "id": "AESA-RULE-003",
+              "name": "MCP server uses remote endpoint",
+              "shortDescription": {
+                "text": "MCP server uses remote endpoint"
               }
             }
           ]
@@ -21,10 +42,30 @@
       },
       "results": [
         {
-          "ruleId": "AESA-RULE-002",
-          "level": "error",
+          "ruleId": "AESA-RULE-005",
+          "level": "note",
           "message": {
-            "text": "MCP server `filesystem-broad` is registered with a local command transport. Environment inheritance or broad path arguments elevate this beyond a simple capability observation."
+            "text": "Skill `fetch-helper` references external URLs. A URL is an exposure indicator, not proof of malicious content."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "skills/fetch-helper/SKILL.md"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AESA-RULE-002",
+          "level": "note",
+          "message": {
+            "text": "MCP server `floaty` is registered with a local command transport. Presence of a local process is a capability observation, not proof of abuse."
           },
           "locations": [
             {
@@ -35,6 +76,46 @@
                 "region": {
                   "startLine": 4,
                   "endLine": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AESA-RULE-011",
+          "level": "error",
+          "message": {
+            "text": "MCP server `floaty` uses an unpinned launcher (`npx` -y @modelcontextprotocol/server-everything). A later package publish can change behavior without a config edit (rug-pull risk)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".cursor/mcp.json"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AESA-RULE-003",
+          "level": "warning",
+          "message": {
+            "text": "MCP server `remote` is configured with a remote URL. This is an external exposure surface; TLS identity and credential forwarding are not verified by this rule."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".cursor/mcp.json"
+                },
+                "region": {
+                  "startLine": 8,
+                  "endLine": 8
                 }
               }
             }

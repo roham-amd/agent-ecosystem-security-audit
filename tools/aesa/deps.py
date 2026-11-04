@@ -16,7 +16,6 @@ from packaging.requirements import Requirement
 from packaging.version import InvalidVersion, Version
 
 from aesa.paths import repo_root
-from aesa.pins import normalize_package_name
 
 _PYPI = "https://pypi.org/pypi/{name}/json"
 _USER_AGENT = "aesa-deps/0.3 (+https://github.com/roham-amd/agent-ecosystem-security-audit)"
@@ -257,12 +256,3 @@ def ensure_lock_in_sync() -> None:
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "uv.lock is out of date").strip()
         raise SystemExit(f"uv.lock out of sync with pyproject.toml: {detail}")
-
-
-def lock_version_for(name: str, pins: dict[str, str] | None = None) -> str | None:
-    resolved = pins if pins is not None else parse_lock_pins()
-    key = next(
-        (k for k in resolved if normalize_package_name(k) == normalize_package_name(name)),
-        None,
-    )
-    return resolved.get(key) if key is not None else None

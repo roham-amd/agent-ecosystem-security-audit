@@ -1,7 +1,11 @@
-# AESA Guard 3.4 implementation backlog
+# AESA Guard 3.4 implementation backlog (historical)
+
+> **Superseded for active work by [`GUARD-3.5-BACKLOG.md`](GUARD-3.5-BACKLOG.md)**
+> (Authority Diff: `doctor` / `vet` / trusted PR gate). Kept for acceptance
+> history of the 3.4 productization milestone.
 
 Derived from the November 4, 2026 strategic product review.
-North-star: **AESA Guard — Agent Ecosystem Security Gate** (local CLI + PR change gate).
+North-star (then): **AESA Guard — Agent Ecosystem Security Gate** (local CLI + PR change gate).
 
 Status key: `done` · `in_progress` · `next` · `deferred`
 

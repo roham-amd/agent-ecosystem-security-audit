@@ -1,11 +1,11 @@
 {
-  "findings_version": "1.1",
+  "findings_version": "1.2",
   "product": "AESA Guard",
-  "product_version": "3.4.0",
-  "package_version": "0.7.0",
-  "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\tests\\benchmark\\fixtures\\skill-to-mcp-path",
-  "audited_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
-  "collected_at_utc": "2026-11-04T21:27:15Z",
+  "product_version": "3.5.0",
+  "package_version": "0.8.0",
+  "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\examples\\_gen_src",
+  "audited_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+  "collected_at_utc": "2026-11-04T22:25:47Z",
   "rules_applied": [
     "AESA-RULE-001",
     "AESA-RULE-002",
@@ -16,30 +16,46 @@
     "AESA-RULE-007",
     "AESA-RULE-008",
     "AESA-RULE-009",
-    "AESA-RULE-010"
+    "AESA-RULE-010",
+    "AESA-RULE-011",
+    "AESA-RULE-012",
+    "AESA-RULE-013",
+    "AESA-RULE-014",
+    "AESA-RULE-015",
+    "AESA-RULE-016"
   ],
   "summary": {
-    "component_count": 3,
-    "authority_bearing_components": 1,
-    "external_data_destinations": 0,
-    "finding_count": 1,
+    "component_count": 4,
+    "authority_bearing_components": 3,
+    "external_data_destinations": 2,
+    "finding_count": 4,
     "by_severity": {
       "CRITICAL": 0,
       "HIGH": 1,
-      "MEDIUM": 0,
-      "LOW": 0,
-      "INFORMATIONAL": 0
+      "MEDIUM": 1,
+      "LOW": 1,
+      "INFORMATIONAL": 1
     },
     "by_finding_class": {
-      "CAPABILITY": 0,
-      "EXPOSURE": 0,
+      "CAPABILITY": 1,
+      "EXPOSURE": 2,
       "SECURITY_FINDING": 1
     },
     "security_findings": 1,
-    "exposure_observations": 0,
-    "capability_observations": 0
+    "exposure_observations": 2,
+    "capability_observations": 1
   },
   "capabilities": [
+    {
+      "kind": "access_network",
+      "status": "POTENTIAL",
+      "component_id": "C-001",
+      "evidence_ids": [
+        "E-INV-C-001"
+      ],
+      "notes": "Derived from priority hint `external_url_reference`.",
+      "origin": "POTENTIAL"
+    },
     {
       "kind": "modify_agent_instructions",
       "status": "OBSERVED",
@@ -61,16 +77,6 @@
       "origin": "DECLARED"
     },
     {
-      "kind": "read_files",
-      "status": "POTENTIAL",
-      "component_id": "C-002",
-      "evidence_ids": [
-        "E-INV-C-002"
-      ],
-      "notes": "Derived from priority hint `broad_or_relative_path_args`.",
-      "origin": "POTENTIAL"
-    },
-    {
       "kind": "invoke_tools",
       "status": "OBSERVED",
       "component_id": "C-002",
@@ -79,38 +85,109 @@
       ],
       "notes": "MCP registration exposes tool surface to the host agent.",
       "origin": "TYPE_DEFAULT"
+    },
+    {
+      "kind": "access_network",
+      "status": "OBSERVED",
+      "component_id": "C-003",
+      "evidence_ids": [
+        "E-INV-C-003"
+      ],
+      "notes": "Derived from priority hint `remote_endpoint`.",
+      "origin": "DECLARED"
+    },
+    {
+      "kind": "invoke_tools",
+      "status": "OBSERVED",
+      "component_id": "C-003",
+      "evidence_ids": [
+        "E-INV-C-003"
+      ],
+      "notes": "MCP registration exposes tool surface to the host agent.",
+      "origin": "TYPE_DEFAULT"
     }
   ],
   "evidence_registry": [
     {
       "evidence_id": "E-001",
+      "component_id": "C-001",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": "skills/fetch-helper/SKILL.md",
+      "line_start": 5,
+      "line_end": 5,
+      "content_digest": "sha256:764a7c0eaefebf4e721f07718ce2a51a39d72219f92278f0d9fcd073509140cc",
+      "collection_method": "deterministic_rule",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
+      "limitations": [
+        "Static configuration observation only; host effective permissions not verified."
+      ],
+      "summary": "Skill instructions reference external HTTP(S) URLs."
+    },
+    {
+      "evidence_id": "E-002",
       "component_id": "C-002",
       "evidence_class": "SOURCE_STATIC",
       "verification_status": "OBSERVED",
       "file_path": ".cursor/mcp.json",
       "line_start": 4,
       "line_end": 4,
-      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
       "collection_method": "deterministic_rule",
-      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
-      "observed_at": "2026-11-04T21:27:15Z",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
       "limitations": [
         "Static configuration observation only; host effective permissions not verified."
       ],
       "summary": "MCP registration launches local command `npx`."
     },
     {
+      "evidence_id": "E-003",
+      "component_id": "C-002",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": ".cursor/mcp.json",
+      "line_start": 4,
+      "line_end": 4,
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
+      "collection_method": "deterministic_rule",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
+      "limitations": [
+        "Static configuration observation only; host effective permissions not verified."
+      ],
+      "summary": "MCP launcher `npx` appears unpinned (npx -y / uvx / similar)."
+    },
+    {
+      "evidence_id": "E-004",
+      "component_id": "C-003",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": ".cursor/mcp.json",
+      "line_start": 8,
+      "line_end": 8,
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
+      "collection_method": "deterministic_rule",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
+      "limitations": [
+        "Static configuration observation only; host effective permissions not verified."
+      ],
+      "summary": "MCP registration points at remote URL `https://mcp.example.com/sse`."
+    },
+    {
       "evidence_id": "E-INV-C-001",
       "component_id": "C-001",
       "evidence_class": "SOURCE_STATIC",
       "verification_status": "OBSERVED",
-      "file_path": "SKILL.md",
+      "file_path": "skills/fetch-helper/SKILL.md",
       "line_start": null,
       "line_end": null,
-      "content_digest": "sha256:0f961825ffbe557afe16f654fc4b89709db7631cd0c1c9432b290779e3245d53",
+      "content_digest": "sha256:764a7c0eaefebf4e721f07718ce2a51a39d72219f92278f0d9fcd073509140cc",
       "collection_method": "inventory_adapter",
-      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
-      "observed_at": "2026-11-04T21:27:15Z",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
       "limitations": [
         "Discovery only; does not prove runtime loading."
       ],
@@ -124,10 +201,10 @@
       "file_path": ".cursor/mcp.json",
       "line_start": null,
       "line_end": null,
-      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
       "collection_method": "inventory_adapter",
-      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
-      "observed_at": "2026-11-04T21:27:15Z",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
       "limitations": [
         "Discovery only; does not prove runtime loading."
       ],
@@ -141,10 +218,27 @@
       "file_path": ".cursor/mcp.json",
       "line_start": null,
       "line_end": null,
-      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
       "collection_method": "inventory_adapter",
-      "source_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
-      "observed_at": "2026-11-04T21:27:15Z",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
+      "limitations": [
+        "Discovery only; does not prove runtime loading."
+      ],
+      "summary": "Component discovered by adapter `mcp_config`."
+    },
+    {
+      "evidence_id": "E-INV-C-004",
+      "component_id": "C-004",
+      "evidence_class": "SOURCE_STATIC",
+      "verification_status": "OBSERVED",
+      "file_path": ".cursor/mcp.json",
+      "line_start": null,
+      "line_end": null,
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
+      "collection_method": "inventory_adapter",
+      "source_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
+      "observed_at": "2026-11-04T22:25:47Z",
       "limitations": [
         "Discovery only; does not prove runtime loading."
       ],
@@ -154,21 +248,53 @@
   "findings": [
     {
       "finding_id": "F-001",
-      "rule_id": "AESA-RULE-002",
-      "title": "MCP local command with broad filesystem arguments",
-      "severity": "HIGH",
-      "confidence": "POTENTIAL",
-      "description": "MCP server `filesystem-broad` is registered with a local command transport. Environment inheritance or broad path arguments elevate this beyond a simple capability observation.",
+      "rule_id": "AESA-RULE-005",
+      "title": "Skill references external URLs",
+      "severity": "LOW",
+      "confidence": "OBSERVED",
+      "description": "Skill `fetch-helper` references external URLs. A URL is an exposure indicator, not proof of malicious content.",
       "component_ids": [
-        "C-002"
+        "C-001"
       ],
       "evidence_ids": [
         "E-001"
       ],
       "capabilities": [
+        "access_network",
+        "modify_agent_instructions"
+      ],
+      "attacker_control": "Compromised remote resource referenced by the skill",
+      "entry_point": "skills/fetch-helper/SKILL.md",
+      "trust_boundary": "Reviewed skill \u2192 unreviewed remote content",
+      "impact": "Potential instruction injection or data exfiltration guidance",
+      "missing_controls": [
+        "Pinned remote content digests",
+        "Egress policy for agent fetches"
+      ],
+      "recommended_action": "Pin or vendor remote references; treat remote content as untrusted.",
+      "exploitability": "UNKNOWN",
+      "exposure": "EXTERNAL_URL",
+      "finding_class": "EXPOSURE",
+      "evidence_strength": "INFERRED_HINT",
+      "verify_in_60s": "",
+      "fix_snippet": ""
+    },
+    {
+      "finding_id": "F-002",
+      "rule_id": "AESA-RULE-002",
+      "title": "MCP server launched via local command",
+      "severity": "INFORMATIONAL",
+      "confidence": "OBSERVED",
+      "description": "MCP server `floaty` is registered with a local command transport. Presence of a local process is a capability observation, not proof of abuse.",
+      "component_ids": [
+        "C-002"
+      ],
+      "evidence_ids": [
+        "E-002"
+      ],
+      "capabilities": [
         "execute_commands",
-        "invoke_tools",
-        "read_files"
+        "invoke_tools"
       ],
       "attacker_control": "Compromised MCP server binary/package or tool-poisoned metadata",
       "entry_point": ".cursor/mcp.json",
@@ -176,13 +302,81 @@
       "impact": "Tool calls execute under the MCP process identity with host-granted access",
       "missing_controls": [
         "Exact artifact digest of the launched binary/package",
-        "Host-side authorization binding for tool arguments",
-        "Least-privilege filesystem binding"
+        "Host-side authorization binding for tool arguments"
       ],
-      "recommended_action": "Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.",
+      "recommended_action": "Record as an execution capability; verify host isolation before treating as risk.",
       "exploitability": "UNKNOWN",
-      "exposure": "BROAD_PATH_ARGS",
-      "finding_class": "SECURITY_FINDING"
+      "exposure": "REPO_CONFIG",
+      "finding_class": "CAPABILITY",
+      "evidence_strength": "LITERAL_CONFIG",
+      "verify_in_60s": "Open the MCP config and inspect command=`npx` plus env/args.",
+      "fix_snippet": "Pin the MCP binary/package; drop broad path args; avoid inheriting secrets."
+    },
+    {
+      "finding_id": "F-003",
+      "rule_id": "AESA-RULE-011",
+      "title": "MCP server launched via unpinned package installer",
+      "severity": "HIGH",
+      "confidence": "OBSERVED",
+      "description": "MCP server `floaty` uses an unpinned launcher (`npx` -y @modelcontextprotocol/server-everything). A later package publish can change behavior without a config edit (rug-pull risk).",
+      "component_ids": [
+        "C-002"
+      ],
+      "evidence_ids": [
+        "E-003"
+      ],
+      "capabilities": [
+        "execute_commands",
+        "invoke_tools"
+      ],
+      "attacker_control": "Malicious or compromised package published to the unpinned name",
+      "entry_point": ".cursor/mcp.json",
+      "trust_boundary": "Host agent \u2192 package registry \u2192 MCP process",
+      "impact": "Arbitrary code execution under the host agent identity after a registry update",
+      "missing_controls": [
+        "Pinned version or content digest",
+        "Allowlisted package source"
+      ],
+      "recommended_action": "Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.",
+      "exploitability": "UNKNOWN",
+      "exposure": "UNPINNED_LAUNCHER",
+      "finding_class": "SECURITY_FINDING",
+      "evidence_strength": "LITERAL_CONFIG",
+      "verify_in_60s": "grep the MCP JSON for npx -y / uvx and confirm no @version pin.",
+      "fix_snippet": "Use \"command\": \"npx\", \"args\": [\"-y\", \"pkg@1.2.3\"] or a local pinned binary."
+    },
+    {
+      "finding_id": "F-004",
+      "rule_id": "AESA-RULE-003",
+      "title": "MCP server uses remote endpoint",
+      "severity": "MEDIUM",
+      "confidence": "OBSERVED",
+      "description": "MCP server `remote` is configured with a remote URL. This is an external exposure surface; TLS identity and credential forwarding are not verified by this rule.",
+      "component_ids": [
+        "C-003"
+      ],
+      "evidence_ids": [
+        "E-004"
+      ],
+      "capabilities": [
+        "access_network",
+        "invoke_tools"
+      ],
+      "attacker_control": "Compromised remote MCP endpoint or MITM without transport identity",
+      "entry_point": ".cursor/mcp.json",
+      "trust_boundary": "Host agent \u2192 remote network service",
+      "impact": "Potential exfiltration or tool abuse via remote MCP",
+      "missing_controls": [
+        "Transport identity / TLS pinning",
+        "OAuth / credential forwarding scope review"
+      ],
+      "recommended_action": "Verify endpoint identity, TLS, OAuth scopes, and whether secrets are forwarded.",
+      "exploitability": "UNKNOWN",
+      "exposure": "REMOTE_ENDPOINT",
+      "finding_class": "EXPOSURE",
+      "evidence_strength": "INFERRED_HINT",
+      "verify_in_60s": "",
+      "fix_snippet": ""
     }
   ],
   "coverage": {
@@ -292,16 +486,16 @@
     ],
     "component_counts_by_type": {
       "Skill": 1,
-      "MCP Server Registration": 1,
+      "MCP Server Registration": 2,
       "Agent Host": 1
     },
     "component_counts_by_maturity": {
       "SUPPORTED": 1,
-      "PARTIAL": 2,
+      "PARTIAL": 3,
       "MANUAL_ONLY": 0,
       "UNSUPPORTED": 0
     },
-    "deterministically_discovered": 3,
+    "deterministically_discovered": 4,
     "manual_review_families": [
       "Browser agents",
       "Memory / RAG",
@@ -312,17 +506,35 @@
     ],
     "high_priority_review_areas": [
       {
+        "component_id": "C-001",
+        "name": "fetch-helper",
+        "type": "Skill",
+        "repository_path": "skills/fetch-helper/SKILL.md",
+        "hints": [
+          "external_url_reference"
+        ]
+      },
+      {
         "component_id": "C-002",
-        "name": "filesystem-broad",
+        "name": "floaty",
         "type": "MCP Server Registration",
         "repository_path": ".cursor/mcp.json",
         "hints": [
           "local_command_transport",
-          "broad_or_relative_path_args"
+          "unpinned_package_launcher"
         ]
       },
       {
         "component_id": "C-003",
+        "name": "remote",
+        "type": "MCP Server Registration",
+        "repository_path": ".cursor/mcp.json",
+        "hints": [
+          "remote_endpoint"
+        ]
+      },
+      {
+        "component_id": "C-004",
         "name": "Cursor",
         "type": "Agent Host",
         "repository_path": ".cursor/mcp.json",

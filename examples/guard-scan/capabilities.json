@@ -1,6 +1,16 @@
 {
   "capabilities": [
     {
+      "kind": "access_network",
+      "status": "POTENTIAL",
+      "component_id": "C-001",
+      "evidence_ids": [
+        "E-INV-C-001"
+      ],
+      "notes": "Derived from priority hint `external_url_reference`.",
+      "origin": "POTENTIAL"
+    },
+    {
       "kind": "modify_agent_instructions",
       "status": "OBSERVED",
       "component_id": "C-001",
@@ -21,21 +31,31 @@
       "origin": "DECLARED"
     },
     {
-      "kind": "read_files",
-      "status": "POTENTIAL",
-      "component_id": "C-002",
-      "evidence_ids": [
-        "E-INV-C-002"
-      ],
-      "notes": "Derived from priority hint `broad_or_relative_path_args`.",
-      "origin": "POTENTIAL"
-    },
-    {
       "kind": "invoke_tools",
       "status": "OBSERVED",
       "component_id": "C-002",
       "evidence_ids": [
         "E-INV-C-002"
+      ],
+      "notes": "MCP registration exposes tool surface to the host agent.",
+      "origin": "TYPE_DEFAULT"
+    },
+    {
+      "kind": "access_network",
+      "status": "OBSERVED",
+      "component_id": "C-003",
+      "evidence_ids": [
+        "E-INV-C-003"
+      ],
+      "notes": "Derived from priority hint `remote_endpoint`.",
+      "origin": "DECLARED"
+    },
+    {
+      "kind": "invoke_tools",
+      "status": "OBSERVED",
+      "component_id": "C-003",
+      "evidence_ids": [
+        "E-INV-C-003"
       ],
       "notes": "MCP registration exposes tool surface to the host agent.",
       "origin": "TYPE_DEFAULT"

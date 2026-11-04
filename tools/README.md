@@ -1,13 +1,14 @@
 # AESA Guard tooling
 
-Deterministic Guard scan, unified audit profiles, report validation, passive inventory, corpus, and AgentSecBench harness.
+Authority Diff CLI: host doctor, pre-install vet, repo Guard scan, CI gate helpers,
+report validation, corpus, and AgentSecBench harness.
 
 **Full command reference:** [`../docs/CLI-REFERENCE.md`](../docs/CLI-REFERENCE.md)  
 **Scan guide:** [`../docs/GUARD-SCAN.md`](../docs/GUARD-SCAN.md)  
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.7.0** · Product: AESA Guard **3.4.0**
+Package: `aesa-tools` **0.8.0** · Product: AESA Guard **3.5.0**
 
 ---
 
@@ -34,7 +35,9 @@ Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
 **User tool (recommended):**
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@main#subdirectory=tools
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools
+aesa doctor
+aesa vet github.com/org/some-skill
 aesa scan /path/to/target-repo
 ```
 
@@ -47,11 +50,12 @@ Details / PyPI: [`../docs/INSTALL.md`](../docs/INSTALL.md).
 cd tools
 uv sync --locked          # creates .venv from uv.lock
 uv run aesa --help
+uv run aesa doctor
 uv run aesa scan /path/to/target-repo
 ```
 
-Primary command: **`aesa scan`** (inventory + deterministic security findings + SARIF).  
-Profiles via `aesa audit --profile quick|standard|deployment` remain for agent handoff.
+Primary path: **`doctor` / `vet` / `scan`**.  
+`aesa audit --profile …` remains for agent handoff packages.
 `aesa annotate` emits PR annotations; `aesa pilots run` exercises curated targets.
 
 `.python-version` selects the **minor** interpreter (`3.15`). Patch pins belong in CI (`uv python install 3.15.2`) and the Docker base image.
@@ -117,6 +121,9 @@ uv run --locked aesa benchmark run
 
 ```bash
 # Primary product surface
+uv run aesa doctor [--home DIR]
+uv run aesa vet SOURCE [-o DIR]
+uv run aesa init-gate [PATH] [--force]
 uv run aesa scan PATH [-o DIR] [--baseline B] [--save-baseline B] [--fail-on never|high|any]
 uv run aesa explain F-001 -o DIR
 uv run aesa baseline save|show …
@@ -149,7 +156,7 @@ uv run aesa lint [--fix] [--format] [--check-format]
 | --- | --- |
 | `cli/` | argparse construction + command dispatch |
 | `security/` | Guard engine: capabilities, rules, scan, baseline, report |
-| `security/rules.py` | Deterministic rules AESA-RULE-001…010 |
+| `security/rules.py` | Deterministic rules AESA-RULE-001…016 (pack 1.2) |
 | `security/scan.py` | Artifact writer + policy fail-on |
 | `inventory/` | Bounded I/O, adapter registry, collector, coverage |
 | `inventory/adapters/` | Skills, MCP, hooks, plugins, subagents, automations, A2A, workflows |

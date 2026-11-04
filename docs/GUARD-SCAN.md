@@ -1,8 +1,12 @@
 # AESA Guard scan — operator guide
 
-This document describes the **primary product experience** introduced in release **3.1.0** and current through **3.4.0**: deterministic discovery plus evidence-backed security observations via `aesa scan`, with explicit capability / exposure / finding separation. Default artifacts land in cwd `./aesa-out` (not inside the target tree).
+This document describes the Guard scan path current through **3.5.0**: deterministic
+discovery plus evidence-backed security observations via `aesa scan`, with explicit
+capability / exposure / finding separation. Default artifacts land in cwd
+`./aesa-out` (not inside the target tree). Companion commands: `aesa doctor`
+(host map) and `aesa vet` (pre-install verdict).
 
-Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md).
+Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md), [`POLICY.md`](POLICY.md).
 
 ---
 
@@ -143,7 +147,10 @@ You may run both: scan for security observations, then `audit --profile standard
 3. Inspect `risk-delta.json` for added HIGH/CRITICAL finding keys.
 4. CI: set Action `fail-on: high` and pass `baseline` input (see [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml)).
 
-Baseline identity uses repository path/name keys and `rule_id:component_ids` finding keys. Renames can look like churn — treat deltas as review signals, not absolute truth.
+Baseline identity is **fingerprint-first** (content digest of authority-bearing
+evidence), with path/name as a secondary signal. Renames of unchanged content
+should not look like new risk; treat residual churn as a review signal, not
+absolute truth.
 
 ---
 
@@ -158,12 +165,14 @@ Composite action: [`.github/actions/aesa-gate`](../.github/actions/aesa-gate).
 | `profile` | `quick` | Only for `mode=audit` |
 | `baseline` | — | Guard `baseline.json` |
 | `baseline-inventory` | — | Optional inventory path diff |
-| `fail-on` | `never` | `never` \| `high` \| `any` |
+| `fail-on` | empty → policy / never | `never` \| `high` \| `any` |
+| `trusted-policy` | `true` | Load `.aesa.yml` from PR base ref; fail on policy edits |
 | `output-dir` | `aesa-out` | Artifact dir |
-| `install-tools-from` | `tools` | AESA tools directory |
+| `install-tools-from` | empty → Action-bundled tools | Prefer pinned kit; refuse accidental PR `./tools` |
 | `upload-sarif` | `true` | Prints SARIF path for optional upload |
 
-Hardening note: all user inputs are mapped to environment variables before bash uses them.
+Hardening note: inputs are mapped to environment variables before bash uses them.
+Never `uv sync` a PR-controlled `tools/` directory as the scanner.
 
 ---
 

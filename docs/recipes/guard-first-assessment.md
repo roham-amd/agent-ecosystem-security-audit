@@ -1,35 +1,43 @@
-# Recipe — Guard-first assessment (recommended default)
+# Recipe — Authority Diff first assessment (recommended default)
 
-Use this pattern for most repositories that may contain Skills, MCP configs, hooks, or other agent surfaces.
+Use this pattern for most developers and repos that may contain Skills, MCP
+configs, hooks, or other agent surfaces.
 
 ## Goal
 
-Produce evidence-backed security observations in under 10 minutes, then optionally deepen with an AI auditor.
+Produce a non-empty, evidence-backed authority picture in under 10 minutes, then
+optionally deepen with an AI auditor and wire a tamper-resistant CI gate.
 
 ## Steps
 
-1. **Authorize scope** — confirm repository path/commit, data sensitivity, and that passive mode is required.
-2. **Scan**
+1. **Install**
    ```bash
-   cd tools && uv sync --locked
-   uv run aesa scan /path/to/target -o /path/to/work/aesa-out
+   uv tool install "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools"
    ```
-3. **Triage** — read `scan-summary.txt`; open HIGH/CRITICAL findings with `aesa explain F-00N`.
-4. **Baseline** — `aesa baseline save -o …/aesa-out` for future diffs.
-5. **Deep review (optional)** — attach `skills/aesa-auditor` + `prompts/04-passive-guardrails.md`; load only matching modules.
-6. **Claims** — require structured claims; `aesa validate claim`.
-7. **Report** — narrative + JSON; `aesa validate report`.
-8. **Govern** — wire CI Action with `fail-on: high` and the saved baseline.
+2. **Host map** — `aesa doctor` (local-only; usually non-empty).
+3. **Pre-install check (optional)** — `aesa vet github.com/org/candidate` or a local path.
+4. **Authorize repo scope** — confirm path/commit, data sensitivity, passive mode.
+5. **Scan**
+   ```bash
+   aesa scan /path/to/target -o /path/to/work/aesa-out
+   ```
+6. **Triage** — read `scan-summary.txt`; prefer `SECURITY_FINDING`/`EXPOSURE` and
+   `evidence_strength: LITERAL_CONFIG`; open items with `aesa explain F-00N`.
+7. **Baseline** — `aesa baseline save -o …/aesa-out` for future diffs.
+8. **Gate** — `aesa init-gate` then pin the kit ref; keep `trusted-policy: true`.
+9. **Deep review (optional)** — attach `skills/aesa-auditor`; load only matching modules.
+10. **Claims / report (optional)** — structured claims + `aesa validate claim|report`.
 
 ## Expected outputs
 
-- Deterministic findings with file evidence
+- Host authority map and/or deterministic findings with file evidence
 - Explicit NOT VERIFIED coverage gaps
-- Optional validated audit-report JSON after deep review
+- CI workflow that loads policy from the PR base ref
 
 ## Non-goals
 
-- Declaring the repository “secure”
+- Declaring the repository or host “secure”
 - Executing target code or contacting MCP endpoints in passive mode
 
-See also: [`../GUARD-SCAN.md`](../GUARD-SCAN.md), [`small-repo-deep-audit.md`](small-repo-deep-audit.md).
+See also: [`../GUARD-SCAN.md`](../GUARD-SCAN.md), [`../AESA-GATE.md`](../AESA-GATE.md),
+[`small-repo-deep-audit.md`](small-repo-deep-audit.md).

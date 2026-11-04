@@ -2,15 +2,15 @@
   "graph_version": "1.0",
   "audit_id": "scan-guard",
   "scope": {
-    "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\tests\\benchmark\\fixtures\\skill-to-mcp-path",
-    "audited_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f",
+    "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\examples\\_gen_src",
+    "audited_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",
     "tree_sha": null
   },
   "nodes": [
     {
       "node_id": "N-host",
       "kind": "AgentHost",
-      "label": "skill-to-mcp-path",
+      "label": "_gen_src",
       "verification_state": "INFERRED",
       "evidence_ids": [
         "E-INV"
@@ -19,7 +19,7 @@
     {
       "node_id": "N-001",
       "kind": "Skill",
-      "label": "untrusted-helper",
+      "label": "fetch-helper",
       "component_id": "C-001",
       "verification_state": "INFERRED",
       "evidence_ids": [
@@ -29,7 +29,7 @@
     {
       "node_id": "N-002",
       "kind": "McpClient",
-      "label": "filesystem-broad",
+      "label": "floaty",
       "component_id": "C-002",
       "verification_state": "INFERRED",
       "evidence_ids": [
@@ -38,9 +38,19 @@
     },
     {
       "node_id": "N-003",
+      "kind": "McpClient",
+      "label": "remote",
+      "component_id": "C-003",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ]
+    },
+    {
+      "node_id": "N-004",
       "kind": "Package",
       "label": "Cursor",
-      "component_id": "C-003",
+      "component_id": "C-004",
       "verification_state": "INFERRED",
       "evidence_ids": [
         "E-INV"
@@ -60,7 +70,7 @@
       ],
       "limitations": [
         "Structural inventory edge only; host binding not independently verified.",
-        "source_path=SKILL.md"
+        "source_path=skills/fetch-helper/SKILL.md"
       ]
     },
     {
@@ -83,6 +93,21 @@
       "kind": "loads",
       "from_node_id": "N-host",
       "to_node_id": "N-003",
+      "direction": "directed",
+      "verification_state": "INFERRED",
+      "evidence_ids": [
+        "E-INV"
+      ],
+      "limitations": [
+        "Structural inventory edge only; host binding not independently verified.",
+        "source_path=.cursor/mcp.json"
+      ]
+    },
+    {
+      "edge_id": "E-004",
+      "kind": "loads",
+      "from_node_id": "N-host",
+      "to_node_id": "N-004",
       "direction": "directed",
       "verification_state": "INFERRED",
       "evidence_ids": [

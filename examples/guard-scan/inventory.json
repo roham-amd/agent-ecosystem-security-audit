@@ -1,8 +1,8 @@
 {
   "aesa_inventory_version": "0.3.0",
   "mode": "passive_read_only",
-  "repository_path": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\tests\\benchmark\\fixtures\\skill-to-mcp-path",
-  "collected_at_utc": "2026-11-04T21:27:15Z",
+  "repository_path": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\examples\\_gen_src",
+  "collected_at_utc": "2026-11-04T22:25:47Z",
   "limits": {
     "max_files": 5000,
     "max_depth": 12,
@@ -122,16 +122,16 @@
     ],
     "component_counts_by_type": {
       "Skill": 1,
-      "MCP Server Registration": 1,
+      "MCP Server Registration": 2,
       "Agent Host": 1
     },
     "component_counts_by_maturity": {
       "SUPPORTED": 1,
-      "PARTIAL": 2,
+      "PARTIAL": 3,
       "MANUAL_ONLY": 0,
       "UNSUPPORTED": 0
     },
-    "deterministically_discovered": 3,
+    "deterministically_discovered": 4,
     "manual_review_families": [
       "Browser agents",
       "Memory / RAG",
@@ -142,17 +142,35 @@
     ],
     "high_priority_review_areas": [
       {
+        "component_id": "C-001",
+        "name": "fetch-helper",
+        "type": "Skill",
+        "repository_path": "skills/fetch-helper/SKILL.md",
+        "hints": [
+          "external_url_reference"
+        ]
+      },
+      {
         "component_id": "C-002",
-        "name": "filesystem-broad",
+        "name": "floaty",
         "type": "MCP Server Registration",
         "repository_path": ".cursor/mcp.json",
         "hints": [
           "local_command_transport",
-          "broad_or_relative_path_args"
+          "unpinned_package_launcher"
         ]
       },
       {
         "component_id": "C-003",
+        "name": "remote",
+        "type": "MCP Server Registration",
+        "repository_path": ".cursor/mcp.json",
+        "hints": [
+          "remote_endpoint"
+        ]
+      },
+      {
+        "component_id": "C-004",
         "name": "Cursor",
         "type": "Agent Host",
         "repository_path": ".cursor/mcp.json",
@@ -170,22 +188,24 @@
   },
   "components": [
     {
-      "name": "untrusted-helper",
+      "name": "fetch-helper",
       "type": "Skill",
       "reference_kind": "LOCAL_IMPLEMENTATION",
-      "repository_path": "SKILL.md",
+      "repository_path": "skills/fetch-helper/SKILL.md",
       "adapter": "skill_md",
       "adapter_maturity": "SUPPORTED",
       "discovery_status": "IDENTIFIED",
       "instruction_content_present": true,
-      "declared_description": "Illustrative skill that references privileged MCP tooling",
-      "priority_hints": [],
+      "declared_description": "demo",
+      "priority_hints": [
+        "external_url_reference"
+      ],
       "component_id": "C-001",
-      "content_digest": "sha256:0f961825ffbe557afe16f654fc4b89709db7631cd0c1c9432b290779e3245d53",
-      "fingerprint": "cc68ba3cf13937eb"
+      "content_digest": "sha256:764a7c0eaefebf4e721f07718ce2a51a39d72219f92278f0d9fcd073509140cc",
+      "fingerprint": "df6e983013b705b3"
     },
     {
-      "name": "filesystem-broad",
+      "name": "floaty",
       "type": "MCP Server Registration",
       "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
       "repository_path": ".cursor/mcp.json",
@@ -194,14 +214,37 @@
       "discovery_status": "IDENTIFIED",
       "declared_transport": null,
       "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
       "url": null,
       "priority_hints": [
         "local_command_transport",
-        "broad_or_relative_path_args"
+        "unpinned_package_launcher"
       ],
       "component_id": "C-002",
-      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
-      "fingerprint": "145289c97defd79d"
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
+      "fingerprint": "35374badd6e63a30"
+    },
+    {
+      "name": "remote",
+      "type": "MCP Server Registration",
+      "reference_kind": "LOCAL_CONFIGURATION_OR_INSTRUCTIONS",
+      "repository_path": ".cursor/mcp.json",
+      "adapter": "mcp_config",
+      "adapter_maturity": "PARTIAL",
+      "discovery_status": "IDENTIFIED",
+      "declared_transport": null,
+      "command": null,
+      "args": [],
+      "url": "https://mcp.example.com/sse",
+      "priority_hints": [
+        "remote_endpoint"
+      ],
+      "component_id": "C-003",
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
+      "fingerprint": "35374badd6e63a30"
     },
     {
       "name": "Cursor",
@@ -224,9 +267,9 @@
         "Absence of .cursor/ does not prove the host is unused."
       ],
       "effective_permissions": "NOT VERIFIED",
-      "component_id": "C-003",
-      "content_digest": "sha256:8cefa7e8dc31c1742f71d6259559ac96b3dcc7f71629f587794978e6e91d936d",
-      "fingerprint": "e454f387bf236a28"
+      "component_id": "C-004",
+      "content_digest": "sha256:63abb5d256405b57899e54f45fce643588f9718464678c847e7badcda7dac738",
+      "fingerprint": "ee22ec58d1374b1b"
     }
   ],
   "parser_events": [],
@@ -235,5 +278,5 @@
     "Deterministic discovery coverage is partial; see coverage.adapter_matrix.",
     "Inventory is not a security clearance or production approval."
   ],
-  "repository_commit": "26fd1f25f13e10f091b96afe026963d6cfb6bf6f"
+  "repository_commit": "f47826a24fff379fd7f7e98d095153a962cf573e"
 }

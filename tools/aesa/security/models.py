@@ -35,6 +35,9 @@ Severity = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL"]
 # Capability vs exposure vs finding — keep these distinct in reports and policy.
 FindingClass = Literal["CAPABILITY", "EXPOSURE", "SECURITY_FINDING"]
 
+# How strongly the rule's evidence supports the claim.
+EvidenceStrength = Literal["LITERAL_CONFIG", "INFERRED_HINT", "NAME_MARKER"]
+
 # How a capability was established. Type defaults are never "effective".
 CapabilityOrigin = Literal[
     "DECLARED",  # Explicitly present in configuration / instructions
@@ -112,6 +115,9 @@ class Finding:
     exploitability: str = "UNKNOWN"
     exposure: str = "UNKNOWN"
     finding_class: FindingClass = "SECURITY_FINDING"
+    evidence_strength: EvidenceStrength = "INFERRED_HINT"
+    verify_in_60s: str = ""
+    fix_snippet: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -119,7 +125,7 @@ class Finding:
 
 @dataclass(slots=True)
 class Relationship:
-    """Component-to-component link for ecosystem graphs (extensibility surface)."""
+    """Reserved graph-link shape for deep review; not emitted by Guard rules yet."""
 
     relationship_id: str
     kind: str

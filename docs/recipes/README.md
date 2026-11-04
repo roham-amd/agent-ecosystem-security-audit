@@ -1,11 +1,12 @@
 # Assessment recipes
 
-Practical engagement patterns for AESA Guard. Start every recipe with
-`aesa scan` when tooling is available, then deepen with the auditor skill.
+Practical engagement patterns for AESA Guard (Authority Diff). Prefer
+`aesa doctor` → `aesa vet` → `aesa scan` when tooling is available, then deepen
+with the auditor skill.
 
 | Recipe | Doc |
 | --- | --- |
-| Guard-first assessment (default) | [`guard-first-assessment.md`](guard-first-assessment.md) |
+| Authority Diff first assessment (default) | [`guard-first-assessment.md`](guard-first-assessment.md) |
 | Docker + AI agent (Cursor / Claude / Codex / …) | [`../docker-agent-audit.md`](../docker-agent-audit.md) |
 | Catalog / awesome-list inventory | [`catalog-inventory.md`](catalog-inventory.md) |
 | Small repo deep audit | [`small-repo-deep-audit.md`](small-repo-deep-audit.md) |

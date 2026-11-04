@@ -7,7 +7,12 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 from aesa.build import validate_json_schema_document
-from aesa.graph.analysis import GraphSemanticResult, find_paths, validate_graph_semantics
+from aesa.graph.analysis import (
+    DEFAULT_UNTRUSTED_TO_EXTERNAL,
+    GraphSemanticResult,
+    find_paths,
+    validate_graph_semantics,
+)
 from aesa.paths import canonical_schema_path, repo_root
 from aesa.semantic import SemanticResult, validate_semantics
 
@@ -51,8 +56,5 @@ def validate_graph_file(path: Path, *, semantic: bool = True) -> GraphSemanticRe
 
 def analyze_graph_paths(path: Path) -> list:
     doc = json.loads(path.read_text(encoding="utf-8"))
-    return find_paths(
-        doc,
-        start_kinds={"Skill", "DataAsset"},
-        end_kinds={"ExternalRecipient", "McpServer", "Tool"},
-    )
+    start_kinds, end_kinds = DEFAULT_UNTRUSTED_TO_EXTERNAL
+    return find_paths(doc, start_kinds=start_kinds, end_kinds=end_kinds)

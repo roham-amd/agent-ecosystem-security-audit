@@ -11,14 +11,16 @@
 
 The bundled audit procedure version (`prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
-Tooling package version (`aesa-tools`, currently **0.7.0**) is tracked in `canonical/versions.json` as `build_tool` and must stay aligned with `tools/pyproject.toml` and `tools/aesa/__init__.py`.
+Tooling package version (`aesa-tools`, currently **0.8.0**) is tracked in
+`canonical/versions.json` as `build_tool` and must stay aligned with
+`tools/pyproject.toml` and `tools/aesa/__init__.py`. Product release **3.5.0**.
 
 ## What this project is
 
-AESA Guard is an **open-source agent-ecosystem security intelligence toolchain**:
-deterministic discovery and security rules (`aesa scan`), procedures, prompts,
-specialized modules, report schemas, validation helpers, baselines/CI gate, and
-an optional AI auditor skill.
+AESA Guard is an **Authority Diff** for AI-agent ecosystems: host doctor,
+pre-install vet, deterministic repo scan (`aesa scan`), procedures, prompts,
+specialized modules, report schemas, validation helpers, baselines/CI gate with
+trusted policy, and an optional AI auditor skill.
 
 It is **not** an automated vulnerability scanner that proves systems are safe,
 a penetration-testing tool, runtime sandbox, marketplace certification authority,

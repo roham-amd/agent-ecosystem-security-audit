@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "local-echo": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-everything"]
+      "command": "node",
+      "args": ["server.js"]
     }
   }
 }

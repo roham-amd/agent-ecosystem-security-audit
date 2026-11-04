@@ -35,6 +35,11 @@ def discover_hooks(
             hints.append("pre_execution_lifecycle")
         if any(token in lowered for token in ("command", "shell", "exec", "subprocess")):
             hints.append("possible_execution_boundary")
+        if any(
+            token in lowered
+            for token in ("curl ", "wget ", "invoke-webrequest", "iwr ", "| sh", "| bash")
+        ):
+            hints.append("download_and_execute")
 
         name = path.stem
         if path.suffix == ".json":

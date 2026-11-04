@@ -1,11 +1,58 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 from aesa.inventory.io import safe_read_text, select_files
 from aesa.inventory.limits import CollectorLimits
+
+_SECRETISH_ENV_RE = re.compile(
+    r"(api[_-]?key|token|secret|password|passwd|authorization|credential|private[_-]?key)",
+    re.IGNORECASE,
+)
+
+
+def _package_looks_pinned(token: str) -> bool:
+    """Distinguish scoped names (`@scope/pkg`) from version pins (`pkg@1.2.3`)."""
+    if "@sha256:" in token or "==" in token:
+        return True
+    if token.startswith("@"):
+        # @scope/name → unpinned; @scope/name@1.2.3 → pinned
+        return token.count("@") >= 2
+    return "@" in token
+
+
+def _looks_unpinned_launcher(command: str, args: list[Any]) -> bool:
+    """True for npx -y / uvx / bunx style launchers without an obvious pin."""
+    cmd = command.strip().lower()
+    arg_strs = [str(a) for a in args]
+    joined = " ".join(arg_strs)
+    if cmd in {"npx", "bunx"} and ("-y" in arg_strs or "--yes" in arg_strs):
+        pkgs = [a for a in arg_strs if a not in {"-y", "--yes", "--"} and not a.startswith("-")]
+        return bool(pkgs) and not any(_package_looks_pinned(p) for p in pkgs)
+    if cmd == "uvx":
+        return bool(arg_strs) and not any(_package_looks_pinned(a) for a in arg_strs)
+    if "npx -y" in f"{cmd} {joined}" or "npx --yes" in f"{cmd} {joined}":
+        return not any(_package_looks_pinned(a) for a in arg_strs)
+    return False
+
+
+def _env_has_literal_secret(env: Any) -> bool:
+    if not isinstance(env, dict):
+        return False
+    for key, value in env.items():
+        key_s = str(key)
+        val_s = str(value) if value is not None else ""
+        if not _SECRETISH_ENV_RE.search(key_s):
+            continue
+        # Placeholder / env expansion is inheritance (RULE-002), not a literal secret.
+        if val_s.startswith("${") or val_s.startswith("$(") or val_s.startswith("{{"):
+            continue
+        if len(val_s) >= 8 and not val_s.startswith("$"):
+            return True
+    return False
 
 
 def _is_mcp_config_candidate(path: Path, root: Path) -> bool:
@@ -73,13 +120,23 @@ def discover_mcp_configs(
             hints: list[str] = []
             if example_like:
                 hints.append("example_or_template_config")
-            if cfg.get("command"):
+            command = str(cfg.get("command") or "")
+            raw_args = cfg.get("args")
+            args: list[Any] = list(raw_args) if isinstance(raw_args, list) else []
+            if command:
                 hints.append("local_command_transport")
-            if cfg.get("env") or cfg.get("environment"):
+                if _looks_unpinned_launcher(command, args):
+                    hints.append("unpinned_package_launcher")
+            env = cfg.get("env") or cfg.get("environment")
+            if env:
                 hints.append("inherits_or_sets_environment")
-            if cfg.get("url"):
+                if _env_has_literal_secret(env):
+                    hints.append("literal_secret_in_env")
+            url = str(cfg.get("url") or "")
+            if url:
                 hints.append("remote_endpoint")
-            args = cfg.get("args")
+                if url.lower().startswith("http://"):
+                    hints.append("insecure_http_remote")
             if isinstance(args, list) and any(
                 ".." in str(a) or str(a).startswith("/") for a in args
             ):
@@ -95,6 +152,7 @@ def discover_mcp_configs(
                     "discovery_status": "IDENTIFIED",
                     "declared_transport": cfg.get("transport") or cfg.get("type"),
                     "command": cfg.get("command"),
+                    "args": list(args) if isinstance(args, list) else [],
                     "url": cfg.get("url"),
                     "priority_hints": hints,
                 }

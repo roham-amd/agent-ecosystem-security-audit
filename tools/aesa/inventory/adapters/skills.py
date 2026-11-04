@@ -17,6 +17,12 @@ _NEGATION_RE = re.compile(
     r"\b(no|not|without|never|don't|do not|avoid|forbid(?:den)?)\b",
     re.IGNORECASE,
 )
+_HIDDEN_UNICODE_RE = re.compile(r"[\u200b\u200c\u200d\u2060\ufeff\u202a-\u202e\u2066-\u2069]")
+_DOWNLOAD_EXEC_RE = re.compile(
+    r"(curl\s+[^\n|;]*\|\s*(?:ba)?sh|wget\s+[^\n|;]*\|\s*(?:ba)?sh|"
+    r"iwr\s+[^\n|;]*\|\s*iex|invoke-webrequest[^\n|;]*\|\s*iex)",
+    re.IGNORECASE,
+)
 
 
 def _mentions_secret_handling(text: str) -> bool:
@@ -83,6 +89,10 @@ def discover_skills(
         # Bundled helper scripts next to the skill raise authority questions.
         if any((path.parent / "scripts").glob("*")):
             hints.append("bundled_scripts_directory")
+        if _HIDDEN_UNICODE_RE.search(raw):
+            hints.append("hidden_unicode_in_instructions")
+        if _DOWNLOAD_EXEC_RE.search(raw):
+            hints.append("download_and_execute")
 
         results.append(
             {

@@ -1,8 +1,8 @@
 name: AESA Guard
 description: >-
-  Passive agent-ecosystem Guard scan with optional baseline risk delta, .aesa.yml
-  policy auto-load, and PR annotations. Does not execute target application code
-  or contact MCP endpoints.
+  Passive agent-ecosystem Guard scan with optional baseline risk delta, trusted
+  .aesa.yml policy loading, and PR annotations. Does not execute target
+  application code or contact MCP endpoints.
 
 inputs:
   path:
@@ -26,32 +26,44 @@ inputs:
   baseline:
     description: >-
       Optional path to previous baseline.json for risk delta.
-      When empty, .aesa.yml policy.baseline is used if present.
+      When empty, trusted/base policy.baseline is used if present.
     required: false
     default: ""
   fail-on:
     description: >-
-      never | high | any. Leave empty to defer to .aesa.yml (or never when no policy).
-      Explicit values always override the policy file.
+      never | high | any. Leave empty to defer to trusted .aesa.yml (or never when
+      no policy). Explicit values always override the policy file.
     required: false
     default: ""
   policy:
     description: >-
-      Path to .aesa.yml. Leave empty to auto-discover from the scan path upward.
+      Explicit path to .aesa.yml. When empty and trusted-policy=true on a PR,
+      policy is loaded from the base ref. Otherwise only the scan-target file is
+      used (never a parent outside the target).
     required: false
     default: ""
   no-policy:
     description: If true, ignore .aesa.yml even when present
     required: false
     default: "false"
+  trusted-policy:
+    description: >-
+      If true on pull_request events, load .aesa.yml from the base ref so the PR
+      author cannot weaken the gate by editing policy on the head ref. Also fails
+      the job when the PR modifies .aesa.yml (authority-surface change).
+    required: false
+    default: "true"
   output-dir:
     description: Output directory for AESA artifacts
     required: false
     default: "aesa-out"
   install-tools-from:
-    description: Path to AESA tools/ directory containing pyproject.toml
+    description: >-
+      Path to AESA tools/ containing pyproject.toml. Empty (default) resolves to
+      the Action-bundled tools directory when present, never the consumer
+      workspace `tools/` by accident.
     required: false
-    default: "tools"
+    default: ""
   upload-sarif:
     description: If true, print path to findings.sarif.json for workflow upload
     required: false
@@ -64,6 +76,41 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Resolve AESA tools directory
+      id: tools
+      shell: bash
+      env:
+        AESA_INSTALL_TOOLS_FROM: ${{ inputs.install-tools-from }}
+        AESA_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        # Prefer explicit input, then Action-bundled tools, and only then a
+        # workspace-relative path. Never silently uv-sync a PR-controlled tools/.
+        chosen="${AESA_INSTALL_TOOLS_FROM}"
+        bundled="$(cd "$AESA_ACTION_PATH/../../.." && pwd)/tools"
+        if [[ -z "${chosen}" ]]; then
+          if [[ -f "${bundled}/pyproject.toml" ]]; then
+            chosen="${bundled}"
+            echo "Using Action-bundled AESA tools: ${chosen}"
+          elif [[ -f tools/pyproject.toml ]]; then
+            echo "::error::install-tools-from is empty and Action-bundled tools were not found. Refusing to default to workspace ./tools (PR-controlled code execution risk). Pass install-tools-from explicitly to a pinned AESA checkout."
+            exit 1
+          else
+            echo "::error::Could not locate AESA tools/pyproject.toml"
+            exit 1
+          fi
+        fi
+        if [[ ! -f "${chosen}/pyproject.toml" ]]; then
+          echo "::error::install-tools-from=${chosen} has no pyproject.toml"
+          exit 1
+        fi
+        # Soft warning when tools resolve inside the default workspace without an
+        # explicit .aesa-kit / action-bundled path.
+        if [[ "${chosen}" == "tools" || "${chosen}" == "./tools" ]]; then
+          echo "::warning::install-tools-from points at workspace tools/. Prefer a pinned AESA kit checkout or Action-bundled tools so PRs cannot supply the scanner."
+        fi
+        echo "dir=${chosen}" >> "$GITHUB_OUTPUT"
+
     - name: Install uv
       uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
@@ -72,11 +119,72 @@ runs:
 
     - name: Install AESA tooling
       shell: bash
-      working-directory: ${{ inputs.install-tools-from }}
+      working-directory: ${{ steps.tools.outputs.dir }}
       run: |
         set -euo pipefail
         uv sync --locked --no-dev
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+    - name: Flag .aesa.yml policy edits on pull requests
+      if: inputs.mode == 'scan' && inputs.trusted-policy == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        AESA_PATH: ${{ inputs.path }}
+        AESA_BASE_REF: ${{ github.base_ref }}
+      run: |
+        set -euo pipefail
+        if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+          echo "Not a git work tree; skipping policy-edit check."
+          exit 0
+        fi
+        base="origin/${AESA_BASE_REF}"
+        if ! git rev-parse --verify "$base" >/dev/null 2>&1; then
+          git fetch --no-tags --depth=1 origin "${AESA_BASE_REF}:${AESA_BASE_REF}" || true
+          base="${AESA_BASE_REF}"
+        fi
+        if git diff --name-only "${base}...HEAD" | grep -E '(^|/)\.aesa\.yml$' >/dev/null; then
+          echo "::error::PR modifies .aesa.yml. Policy changes are an authority-surface edit and must be reviewed on their own; the gate loads policy from the base ref when trusted-policy=true."
+          exit 1
+        fi
+        echo "No .aesa.yml edits in this PR."
+
+    - name: Resolve trusted policy path
+      if: inputs.mode == 'scan'
+      id: trusted_policy
+      shell: bash
+      env:
+        AESA_PATH: ${{ inputs.path }}
+        AESA_BASE_REF: ${{ github.base_ref }}
+        AESA_NO_POLICY: ${{ inputs.no-policy }}
+        AESA_TRUSTED: ${{ inputs.trusted-policy }}
+        AESA_POLICY_INPUT: ${{ inputs.policy }}
+        AESA_EVENT: ${{ github.event_name }}
+      run: |
+        set -euo pipefail
+        echo "path=" >> "$GITHUB_OUTPUT"
+        if [[ "${AESA_NO_POLICY}" == "true" || -n "${AESA_POLICY_INPUT}" ]]; then
+          exit 0
+        fi
+        if [[ "${AESA_TRUSTED}" != "true" || "${AESA_EVENT}" != "pull_request" ]]; then
+          exit 0
+        fi
+        out="${RUNNER_TEMP}/aesa-trusted-policy.yml"
+        rm -f "$out"
+        base="origin/${AESA_BASE_REF}"
+        if ! git rev-parse --verify "$base" >/dev/null 2>&1; then
+          base="${AESA_BASE_REF}"
+        fi
+        rel="${AESA_PATH%/}/.aesa.yml"
+        rel="${rel#./}"
+        if git show "${base}:${rel}" >"$out" 2>/dev/null; then
+          echo "Loaded trusted policy from ${base}:${rel}"
+          echo "path=${out}" >> "$GITHUB_OUTPUT"
+        elif git show "${base}:.aesa.yml" >"$out" 2>/dev/null; then
+          echo "Loaded trusted policy from ${base}:.aesa.yml"
+          echo "path=${out}" >> "$GITHUB_OUTPUT"
+        else
+          echo "No base-ref .aesa.yml; scan will proceed without a trusted policy file."
+        fi
 
     - name: Run AESA Guard scan (passive)
       if: inputs.mode == 'scan'
@@ -88,6 +196,7 @@ runs:
         AESA_FAIL_ON: ${{ inputs.fail-on }}
         AESA_POLICY: ${{ inputs.policy }}
         AESA_NO_POLICY: ${{ inputs.no-policy }}
+        AESA_TRUSTED_POLICY: ${{ steps.trusted_policy.outputs.path }}
       run: |
         set -euo pipefail
         args=(scan "$AESA_PATH" -o "$AESA_OUTPUT_DIR")
@@ -95,12 +204,12 @@ runs:
           args+=(--no-policy)
         elif [[ -n "${AESA_POLICY}" ]]; then
           args+=(--policy "$AESA_POLICY")
+        elif [[ -n "${AESA_TRUSTED_POLICY:-}" ]]; then
+          args+=(--policy "$AESA_TRUSTED_POLICY")
+          echo "Using trusted base-ref policy: $AESA_TRUSTED_POLICY"
         elif [[ -f "${AESA_PATH}/.aesa.yml" ]]; then
           args+=(--policy "${AESA_PATH}/.aesa.yml")
           echo "Auto-loaded policy: ${AESA_PATH}/.aesa.yml"
-        elif [[ -f .aesa.yml ]]; then
-          args+=(--policy .aesa.yml)
-          echo "Auto-loaded policy: .aesa.yml"
         fi
         if [[ -n "${AESA_FAIL_ON}" ]]; then
           args+=(--fail-on "$AESA_FAIL_ON")

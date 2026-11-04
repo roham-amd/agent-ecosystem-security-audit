@@ -69,6 +69,9 @@ class ScanResult:
                 exploitability=str(f.get("exploitability") or "UNKNOWN"),
                 exposure=str(f.get("exposure") or "UNKNOWN"),
                 finding_class=f.get("finding_class") or "SECURITY_FINDING",  # type: ignore[arg-type]
+                evidence_strength=f.get("evidence_strength") or "INFERRED_HINT",  # type: ignore[arg-type]
+                verify_in_60s=str(f.get("verify_in_60s") or ""),
+                fix_snippet=str(f.get("fix_snippet") or ""),
             )
             for f in doc.get("findings") or []
         ]
@@ -111,7 +114,7 @@ class ScanResult:
     def to_findings_doc(self) -> dict[str, Any]:
         by_class = self.findings_by_class()
         return {
-            "findings_version": "1.1",
+            "findings_version": "1.2",
             "product": "AESA Guard",
             "product_version": self.product_version,
             "package_version": self.package_version,

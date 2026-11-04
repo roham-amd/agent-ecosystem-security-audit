@@ -24,7 +24,3 @@ def package_version() -> str:
     from aesa import __version__
 
     return __version__
-
-
-def build_tool_tag() -> str:
-    return load_versions().get("build_tool", f"aesa-tools-{package_version()}")

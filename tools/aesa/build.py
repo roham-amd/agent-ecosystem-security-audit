@@ -13,10 +13,10 @@ from aesa.paths import (
     published_schema_paths,
     repo_root,
     version_file_path,
-    versions_path,
 )
 from aesa.pins import normalize_package_name
 from aesa.prompt_build import write_monolith
+from aesa.versioning import load_versions as load_canonical_versions
 
 
 def _sha256(path: Path) -> str:
@@ -52,10 +52,11 @@ def check_schema_parity() -> None:
 
 
 def load_versions() -> dict[str, object]:
-    data = json.loads(versions_path().read_text(encoding="utf-8"))
+    """Compatibility wrapper — prefer ``aesa.versioning.load_versions``."""
+    data = load_canonical_versions()
     if not isinstance(data, dict):
         raise SystemExit(f"Invalid versions.json: expected object, got {type(data).__name__}")
-    return data
+    return dict(data)
 
 
 def check_requires_python() -> None:

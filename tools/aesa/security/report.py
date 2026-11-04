@@ -101,7 +101,7 @@ def render_terminal_report(scan: ScanResult) -> str:
     )
     unverified = len(scan.coverage.get("not_verified") or [])
     lines = [
-        "AESA Guard — Agent Ecosystem Security Gate",
+        "AESA Guard — Authority Diff for AI agents",
         f"Product: AESA Guard {scan.product_version}  (tooling {scan.package_version})",
         f"Repository: {scan.repository_path}",
         f"Commit: {scan.commit or 'unknown'}",

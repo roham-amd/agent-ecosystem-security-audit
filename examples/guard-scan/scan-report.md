@@ -4,50 +4,67 @@ Decision-oriented scan summary. Capability observations are not vulnerabilities.
 Absence of findings is not evidence of safety when coverage is incomplete.
 
 ```text
-AESA Guard — Agent Ecosystem Security Gate
-Product: AESA Guard 3.4.0  (tooling 0.7.0)
-Repository: C:\Users\rohaa\Projects\agent-ecosystem-security-audit\tests\benchmark\fixtures\skill-to-mcp-path
-Commit: 26fd1f25f13e10f091b96afe026963d6cfb6bf6f
+AESA Guard — Authority Diff for AI agents
+Product: AESA Guard 3.5.0  (tooling 0.8.0)
+Repository: C:\Users\rohaa\Projects\agent-ecosystem-security-audit\examples\_gen_src
+Commit: f47826a24fff379fd7f7e98d095153a962cf573e
 
 DECISION SUMMARY
-  Components discovered              3
-  Authority-bearing components       1
-  External connections               0
+  Components discovered              4
+  Authority-bearing components       3
+  External connections               2
   High-priority review items         1
   Unverified control surfaces        4
 
 OBSERVATION CLASSES
   Security findings                  1
-  Exposure observations              0
-  Capability observations            0
+  Exposure observations              2
+  Capability observations            1
 
 AUTHORITY SURFACES (review required)
-  [HIGH] F-001  MCP local command with broad filesystem arguments
-      class: SECURITY_FINDING  confidence: POTENTIAL
+  [HIGH] F-003  MCP server launched via unpinned package installer
+      class: SECURITY_FINDING  confidence: OBSERVED
       evidence: .cursor/mcp.json:4
-      action: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+      action: Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.
+  [MEDIUM] F-004  MCP server uses remote endpoint
+      class: EXPOSURE  confidence: OBSERVED
+      evidence: .cursor/mcp.json:8
+      action: Verify endpoint identity, TLS, OAuth scopes, and whether secrets are forwarded.
+  [LOW] F-001  Skill references external URLs
+      class: EXPOSURE  confidence: OBSERVED
+      evidence: skills/fetch-helper/SKILL.md:5
+      action: Pin or vendor remote references; treat remote content as untrusted.
 
 EXAMPLE AUTHORITY PATH
   .cursor/mcp.json
-  → Host agent → MCP child process
-  → Tool calls execute under the MCP process identity with host-granted access
-  [SECURITY_FINDING] F-001: MCP local command with broad filesystem arguments
-  Next: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+  → Host agent → package registry → MCP process
+  → Arbitrary code execution under the host agent identity after a registry update
+  [SECURITY_FINDING] F-003: MCP server launched via unpinned package installer
+  Next: Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.
 
 COMPONENTS BY TYPE
   Agent Host               1
-  MCP Server Registration  1
+  MCP Server Registration  2
   Skill                    1
 
 ALL FINDINGS
-  CRITICAL 0  HIGH 1  MEDIUM 0  LOW 0  INFO 0
-  [SECURITY_FINDING/HIGH/POTENTIAL] F-001 MCP local command with broad filesystem arguments
+  CRITICAL 0  HIGH 1  MEDIUM 1  LOW 1  INFO 1
+  [SECURITY_FINDING/HIGH/OBSERVED] F-003 MCP server launched via unpinned package installer
       evidence: .cursor/mcp.json:4
-      action: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+      action: Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.
+  [EXPOSURE/MEDIUM/OBSERVED] F-004 MCP server uses remote endpoint
+      evidence: .cursor/mcp.json:8
+      action: Verify endpoint identity, TLS, OAuth scopes, and whether secrets are forwarded.
+  [EXPOSURE/LOW/OBSERVED] F-001 Skill references external URLs
+      evidence: skills/fetch-helper/SKILL.md:5
+      action: Pin or vendor remote references; treat remote content as untrusted.
+  [CAPABILITY/INFORMATIONAL/OBSERVED] F-002 MCP server launched via local command
+      evidence: .cursor/mcp.json:4
+      action: Record as an execution capability; verify host isolation before treating as risk.
 
 COVERAGE
-  Deterministically discovered  3
-  Adapter maturity              {'SUPPORTED': 1, 'PARTIAL': 2, 'MANUAL_ONLY': 0, 'UNSUPPORTED': 0}
+  Deterministically discovered  4
+  Adapter maturity              {'SUPPORTED': 1, 'PARTIAL': 3, 'MANUAL_ONLY': 0, 'UNSUPPORTED': 0}
 
 ADAPTER COVERAGE
   Skill                        SUPPORTED    skill_md
@@ -95,14 +112,20 @@ IMPORTANT
 
 ## Critical / high findings
 
-- **F-001** [SECURITY_FINDING/HIGH/POTENTIAL] MCP local command with broad filesystem arguments
+- **F-003** [SECURITY_FINDING/HIGH/OBSERVED] MCP server launched via unpinned package installer
   - Evidence: `.cursor/mcp.json:4`
-  - Action: Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+  - Action: Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.
 
 ## All findings
 
-- **F-001** [SECURITY_FINDING/HIGH/POTENTIAL] MCP local command with broad filesystem arguments
-  - Pin and verify the exact MCP server artifact, restrict env inheritance, and require approval for high-impact tools.
+- **F-003** [SECURITY_FINDING/HIGH/OBSERVED] MCP server launched via unpinned package installer
+  - Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.
+- **F-004** [EXPOSURE/MEDIUM/OBSERVED] MCP server uses remote endpoint
+  - Verify endpoint identity, TLS, OAuth scopes, and whether secrets are forwarded.
+- **F-001** [EXPOSURE/LOW/OBSERVED] Skill references external URLs
+  - Pin or vendor remote references; treat remote content as untrusted.
+- **F-002** [CAPABILITY/INFORMATIONAL/OBSERVED] MCP server launched via local command
+  - Record as an execution capability; verify host isolation before treating as risk.
 
 ## Unverified areas
 

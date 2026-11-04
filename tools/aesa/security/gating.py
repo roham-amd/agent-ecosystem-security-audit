@@ -12,8 +12,12 @@ HIGH_SEVERITIES: frozenset[str] = frozenset({"CRITICAL", "HIGH"})
 
 
 class _GateFinding(Protocol):
-    finding_class: str
-    severity: str
+    # Properties keep Literal severity/class fields structural-subtype compatible.
+    @property
+    def finding_class(self) -> str: ...
+
+    @property
+    def severity(self) -> str: ...
 
 
 def is_gate_finding(finding: _GateFinding | dict[str, Any]) -> bool:

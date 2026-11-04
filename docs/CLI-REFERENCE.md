@@ -1,16 +1,9 @@
 # AESA Guard CLI reference
 
-Complete reference for the `aesa` console script (package `aesa-tools` **0.7.0**).
+Complete reference for the `aesa` console script (package `aesa-tools` **0.8.0**,
+product **3.5.0**).
 
-Install:
-
-```bash
-cd tools
-uv sync --locked
-uv run aesa --help
-```
-
-Entry points: `aesa` (console script) and `python -m aesa`.
+Install: [`INSTALL.md`](INSTALL.md). Entry points: `aesa` and `python -m aesa`.
 
 ---
 
@@ -18,10 +11,14 @@ Entry points: `aesa` (console script) and `python -m aesa`.
 
 | Command | Purpose |
 | --- | --- |
-| `scan` | **Primary.** Inventory + deterministic Guard findings + SARIF |
+| `doctor` | **First aha.** Host authority map (Cursor / Claude / VS Code) |
+| `vet` | Pre-install verdict for a local path or GitHub URL |
+| `init-gate` | Write starter `.aesa.yml` + consumer workflow stub |
+| `scan` | Repo inventory + deterministic Guard findings + SARIF |
 | `explain` | Print detailed explanation of a finding id |
 | `baseline` | Save / show recurring assessment baselines |
-| `audit` | Profile-based inventory + AI agent handoff package |
+| `annotate` | Emit GitHub Actions annotations from findings |
+| `audit` | Legacy profile-based inventory + AI agent handoff package |
 | `preflight` | Alias of `audit --profile quick` |
 | `inventory` | Inventory JSON only |
 | `validate` | Validate report, graph, or structured claim |
@@ -32,14 +29,54 @@ Entry points: `aesa` (console script) and `python -m aesa`.
 | `build` | Schema sync, monolith, version consistency |
 | `corpus` | Tooling regression corpus |
 | `benchmark` | AgentSecBench detection fixtures |
+| `pilots` | Curated pilot-repository Guard scans |
+| `hosts` | List / show built-in host assessment profiles |
 | `deps` | Lock outdated / upgrade helpers |
 | `lint` | Ruff lint / format |
 
 ---
 
+## `aesa doctor`
+
+```bash
+aesa doctor [--home PATH] [-o OUTPUT_DIR] [--fail-on never|high|any]
+```
+
+Reads local host configs under the user home (`~/.cursor`, `~/.claude`,
+`~/.mcp.json`, `~/.vscode`, `~/.codex`). Local-only; nothing is uploaded.
+Lone config files are copied into a synthetic root — `$HOME` is never scanned
+wholesale.
+
+---
+
+## `aesa vet`
+
+```bash
+aesa vet SOURCE [-o OUTPUT_DIR] [--keep-clone]
+```
+
+`SOURCE` is a local path, Git URL, or `owner/repo` GitHub shorthand. Remote
+sources are shallow-cloned with hooks disabled, no submodules, and no LFS
+smudge. Exit `0` = accept-with-coverage-gaps; `1` = review/reject gated findings;
+`2` = tooling failure (e.g. missing `git`).
+
+---
+
+## `aesa init-gate`
+
+```bash
+aesa init-gate [PATH] [--force]
+```
+
+Writes `.aesa.yml` (enforce / fail_on high) and
+`.github/workflows/aesa-gate.yml` with `trusted-policy: true` and a pinned kit
+ref. Does not overwrite existing files unless `--force`.
+
+---
+
 ## `aesa scan`
 
-One-command Guard assessment.
+One-command Guard assessment of a repository tree.
 
 ```bash
 aesa scan [PATH] [-o OUTPUT_DIR] [--baseline PATH] [--save-baseline PATH]
@@ -53,7 +90,7 @@ aesa scan [PATH] [-o OUTPUT_DIR] [--baseline PATH] [--save-baseline PATH]
 | `--baseline` | — / `.aesa.yml` | Prior `baseline.json` for risk delta |
 | `--save-baseline` | — | Write baseline after scan |
 | `--fail-on` | `never` or `.aesa.yml` | Exit `1` when policy matches |
-| `--policy` | discover upward | Explicit `.aesa.yml` path |
+| `--policy` | `.aesa.yml` inside scan target only | Explicit policy path (never parent dirs outside target) |
 | `--no-policy` | off | Ignore `.aesa.yml` |
 
 ### Exit codes

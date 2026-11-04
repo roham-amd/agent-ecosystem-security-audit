@@ -22,6 +22,7 @@ from aesa.benchmark.runner import run_benchmark
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
+from aesa.doctor import run_doctor
 from aesa.export.annotate import render_github_annotations, render_text_annotations
 from aesa.export.sarif import report_to_sarif
 from aesa.hosts.profiles import get_host_profile, list_host_profiles
@@ -48,6 +49,7 @@ from aesa.validate_report import (
     validate_graph_file,
     validate_report_file,
 )
+from aesa.vet import run_vet
 
 
 def _print_validation(path: Path, *, ok: bool, issues: list) -> int:
@@ -75,6 +77,12 @@ def dispatch(args: argparse.Namespace) -> int:
     match command:
         case "scan":
             return _cmd_scan(args)
+        case "doctor":
+            return _cmd_doctor(args)
+        case "vet":
+            return _cmd_vet(args)
+        case "init-gate":
+            return _cmd_init_gate(args)
         case "explain":
             return _cmd_explain(args)
         case "baseline":
@@ -118,7 +126,9 @@ def dispatch(args: argparse.Namespace) -> int:
 def _cmd_scan(args: argparse.Namespace) -> int:
     policy = None
     if not getattr(args, "no_policy", False):
-        policy_path = getattr(args, "policy", None) or discover_policy_file(args.path)
+        policy_path = getattr(args, "policy", None) or discover_policy_file(
+            args.path, stop_at=args.path
+        )
         if policy_path is not None:
             policy = load_policy(policy_path)
 
@@ -153,6 +163,61 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         print(f"Suppressions applied: {len(payload['suppressions'])}")
     print(f"Artifacts: {payload['output_dir']}")
     return code
+
+
+def _cmd_doctor(args: argparse.Namespace) -> int:
+    text, code = run_doctor(
+        home=getattr(args, "home", None),
+        output_dir=getattr(args, "output_dir", None),
+        fail_on=getattr(args, "fail_on", None),
+    )
+    print(text)
+    return code
+
+
+def _cmd_vet(args: argparse.Namespace) -> int:
+    text, code = run_vet(
+        args.source,
+        output_dir=getattr(args, "output_dir", None),
+        keep_clone=bool(getattr(args, "keep_clone", False)),
+    )
+    print(text)
+    return code
+
+
+def _init_gate_templates() -> tuple[str, str]:
+    """Load starter policy + workflow templates shipped with the package."""
+    template_dir = Path(__file__).resolve().parents[1] / "templates"
+    policy = (template_dir / "aesa.yml").read_text(encoding="utf-8")
+    workflow = (template_dir / "aesa-gate.yml").read_text(encoding="utf-8")
+    return policy, workflow
+
+
+def _cmd_init_gate(args: argparse.Namespace) -> int:
+    root = args.path.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    policy_path = root / ".aesa.yml"
+    workflow_dir = root / ".github" / "workflows"
+    workflow_path = workflow_dir / "aesa-gate.yml"
+    policy_body, workflow_body = _init_gate_templates()
+    wrote: list[str] = []
+    if policy_path.exists() and not args.force:
+        print(f"Exists (use --force): {policy_path}")
+    else:
+        policy_path.write_text(policy_body, encoding="utf-8")
+        wrote.append(str(policy_path))
+    if workflow_path.exists() and not args.force:
+        print(f"Exists (use --force): {workflow_path}")
+    else:
+        workflow_dir.mkdir(parents=True, exist_ok=True)
+        workflow_path.write_text(workflow_body, encoding="utf-8")
+        wrote.append(str(workflow_path))
+    if wrote:
+        print("Wrote:")
+        for path in wrote:
+            print(f"  {path}")
+    print("Pin the AESA kit ref to an immutable tag/SHA before relying on the gate.")
+    return 0
 
 
 def _cmd_explain(args: argparse.Namespace) -> int:

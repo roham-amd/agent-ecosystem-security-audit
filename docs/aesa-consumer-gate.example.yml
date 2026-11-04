@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
   security-events: write
 
 jobs:
@@ -20,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Checkout AESA kit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -27,20 +30,19 @@ jobs:
           repository: roham-amd/agent-ecosystem-security-audit
           path: .aesa-kit
           # Pin an immutable AESA release tag (or full commit SHA).
-          ref: v3.4.0
+          ref: v3.5.0
 
       - name: AESA Guard
         uses: ./.aesa-kit/.github/actions/aesa-gate
         with:
           path: .
           mode: scan
-          # Leave fail-on empty to honor .aesa.yml; set explicitly to override.
           fail-on: high
-          # policy: .aesa.yml   # optional; auto-loaded when present at path/
+          # Load .aesa.yml from the PR base ref; fail if the PR edits policy.
+          trusted-policy: "true"
           annotate: true
           install-tools-from: .aesa-kit/tools
           baseline: .aesa/baseline.json
-          baseline-inventory: .aesa/baseline-inventory.json
           output-dir: aesa-out
 
       # Optional: upload SARIF to code scanning

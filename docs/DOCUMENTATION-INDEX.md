@@ -1,6 +1,7 @@
 # AESA documentation index
 
-Complete map of project documentation for **AESA Guard 3.4.0** (procedure **1.0**, tooling **0.7.0**).
+Complete map of project documentation for **AESA Guard 3.5.0** (Authority Diff;
+procedure **1.0**, tooling **0.8.0**, rule pack **1.2**).
 
 Use this file as the table of contents. Prefer the **primary** doc for each topic; secondary docs add depth or history.
 
@@ -10,8 +11,8 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 
 | Audience | Read first | Then |
 | --- | --- | --- |
-| New operator | [`../README.md`](../README.md) | [`usage.md`](usage.md), [`GUARD-SCAN.md`](GUARD-SCAN.md) |
-| CLI / DevSecOps | [`CLI-REFERENCE.md`](CLI-REFERENCE.md) | [`../tools/README.md`](../tools/README.md), [`AESA-GATE.md`](AESA-GATE.md) |
+| New operator | [`../README.md`](../README.md) | [`INSTALL.md`](INSTALL.md), [`GUARD-SCAN.md`](GUARD-SCAN.md) |
+| CLI / DevSecOps | [`CLI-REFERENCE.md`](CLI-REFERENCE.md) | [`../tools/README.md`](../tools/README.md), [`AESA-GATE.md`](AESA-GATE.md), [`POLICY.md`](POLICY.md) |
 | AI coding agent | [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) | [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) |
 | Security reviewer | [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) | [`SECURITY-RULES.md`](SECURITY-RULES.md), [`threat-scenarios.md`](threat-scenarios.md) |
 | Contributor | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | [`architecture/`](architecture/), [`engineering-plan.md`](engineering-plan.md) |
@@ -23,18 +24,20 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 
 | Document | Contents |
 | --- | --- |
-| [`../README.md`](../README.md) | Product identity, first experience, layout, principles, versioning |
+| [`../README.md`](../README.md) | Authority Diff identity: doctor → vet → init-gate → scan |
 | [`AESA-GATE.md`](AESA-GATE.md) | Short Guard primer: discover / assess / govern |
-| [`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md) | 3.4 productization backlog and acceptance criteria |
-| [`POLICY.md`](POLICY.md) | `.aesa.yml` policy contract |
+| [`GUARD-3.5-BACKLOG.md`](GUARD-3.5-BACKLOG.md) | **Current** Authority Diff backlog |
+| [`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md) | Historical 3.4 productization backlog |
+| [`POLICY.md`](POLICY.md) | `.aesa.yml` policy contract + CI trusted-policy |
 | [`COVERAGE-MATRIX.md`](COVERAGE-MATRIX.md) | Automated vs manual coverage |
-| [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md) | Normative 3.0 product contract (Guard UX added in 3.1) |
-| [`GUARD-SCAN.md`](GUARD-SCAN.md) | `aesa scan` end-to-end: artifacts, profiles vs scan, baselines |
+| [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md) | Normative 3.0 product contract (historical) |
+| [`GUARD-SCAN.md`](GUARD-SCAN.md) | `aesa scan` end-to-end: artifacts, baselines, Action |
 | [`MIGRATION-2.0.md`](MIGRATION-2.0.md) | 1.x → 2.x migration |
 | [`MIGRATION-3.1.md`](MIGRATION-3.1.md) | 3.0 → 3.1 Guard migration |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Release history |
 | [`../VERSION`](../VERSION) | Authoritative product version string |
 | [`../canonical/versions.json`](../canonical/versions.json) | Product, schemas, corpus, benchmark, tooling tags |
+| [`../canonical/release-manifest.json`](../canonical/release-manifest.json) | North-star + interface matrix |
 
 ---
 
@@ -42,20 +45,20 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 
 | Document | Contents |
 | --- | --- |
-| [`usage.md`](usage.md) | Scope, Guard scan, audit profiles, kit load order, continuous use |
+| [`usage.md`](usage.md) | Scope, doctor/vet/scan, kit load order, continuous use |
 | [`CLI-REFERENCE.md`](CLI-REFERENCE.md) | Every `aesa` command, flags, exit codes, examples |
 | [`INSTALL.md`](INSTALL.md) | `uv tool install` / PyPI / clone install |
 | [`../tools/README.md`](../tools/README.md) | Install (uv), Docker, quality gates, package layout |
 | [`pilots/README.md`](pilots/README.md) | Pilot-repository scan harness |
 | [`INTAKE-CHANNEL.md`](INTAKE-CHANNEL.md) | AgentSecBench external intake (N tracking) |
 | [`docker-agent-audit.md`](docker-agent-audit.md) | Docker discovery + Cursor / Claude / Codex deep review |
-| [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml) | Example GitHub Actions consumer workflow |
+| [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml) | Example GitHub Actions consumer workflow (trusted-policy) |
 | [`recipes/README.md`](recipes/README.md) | Scenario recipes index |
+| [`recipes/guard-first-assessment.md`](recipes/guard-first-assessment.md) | Default Authority Diff first assessment |
 | [`recipes/catalog-inventory.md`](recipes/catalog-inventory.md) | Awesome-list / catalog inventory |
 | [`recipes/small-repo-deep-audit.md`](recipes/small-repo-deep-audit.md) | Small repo deep assessment |
 | [`recipes/source-only-review.md`](recipes/source-only-review.md) | Source-only constraints |
 | [`recipes/staging-boundary.md`](recipes/staging-boundary.md) | Staging / runtime authorization boundary |
-| [`recipes/guard-first-assessment.md`](recipes/guard-first-assessment.md) | Default Guard-first assessment recipe |
 
 ---
 
@@ -71,8 +74,8 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | [`../prompts/audit.md`](../prompts/audit.md) | Kit entry pointer |
 | [`../prompts/scan-triage.md`](../prompts/scan-triage.md) | Lightweight scan + triage (default agent path) |
 | [`../prompts/audit.full.md`](../prompts/audit.full.md) | Generated monolithic procedure |
-| [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) | Evidence classes, findings, claims, capabilities |
-| [`SECURITY-RULES.md`](SECURITY-RULES.md) | Deterministic Guard rules AESA-RULE-001…010 |
+| [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) | Evidence classes, findings, claims, capabilities, strength |
+| [`SECURITY-RULES.md`](SECURITY-RULES.md) | Deterministic Guard rules AESA-RULE-001…016 |
 | [`threat-scenarios.md`](threat-scenarios.md) | Capability-first threat scenarios |
 | [`toolchain-threat-model.md`](toolchain-threat-model.md) | Threats against AESA itself |
 | [`runtime-validation/README.md`](runtime-validation/README.md) | Runtime validation status (design only; disabled by default) |
@@ -98,76 +101,31 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | [`../modules/automations.md`](../modules/automations.md) | Automations / scheduled tasks |
 | [`../modules/a2a.md`](../modules/a2a.md) | Agent-to-Agent / Agent Cards |
 | [`../modules/multimodal.md`](../modules/multimodal.md) | Multimodal / cross-modal |
-| [`../modules/agent-host.md`](../modules/agent-host.md) | Host agent security |
+| [`../modules/agent-host.md`](../modules/agent-host.md) | Agent host integration |
 | [`../modules/memory-rag.md`](../modules/memory-rag.md) | Memory / RAG |
 | [`../modules/models-providers.md`](../modules/models-providers.md) | Models / providers |
 | [`../modules/browser-agents.md`](../modules/browser-agents.md) | Browser agents |
-| [`../modules/ci-cd.md`](../modules/ci-cd.md) | CI/CD agent surfaces |
+| [`../modules/ci-cd.md`](../modules/ci-cd.md) | CI/CD surfaces |
 
 ---
 
-## Schemas and examples
+## Architecture and engineering
 
 | Document | Contents |
 | --- | --- |
-| [`../schemas/README.md`](../schemas/README.md) | Schema catalog and purpose |
-| [`../schemas/audit-report.schema.json`](../schemas/audit-report.schema.json) | Audit report summary |
-| [`../schemas/ecosystem-graph.schema.json`](../schemas/ecosystem-graph.schema.json) | Ecosystem graph |
-| [`../schemas/audit-manifest.schema.json`](../schemas/audit-manifest.schema.json) | Audit engagement manifest |
-| [`../schemas/audit-diff.schema.json`](../schemas/audit-diff.schema.json) | Report / graph diff |
-| [`../schemas/evidence-digest-manifest.schema.json`](../schemas/evidence-digest-manifest.schema.json) | Digest manifest |
-| [`../schemas/runtime-test-record.schema.json`](../schemas/runtime-test-record.schema.json) | Authorized runtime test record |
-| [`../schemas/structured-claim.schema.json`](../schemas/structured-claim.schema.json) | AI auditor intermediate claims |
-| [`../examples/`](../examples/) | Sample inventory, summary, context, runtime record |
-
-Canonical report schema source: [`../canonical/schemas/audit-report.schema.json`](../canonical/schemas/audit-report.schema.json) (publish with `aesa build schemas`).
+| [`engineering-plan.md`](engineering-plan.md) | Milestone status through 3.5 Authority Diff |
+| [`architecture/ADR-001-canonical-sources.md`](architecture/ADR-001-canonical-sources.md) | Canonical version/schema sources |
+| [`architecture/ADR-002-semantic-validation.md`](architecture/ADR-002-semantic-validation.md) | Semantic validation |
+| [`architecture/ADR-003-monolith-generation.md`](architecture/ADR-003-monolith-generation.md) | Prompt monolith generation |
+| [`architecture/ADR-004-gating-and-policy.md`](architecture/ADR-004-gating-and-policy.md) | Gate classes + trusted policy |
 
 ---
 
-## Skills and Cursor integration
+## Examples and schemas
 
 | Document | Contents |
 | --- | --- |
-| [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) | Canonical auditor skill (Guard-first) |
-| [`../skills/cursor/AESA.md`](../skills/cursor/AESA.md) | Cursor task shortcuts |
-
----
-
-## Testing and quality
-
-| Document | Contents |
-| --- | --- |
-| [`../tests/corpus/README.md`](../tests/corpus/README.md) | Tooling regression corpus CORPUS-001…010 |
-| [`../tests/benchmark/README.md`](../tests/benchmark/README.md) | AgentSecBench (detection expectations) |
-| [`engineering-plan.md`](engineering-plan.md) | Milestone status vs roadmap |
-| [`.github/actions/aesa-gate/action.yml`](../.github/actions/aesa-gate/action.yml) | Composite CI Action (Guard) |
-| [`.github/workflows/aesa-validate.yml`](../.github/workflows/aesa-validate.yml) | Kit CI validation workflow |
-
----
-
-## Architecture (ADRs)
-
-| Document | Contents |
-| --- | --- |
-| [`architecture/ADR-001-canonical-sources.md`](architecture/ADR-001-canonical-sources.md) | Canonical schemas / versions |
-| [`architecture/ADR-002-semantic-validation.md`](architecture/ADR-002-semantic-validation.md) | Semantic validation beyond JSON Schema |
-| [`architecture/ADR-003-monolith-generation.md`](architecture/ADR-003-monolith-generation.md) | Prompt kit → `audit.full.md` |
-| [`architecture/ADR-004-gating-and-policy.md`](architecture/ADR-004-gating-and-policy.md) | Gate classes, `.aesa.yml`, exit codes |
-
----
-
-## Supply chain helpers
-
-| Document | Contents |
-| --- | --- |
-| [`../tools/aesa/supply_chain/README.md`](../tools/aesa/supply_chain/README.md) | Digest verify / manifest helpers |
-
----
-
-## Documentation rules
-
-1. Narrative procedure and reports are **English**.
-2. Do not document AESA as a certification authority or full vulnerability scanner.
-3. Keep version tables synchronized with `VERSION` and `canonical/versions.json`.
-4. When adding a CLI command, update `CLI-REFERENCE.md`, `tools/README.md`, and this index.
-5. When adding a module, update `modules/README.md`, `prompts/02-modules.md`, and the auditor skill table.
+| [`../examples/guard-scan/`](../examples/guard-scan/) | Sample Guard scan artifacts |
+| [`../examples/aesa.policy.example.yml`](../examples/aesa.policy.example.yml) | Sample `.aesa.yml` |
+| [`../schemas/README.md`](../schemas/README.md) | Published JSON Schemas |
+| [`../tests/rules/README.md`](../tests/rules/README.md) | Rule-quality fixture pack |

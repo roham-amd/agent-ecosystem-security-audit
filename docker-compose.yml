@@ -1,10 +1,10 @@
 # Local AESA container — kit baked into the image; mount a target repo at /work.
 #
 #   docker compose build
-#   docker compose run --rm aesa audit /work --profile quick -o /work/aesa-out
+#   TARGET=/path/to/repo docker compose run --rm aesa scan /work -o /tmp/aesa-out
+#   docker compose run --rm aesa doctor --home /work
 #
-# Override the bind mount:
-#   TARGET=/path/to/repo docker compose run --rm aesa audit /work --profile quick
+# Prefer writing artifacts outside the mounted target (e.g. /tmp/aesa-out).
 
 services:
   aesa:

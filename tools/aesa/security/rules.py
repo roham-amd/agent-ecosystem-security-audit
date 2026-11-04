@@ -11,7 +11,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from aesa.security.evidence_util import EvidenceContext, build_rule_evidence
-from aesa.security.models import Evidence, Finding, FindingClass, Severity, VerificationStatus
+from aesa.security.models import (
+    Evidence,
+    EvidenceStrength,
+    Finding,
+    FindingClass,
+    Severity,
+    VerificationStatus,
+)
 
 RuleFn = Callable[[dict[str, Any], list[Evidence], list[Finding], EvidenceContext], None]
 
@@ -43,6 +50,9 @@ def _add_finding(
     recommended_action: str,
     finding_class: FindingClass,
     exposure: str = "REPO_CONFIG",
+    evidence_strength: EvidenceStrength = "INFERRED_HINT",
+    verify_in_60s: str = "",
+    fix_snippet: str = "",
 ) -> None:
     fid = f"F-{len(findings) + 1:03d}"
     findings.append(
@@ -65,6 +75,9 @@ def _add_finding(
             exploitability="UNKNOWN",
             exposure=exposure,
             finding_class=finding_class,
+            evidence_strength=evidence_strength,
+            verify_in_60s=verify_in_60s,
+            fix_snippet=fix_snippet,
         )
     )
 
@@ -127,6 +140,10 @@ def rule_skill_bundled_scripts(
             "environment variables and whether execution requires independent approval."
         ),
         finding_class=finding_class,
+        evidence_strength="LITERAL_CONFIG"
+        if "bundled_scripts_directory" in hints
+        else "INFERRED_HINT",
+        verify_in_60s="ls the skill directory; confirm whether scripts/ is present and executed.",
     )
 
 
@@ -217,6 +234,9 @@ def rule_mcp_local_command(
         ),
         finding_class=finding_class,
         exposure=exposure,
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s=f"Open the MCP config and inspect command=`{command}` plus env/args.",
+        fix_snippet="Pin the MCP binary/package; drop broad path args; avoid inheriting secrets.",
     )
 
 
@@ -592,26 +612,323 @@ def rule_instruction_injection_markers(
         missing_controls=["Instruction isolation", "Tool allowlists for untrusted content"],
         recommended_action="Review full instruction text; do not auto-activate in privileged hosts.",
         finding_class="CAPABILITY",
+        evidence_strength="NAME_MARKER",
+        verify_in_60s="Open the file; naming alone is weak — read the instruction text.",
+    )
+
+
+def rule_unpinned_package_launcher(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "MCP Server Registration":
+        return
+    if "unpinned_package_launcher" not in set(component.get("priority_hints") or []):
+        return
+    command = str(component.get("command") or "")
+    args = component.get("args") or []
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary=f"MCP launcher `{command}` appears unpinned (npx -y / uvx / similar).",
+        ctx=ctx,
+        status="OBSERVED",
+        needle=command or "npx",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-011",
+        title="MCP server launched via unpinned package installer",
+        severity="HIGH",
+        confidence="OBSERVED",
+        description=(
+            f"MCP server `{component.get('name')}` uses an unpinned launcher "
+            f"(`{command}` {' '.join(str(a) for a in args)}). A later package publish can "
+            "change behavior without a config edit (rug-pull risk)."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["execute_commands", "invoke_tools"],
+        attacker_control="Malicious or compromised package published to the unpinned name",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Host agent → package registry → MCP process",
+        impact="Arbitrary code execution under the host agent identity after a registry update",
+        missing_controls=["Pinned version or content digest", "Allowlisted package source"],
+        recommended_action="Pin an exact version or digest; avoid `npx -y` / floating `uvx` tags.",
+        finding_class="SECURITY_FINDING",
+        exposure="UNPINNED_LAUNCHER",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="grep the MCP JSON for npx -y / uvx and confirm no @version pin.",
+        fix_snippet='Use "command": "npx", "args": ["-y", "pkg@1.2.3"] or a local pinned binary.',
+    )
+
+
+def rule_literal_secret_in_mcp_env(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "MCP Server Registration":
+        return
+    if "literal_secret_in_env" not in set(component.get("priority_hints") or []):
+        return
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary="MCP registration embeds a literal secret-like value in env.",
+        ctx=ctx,
+        status="OBSERVED",
+        needle="env",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-012",
+        title="Literal secret-like value in MCP env",
+        severity="CRITICAL",
+        confidence="OBSERVED",
+        description=(
+            f"MCP server `{component.get('name')}` appears to embed a literal credential in "
+            "`env` rather than a placeholder reference. Committed secrets are an immediate "
+            "exposure."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["access_secrets"],
+        attacker_control="Anyone with repo or backup access can read the credential",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Repository contents → MCP process environment",
+        impact="Credential theft and downstream account takeover",
+        missing_controls=["Secret store / OS keychain", "Placeholder env expansion only"],
+        recommended_action="Replace literal values with `${ENV}` references; rotate the secret.",
+        finding_class="SECURITY_FINDING",
+        exposure="LITERAL_SECRET",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="Open the MCP JSON env block; confirm values are placeholders, not literals.",
+        fix_snippet='Use "API_KEY": "${API_KEY}" and inject from the host secret store.',
+    )
+
+
+def rule_insecure_http_remote_mcp(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "MCP Server Registration":
+        return
+    if "insecure_http_remote" not in set(component.get("priority_hints") or []):
+        return
+    url = str(component.get("url") or "")
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary=f"MCP remote endpoint uses cleartext HTTP: `{url}`.",
+        ctx=ctx,
+        status="OBSERVED",
+        needle="http://",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-013",
+        title="Remote MCP endpoint uses cleartext HTTP",
+        severity="HIGH",
+        confidence="OBSERVED",
+        description=(
+            f"MCP server `{component.get('name')}` points at `{url}` over HTTP. Tool traffic "
+            "and any forwarded credentials lack transport confidentiality/integrity."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["access_network", "invoke_tools", "access_secrets"],
+        attacker_control="Network MITM on the path to the MCP endpoint",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Host agent → cleartext network → remote MCP",
+        impact="Credential and tool-argument interception or modification",
+        missing_controls=["HTTPS / TLS", "Certificate pinning where appropriate"],
+        recommended_action="Use https:// only; reject plain HTTP remote MCP registrations.",
+        finding_class="SECURITY_FINDING",
+        exposure="INSECURE_TRANSPORT",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="Confirm the url field starts with https://.",
+        fix_snippet='Change "url": "http://..." to "https://...".',
+    )
+
+
+def rule_hidden_unicode_instructions(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "Skill":
+        return
+    if "hidden_unicode_in_instructions" not in set(component.get("priority_hints") or []):
+        return
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary="Instruction text contains hidden/bidi Unicode code points.",
+        ctx=ctx,
+        status="OBSERVED",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-014",
+        title="Hidden or bidi Unicode in skill instructions",
+        severity="HIGH",
+        confidence="OBSERVED",
+        description=(
+            f"Skill `{component.get('name')}` contains zero-width or bidirectional Unicode "
+            "characters that can hide or reorder instructions to humans while remaining "
+            "visible to the model."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["modify_agent_instructions"],
+        attacker_control="Author of the skill instruction file",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Human review → Unicode-obscured model instructions",
+        impact="Covert instruction injection past visual review",
+        missing_controls=["Unicode normalization / disallowlist on ingest"],
+        recommended_action="Strip bidi/zero-width characters; re-review the visible text.",
+        finding_class="SECURITY_FINDING",
+        exposure="HIDDEN_UNICODE",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="hexdump or `python -c` for U+200B/U+202E in the SKILL.md bytes.",
+        fix_snippet="Remove zero-width and bidi override characters from the file.",
+    )
+
+
+def rule_download_and_execute(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    ctype = str(component.get("type") or "")
+    if ctype not in {"Skill", "Hook"}:
+        return
+    if "download_and_execute" not in set(component.get("priority_hints") or []):
+        return
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary="Component text references download-and-execute patterns (curl|sh / similar).",
+        ctx=ctx,
+        status="OBSERVED",
+        needle="curl",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-015",
+        title="Download-and-execute pattern in agent surface",
+        severity="CRITICAL",
+        confidence="OBSERVED",
+        description=(
+            f"`{component.get('name')}` references piping a remote download into a shell. "
+            "That is remote code execution under the agent/host identity if followed."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["execute_commands", "access_network"],
+        attacker_control="Remote URL content at fetch time",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Reviewed instructions → unreviewed remote script",
+        impact="Arbitrary remote code execution",
+        missing_controls=["Pinned script digest", "No pipe-to-shell in agent surfaces"],
+        recommended_action="Vendor and pin scripts; never curl|sh from skills or hooks.",
+        finding_class="SECURITY_FINDING",
+        exposure="DOWNLOAD_EXEC",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="Search the file for `curl .*|` / `wget .*|` / `iwr .*| iex`.",
+        fix_snippet="Replace with a pinned local script checked into the repo.",
+    )
+
+
+def rule_pull_request_target_with_agent(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "CI Workflow":
+        return
+    if "pull_request_target_with_agent" not in set(component.get("priority_hints") or []):
+        return
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary="Workflow combines pull_request_target with agent/MCP-related steps.",
+        ctx=ctx,
+        status="OBSERVED",
+        needle="pull_request_target",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-016",
+        title="pull_request_target workflow invokes agent-related steps",
+        severity="HIGH",
+        confidence="POTENTIAL",
+        description=(
+            f"CI workflow `{component.get('name')}` uses `pull_request_target` together with "
+            "agent/MCP-related steps. Fork PRs can often influence checkout/content while "
+            "retaining privileged secrets — a classic CI + agent abuse path."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["unattended_operation", "access_secrets", "execute_commands"],
+        attacker_control="Malicious pull request from a fork",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Fork PR content → privileged workflow + agent tools",
+        impact="Secret theft or privileged agent actions from untrusted PR content",
+        missing_controls=[
+            "Avoid pull_request_target for untrusted code",
+            "Persist-credentials false + explicit safe checkout",
+        ],
+        recommended_action="Prefer pull_request; never feed fork PR code to privileged agents.",
+        finding_class="SECURITY_FINDING",
+        exposure="PR_TARGET_AGENT",
+        evidence_strength="INFERRED_HINT",
+        verify_in_60s="Confirm `on: pull_request_target` and whether agent steps touch PR code.",
+        fix_snippet="Switch to pull_request, or isolate secrets from any PR-controlled checkout.",
     )
 
 
 RULES: list[RuleSpec] = [
     RuleSpec(
-        "AESA-RULE-001", "Skill references executable scripts", "1.1", rule_skill_bundled_scripts
+        "AESA-RULE-001", "Skill references executable scripts", "1.2", rule_skill_bundled_scripts
     ),
-    RuleSpec("AESA-RULE-002", "MCP local command transport", "1.1", rule_mcp_local_command),
-    RuleSpec("AESA-RULE-003", "MCP remote endpoint", "1.1", rule_mcp_remote_endpoint),
-    RuleSpec("AESA-RULE-004", "Hook execution boundary", "1.1", rule_hook_execution_boundary),
-    RuleSpec("AESA-RULE-005", "Skill external URLs", "1.1", rule_skill_external_url),
-    RuleSpec("AESA-RULE-006", "Skill secrets handling", "1.1", rule_skill_secrets_handling),
-    RuleSpec("AESA-RULE-007", "Unattended automation", "1.1", rule_unattended_automation),
-    RuleSpec("AESA-RULE-008", "Subagent delegation", "1.1", rule_subagent_delegation),
-    RuleSpec("AESA-RULE-009", "Example MCP config", "1.1", rule_example_mcp_config),
+    RuleSpec("AESA-RULE-002", "MCP local command transport", "1.2", rule_mcp_local_command),
+    RuleSpec("AESA-RULE-003", "MCP remote endpoint", "1.2", rule_mcp_remote_endpoint),
+    RuleSpec("AESA-RULE-004", "Hook execution boundary", "1.2", rule_hook_execution_boundary),
+    RuleSpec("AESA-RULE-005", "Skill external URLs", "1.2", rule_skill_external_url),
+    RuleSpec("AESA-RULE-006", "Skill secrets handling", "1.2", rule_skill_secrets_handling),
+    RuleSpec("AESA-RULE-007", "Unattended automation", "1.2", rule_unattended_automation),
+    RuleSpec("AESA-RULE-008", "Subagent delegation", "1.2", rule_subagent_delegation),
+    RuleSpec("AESA-RULE-009", "Example MCP config", "1.2", rule_example_mcp_config),
     RuleSpec(
         "AESA-RULE-010",
         "Prompt-injection oriented surface",
-        "1.1",
+        "1.2",
         rule_instruction_injection_markers,
+    ),
+    RuleSpec(
+        "AESA-RULE-011", "Unpinned MCP package launcher", "1.0", rule_unpinned_package_launcher
+    ),
+    RuleSpec("AESA-RULE-012", "Literal secret in MCP env", "1.0", rule_literal_secret_in_mcp_env),
+    RuleSpec("AESA-RULE-013", "Cleartext HTTP remote MCP", "1.0", rule_insecure_http_remote_mcp),
+    RuleSpec(
+        "AESA-RULE-014", "Hidden Unicode in instructions", "1.0", rule_hidden_unicode_instructions
+    ),
+    RuleSpec("AESA-RULE-015", "Download-and-execute pattern", "1.0", rule_download_and_execute),
+    RuleSpec(
+        "AESA-RULE-016",
+        "pull_request_target with agent steps",
+        "1.0",
+        rule_pull_request_target_with_agent,
     ),
 ]
 

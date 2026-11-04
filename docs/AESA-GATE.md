@@ -1,37 +1,31 @@
 # AESA Guard — short primer
 
-AESA Guard is the operator-facing product name for AESA’s local discovery,
-deterministic security observations, and CI-oriented change gate.
+AESA Guard is an **Authority Diff** for AI agents: local discovery, deterministic
+security observations, and a CI-oriented change gate.
 
 | Item | Value |
 | --- | --- |
-| Product release | **3.4.0** |
+| Product release | **3.5.0** |
 | Procedure | **1.0** |
-| Tooling package | **0.7.0** |
-| Primary command | `aesa scan` |
-| Policy file | `.aesa.yml` (optional) |
+| Tooling package | **0.8.0** |
+| Rule pack | **1.2** |
+| Primary path | `aesa doctor` → `aesa vet` → `aesa init-gate` → `aesa scan` |
+| Policy file | `.aesa.yml` (optional; trusted from PR base ref in CI) |
 
-Normative depth: [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md), [`GUARD-SCAN.md`](GUARD-SCAN.md), [`DOCUMENTATION-INDEX.md`](DOCUMENTATION-INDEX.md).
+Normative depth: [`GUARD-SCAN.md`](GUARD-SCAN.md), [`POLICY.md`](POLICY.md),
+[`DOCUMENTATION-INDEX.md`](DOCUMENTATION-INDEX.md).
 
 ---
 
 ## Job to be done
 
-Help teams **discover**, **evidence**, and **gate change** in AI agent ecosystems —
-without claiming false assurance.
+> Before I install, merge, deploy, or upgrade an AI-agent integration, tell me
+> what authority it introduces, who receives that authority, what data can flow
+> through it, and what materially changed.
 
-1. **Discover** — Skills, MCP registrations, hooks, plugins, subagents, automations, instruction rules, A2A cards, CI workflows.
+1. **Discover** — Skills, MCP registrations, hooks, plugins, subagents, automations, host configs, CI workflows.
 2. **Assess** — Deterministic Guard rules + optional evidence-bounded AI/human review.
-3. **Govern** — Baselines, risk diffs, CI fail policies, SARIF.
-
-Essential questions:
-
-1. What can my agents access and execute?
-2. Who or what grants those capabilities?
-3. Where can data and authority flow?
-4. What changed?
-5. What is unsafe, unverified, or excessive?
-6. What should I do about it?
+3. **Govern** — Baselines, risk diffs, trusted CI policy, SARIF.
 
 ---
 
@@ -39,37 +33,36 @@ Essential questions:
 
 | Role | Responsibility | Final decision |
 | --- | --- | --- |
-| Deterministic tools (`aesa scan`) | Inventory, capabilities, rules, evidence, baselines, SARIF | No |
+| Deterministic tools (`doctor` / `vet` / `scan`) | Inventory, capabilities, rules, evidence, baselines, SARIF | No |
 | AI audit agent | Semantics, complex attack paths, explanations | No |
 | Human operator | Scope, risk acceptance, runtime authorization | Yes |
 
 Never ask an LLM to establish a fact a deterministic tool can establish.  
 Never let an unsupported LLM interpretation become an enforced finding.
 
-Evidence model: [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md).  
-Rules: [`SECURITY-RULES.md`](SECURITY-RULES.md).  
-CLI: [`CLI-REFERENCE.md`](CLI-REFERENCE.md).
-
 ---
 
 ## First user journey
 
 ```bash
-cd tools && uv sync --locked
-uv run aesa scan .
-uv run aesa explain F-001 -o aesa-out
-uv run aesa baseline save -o aesa-out
-# optional deep review via skills/aesa-auditor
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools
+
+aesa doctor                          # host authority map
+aesa vet github.com/org/some-skill   # pre-install verdict
+aesa init-gate                       # .aesa.yml + workflow stub
+aesa scan .
+aesa explain F-001 -o aesa-out
 ```
 
-CI: [`.github/actions/aesa-gate`](../.github/actions/aesa-gate) (`mode: scan`, `fail-on: high|any`, baseline risk delta).  
-Example workflow: [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml).
+CI: [`.github/actions/aesa-gate`](../.github/actions/aesa-gate) with
+`trusted-policy: true`, pinned kit, `fail-on: high`.  
+Example: [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml).
 
-`aesa audit --profile …` remains for agent handoff packages.  
-`aesa preflight` remains as an alias of `aesa audit --profile quick`.
+`aesa audit --profile …` remains for agent handoff packages only.
 
-Guard must never print a global “secure” / “insecure” verdict. It reports
-observations, coverage, and unknowns.
+Guard never prints a global “secure” / “insecure” verdict. It reports
+observations, coverage, and unknowns. `NO FINDINGS` on `PARTIAL` /
+`MANUAL_ONLY` surfaces is not a clearance.
 
 ---
 
@@ -77,10 +70,10 @@ observations, coverage, and unknowns.
 
 | Interface | Status |
 | --- | --- |
-| CLI (`aesa`) | Primary product |
-| GitHub Action | Supported (composite) |
-| AI agent skill | Supported (`skills/aesa-auditor`) |
-| Prompt-only kit | Secondary distribution |
+| CLI (`doctor` / `vet` / `scan`) | Primary product |
+| GitHub Action (trusted policy) | Supported (composite) |
+| AI agent skill | Supported (`skills/aesa-auditor`, self-contained) |
+| Prompt-only kit | Optional deep assessment |
 | MCP server assistant | Deferred |
 | Web workbench / marketplace | Deferred |
 
@@ -92,4 +85,4 @@ observations, coverage, and unknowns.
 - SaaS multi-tenant evidence storage
 - Bundled runtime detonation harness
 - Numeric trust scores that hide coverage gaps
-- Claiming LLM detection accuracy without AgentSecBench model runners
+- Claiming LLM detection accuracy without external AgentSecBench intakes (N=0)

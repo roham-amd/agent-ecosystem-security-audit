@@ -64,7 +64,11 @@ Deliverables
 
 Install: `cd tools && uv sync --locked` → console script `aesa` (via `.venv` / `uv run`).
 
-### Primary command
+> **3.5 note:** The live primary path is Authority Diff —
+> `aesa doctor` / `aesa vet` / `aesa scan` / `aesa init-gate`. The `aesa audit`
+> profiles below remain supported for agent handoff packages.
+
+### Primary command (historical 3.0)
 
 ```bash
 aesa audit PATH [--profile quick|standard|deployment] [-o OUT_DIR]

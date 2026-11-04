@@ -79,17 +79,28 @@ class AesaPolicy:
         return None
 
 
-def discover_policy_file(start: Path) -> Path | None:
-    """Walk from ``start`` toward filesystem root looking for ``.aesa.yml``."""
+def discover_policy_file(start: Path, *, stop_at: Path | None = None) -> Path | None:
+    """Find ``.aesa.yml`` within the scan tree only.
+
+    Walks from ``start`` upward, but never above ``stop_at`` (default: the
+    resolved start directory). This prevents silently loading an unrelated
+    parent-directory policy outside the assessed repository.
+    """
     current = start.resolve()
     if current.is_file():
         current = current.parent
-    root = current.anchor
+    ceiling = (stop_at or current).resolve()
+    if ceiling.is_file():
+        ceiling = ceiling.parent
     while True:
         candidate = current / ".aesa.yml"
         if candidate.is_file():
             return candidate
-        if str(current) == root or current.parent == current:
+        if current == ceiling or current.parent == current:
+            return None
+        try:
+            current.relative_to(ceiling)
+        except ValueError:
             return None
         current = current.parent
 

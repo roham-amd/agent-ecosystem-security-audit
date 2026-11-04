@@ -45,12 +45,62 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument(
         "--policy",
         type=Path,
-        help="Path to .aesa.yml (default: discover from target upward)",
+        help="Path to .aesa.yml (default: only inside the scan target tree)",
     )
     scan.add_argument(
         "--no-policy",
         action="store_true",
         help="Ignore .aesa.yml even if present",
+    )
+
+    doctor = sub.add_parser(
+        "doctor",
+        help="Map authority on this machine's Cursor/Claude/VS Code host configs",
+    )
+    doctor.add_argument(
+        "--home",
+        type=Path,
+        help="Override home directory (default: user home; local-only)",
+    )
+    doctor.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Optional directory for per-surface scan artifacts",
+    )
+    doctor.add_argument(
+        "--fail-on",
+        choices=["never", "high", "any"],
+        default=None,
+        help="Optional exit policy across host surfaces",
+    )
+
+    vet = sub.add_parser(
+        "vet",
+        help="Pre-install verdict for a local path or GitHub URL (safe shallow clone)",
+    )
+    vet.add_argument("source", help="Local path, Git URL, or owner/repo GitHub shorthand")
+    vet.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Optional output directory for scan artifacts",
+    )
+    vet.add_argument(
+        "--keep-clone",
+        action="store_true",
+        help="Keep the temporary clone directory (remote sources only)",
+    )
+
+    init_gate = sub.add_parser(
+        "init-gate",
+        help="Write a starter .aesa.yml and consumer workflow stub into a repo",
+    )
+    init_gate.add_argument("path", type=Path, nargs="?", default=Path("."))
+    init_gate.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing .aesa.yml / workflow stub",
     )
 
     explain = sub.add_parser("explain", help="Explain a finding from a prior scan")

@@ -1,7 +1,7 @@
 [project]
 name = "aesa-tools"
-version = "0.7.0"
-description = "AESA Guard — local agent-ecosystem security scanner and PR change gate"
+version = "0.8.0"
+description = "AESA Guard — authority diff for AI agents (doctor, vet, scan, PR gate)"
 readme = "README.md"
 requires-python = ">=3.15"
 license = "MIT"
@@ -124,3 +124,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["aesa*"]
+
+[tool.setuptools.package-data]
+aesa = ["templates/*"]

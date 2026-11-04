@@ -1,8 +1,16 @@
 # Using AESA Guard
 
-AESA Guard is an **evidence-first security intelligence toolkit** for AI-agent ecosystems: deterministic discovery and security rules, a versioned assessment procedure, specialized modules, report schemas, CI gating, and an optional AI auditor skill.
+AESA Guard is an **Authority Diff** for AI-agent ecosystems: host and repo
+discovery, deterministic security rules, CI gating with tamper-resistant policy,
+and an optional AI auditor skill.
 
-Release **3.4.0** centers on **`aesa scan`** as the Agent Ecosystem Security Gate. Profile-based `aesa audit` remains for agent handoff packages. Optional `.aesa.yml` sets fail-on / baseline / suppressions. AESA is **not** a certification authority. Deterministic findings are `OBSERVED`/`POTENTIAL` evidence observations classified as capability, exposure, or security finding; judgment belongs to a human-authorized reviewer.
+Release **3.5.0** centers on **`aesa doctor` → `aesa vet` → `aesa scan`**.
+Profile-based `aesa audit` remains for agent handoff packages. Optional
+`.aesa.yml` sets fail-on / baseline / suppressions (CI loads it from the PR
+**base ref** when `trusted-policy` is on). AESA is **not** a certification
+authority. Deterministic findings are `OBSERVED`/`POTENTIAL` observations
+classified as capability, exposure, or security finding; judgment belongs to a
+human-authorized reviewer.
 
 | Doc | Role |
 | --- | --- |
@@ -32,32 +40,41 @@ Fill audit inputs in Section 2 of [`../prompts/01-core-prompt.md`](../prompts/01
 
 ---
 
-## 2. First run (recommended) — Guard scan
+## 2. First run (recommended) — Authority Diff
 
-### Option A — local uv
-
-```bash
-cd tools && uv sync --locked
-uv run aesa scan /path/to/target -o /path/to/work/aesa-out
-uv run aesa explain F-001 -o /path/to/work/aesa-out
-uv run aesa baseline save -o /path/to/work/aesa-out
-```
-
-### Option B — Docker + AI agent
+### Step 1 — host map (usually non-empty)
 
 ```bash
-docker compose build
-TARGET=/path/to/target-repo docker compose run --rm aesa \
-  scan /work -o /work/aesa-out
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools
+aesa doctor
 ```
 
-Full guide: [`docker-agent-audit.md`](docker-agent-audit.md).
+### Step 2 — pre-install verdict (optional)
 
-Outputs: `findings.json`, `findings.sarif.json`, `inventory.json`, `ecosystem-graph.json`, `scan-summary.txt`, `scan-report.md`, `profile.json`.
+```bash
+aesa vet github.com/org/candidate-skill
+# or: aesa vet /path/to/local/checkout
+```
 
-Then attach [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) and [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) for optional deep review.
+### Step 3 — repo scan + gate
 
-### Option C — audit profiles (handoff package)
+```bash
+aesa init-gate /path/to/target
+aesa scan /path/to/target -o /path/to/work/aesa-out
+aesa explain F-001 -o /path/to/work/aesa-out
+aesa baseline save -o /path/to/work/aesa-out
+```
+
+From a clone: `cd tools && uv sync --locked && uv run aesa …`.
+
+Docker: [`docker-agent-audit.md`](docker-agent-audit.md).
+
+Outputs: `findings.json`, `findings.sarif.json`, `inventory.json`,
+`ecosystem-graph.json`, `scan-summary.txt`, `scan-report.md`, `profile.json`.
+
+Optional deep review: [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md).
+
+### Legacy — audit profiles (handoff package)
 
 ```bash
 uv run aesa audit /path/to/target --profile quick|standard|deployment

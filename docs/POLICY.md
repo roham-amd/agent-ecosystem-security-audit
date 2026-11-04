@@ -4,8 +4,9 @@ Repository-level defaults for the Guard scan and CI gate.
 
 | Item | Value |
 | --- | --- |
-| Contract | **1.0** |
-| Discovery | Walk from the scan target upward until `.aesa.yml` is found |
+| Contract | **1.1** |
+| Discovery | Look for `.aesa.yml` **inside the scan target tree only** (never parent dirs outside the target) |
+| CI trust | Action `trusted-policy=true` loads `.aesa.yml` from the **PR base ref** and fails if the PR edits policy |
 | Override | Explicit CLI flags always win |
 | Disable | `aesa scan --no-policy` |
 
@@ -68,3 +69,14 @@ Suppressions must not become permanent blind spots: require owner, justification
 uv run aesa scan . --policy .aesa.yml --fail-on high
 uv run aesa scan . --no-policy
 ```
+
+## Gate integrity
+
+A policy file that the PR author can edit is not a gate. In CI:
+
+1. Set Action input `trusted-policy: true` (default).
+2. Checkout with enough history to read the base ref (e.g. `fetch-depth: 0`).
+3. Pin AESA tools via `install-tools-from: .aesa-kit/tools` (or rely on
+   Action-bundled tools). Do not let a PR supply the scanner under `./tools`.
+4. Treat PR edits to `.aesa.yml` as their own authority-surface change (the
+   Action fails closed on those edits when `trusted-policy` is enabled).

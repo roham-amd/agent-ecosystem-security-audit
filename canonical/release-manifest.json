@@ -1,27 +1,29 @@
 {
   "manifest_version": "1.0",
   "product": "AESA Guard",
-  "product_version": "3.4.0",
+  "product_version": "3.5.0",
   "package_name": "aesa-tools",
-  "package_version": "0.7.0",
-  "primary_command": "aesa scan",
-  "north_star": "Agent Ecosystem Security Gate",
-  "positioning": "Find and gate risky changes to what your AI agents can access, execute, communicate with, and delegate.",
+  "package_version": "0.8.0",
+  "primary_command": "aesa doctor",
+  "north_star": "Authority Diff — git diff for what your AI agents can do",
+  "positioning": "Before you install, merge, or upgrade an AI-agent integration, see what authority it introduces and what changed.",
   "release_status": "released",
   "contracts": {
     "audit_procedure": "1.0",
     "audit_report_schema": "1.0",
-    "findings_contract": "1.1",
+    "findings_contract": "1.2",
     "baseline_contract": "1.3",
-    "rule_pack": "1.1",
-    "rule_quality_pack": "1.0.0",
+    "rule_pack": "1.2",
+    "rule_quality_pack": "1.1.0",
     "agent_benchmark": "0.3.0",
     "agent_benchmark_llm": "0.3.0",
     "host_profiles": "1.0.0",
-    "policy_contract": "1.0"
+    "policy_contract": "1.1"
   },
   "interfaces": {
     "cli": true,
+    "doctor": true,
+    "vet": true,
     "github_action": true,
     "policy_file": true,
     "prompt_kit": "optional_deep_assessment",
@@ -36,7 +38,8 @@
     "capability": "What a component can potentially do",
     "exposure": "How reachable that capability is and under which identity",
     "security_finding": "Evidenced violation of a defined security property",
-    "declared_vs_effective": "Host profiles declare configuration; effective permissions stay NOT VERIFIED without host/runtime evidence"
+    "declared_vs_effective": "Host profiles declare configuration; effective permissions stay NOT VERIFIED without host/runtime evidence",
+    "evidence_strength": "LITERAL_CONFIG | INFERRED_HINT | NAME_MARKER"
   },
   "compatibility": {
     "supported_product_line": "3.x",

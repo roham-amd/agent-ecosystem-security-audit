@@ -1,0 +1,8 @@
+version: 1
+
+policy:
+  mode: enforce
+  fail_on: high
+  output_dir: aesa-out
+  # baseline: .aesa/baseline.json
+  ignore: []

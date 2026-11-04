@@ -2,9 +2,9 @@
 
 Rules live in `tools/aesa/security/rules.py` and are applied by `aesa scan`.
 
-**Version:** rule pack **1.1** (embedded in tooling **0.4.1**).
+**Version:** rule pack **1.2** (embedded in tooling **0.8.0**).
 
-**Discipline:** rules emit findings with confidence `OBSERVED` or `POTENTIAL`. They never claim confirmed runtime exploitation. Every finding references evidence and lists missing controls.
+**Discipline:** rules emit findings with confidence `OBSERVED` or `POTENTIAL`. They never claim confirmed runtime exploitation. Every finding references evidence and lists missing controls. Each finding also carries `evidence_strength` (`LITERAL_CONFIG` / `INFERRED_HINT` / `NAME_MARKER`).
 
 **Finding classes (required distinction):**
 
@@ -43,7 +43,13 @@ Absent a matching hint/type, a rule does nothing for that component.
 | `AESA-RULE-007` | Unattended automation | CAPABILITY (SECURITY if secret hints) | INFO / MEDIUM | Type `Automation`, `CI Workflow`, or `Workflow` |
 | `AESA-RULE-008` | Subagent delegation | CAPABILITY | INFORMATIONAL | Type `Subagent` |
 | `AESA-RULE-009` | Example MCP config | EXPOSURE | LOW | MCP hint: `example_or_template_config` |
-| `AESA-RULE-010` | Prompt-injection oriented surface | CAPABILITY | LOW | Name/path markers (weak indicator) |
+| `AESA-RULE-010` | Prompt-injection oriented surface | CAPABILITY | LOW | Name/path markers (weak indicator; `NAME_MARKER`) |
+| `AESA-RULE-011` | Unpinned MCP package launcher | SECURITY_FINDING | HIGH | `npx -y` / `uvx` / similar without version pin |
+| `AESA-RULE-012` | Literal secret in MCP env | SECURITY_FINDING | CRITICAL | Secret-like env key with non-placeholder value |
+| `AESA-RULE-013` | Cleartext HTTP remote MCP | SECURITY_FINDING | HIGH | `url` starts with `http://` |
+| `AESA-RULE-014` | Hidden Unicode in instructions | SECURITY_FINDING | HIGH | Zero-width / bidi characters in `SKILL.md` |
+| `AESA-RULE-015` | Download-and-execute pattern | SECURITY_FINDING | CRITICAL | `curl\|sh` / `wget\|sh` / `iwr\|iex` in skills/hooks |
+| `AESA-RULE-016` | `pull_request_target` + agent steps | SECURITY_FINDING | HIGH | Privileged PR trigger combined with agent/MCP tokens |
 
 ---
 
@@ -99,8 +105,38 @@ Absent a matching hint/type, a rule does nothing for that component.
 
 ### AESA-RULE-010 — Potential prompt-injection oriented instruction surface
 
-- **Class:** CAPABILITY / LOW — naming is a weak indicator
+- **Class:** CAPABILITY / LOW — naming is a weak indicator (`evidence_strength: NAME_MARKER`)
 - **Recommended action:** Review full instruction text; do not auto-activate in privileged hosts
+
+### AESA-RULE-011 — Unpinned MCP package launcher
+
+- **Class:** SECURITY_FINDING / HIGH — rug-pull risk via registry updates
+- **Recommended action:** Pin exact version or digest; avoid floating `npx -y` / `uvx`
+
+### AESA-RULE-012 — Literal secret-like value in MCP env
+
+- **Class:** SECURITY_FINDING / CRITICAL
+- **Recommended action:** Replace literals with `${ENV}` placeholders; rotate the secret
+
+### AESA-RULE-013 — Remote MCP over cleartext HTTP
+
+- **Class:** SECURITY_FINDING / HIGH
+- **Recommended action:** Use `https://` only
+
+### AESA-RULE-014 — Hidden or bidi Unicode in skill instructions
+
+- **Class:** SECURITY_FINDING / HIGH
+- **Recommended action:** Strip zero-width/bidi characters; re-review visible text
+
+### AESA-RULE-015 — Download-and-execute pattern
+
+- **Class:** SECURITY_FINDING / CRITICAL
+- **Recommended action:** Vendor and pin scripts; never `curl | sh` from skills/hooks
+
+### AESA-RULE-016 — `pull_request_target` with agent-related steps
+
+- **Class:** SECURITY_FINDING / HIGH
+- **Recommended action:** Prefer `pull_request`; never feed fork PR code to privileged agents
 
 ---
 
@@ -111,6 +147,9 @@ Absent a matching hint/type, a rule does nothing for that component.
 | `finding_id` | Stable within a scan (`F-001`, …) |
 | `rule_id` | Catalog id above |
 | `finding_class` | `CAPABILITY` / `EXPOSURE` / `SECURITY_FINDING` |
+| `evidence_strength` | `LITERAL_CONFIG` / `INFERRED_HINT` / `NAME_MARKER` |
+| `verify_in_60s` | One-line reproduction hint |
+| `fix_snippet` | One-line remediation hint |
 | `title` / `description` | Human-readable summary |
 | `severity` | CRITICAL / HIGH / MEDIUM / LOW / INFORMATIONAL |
 | `confidence` | OBSERVED / POTENTIAL (not CONFIRMED from rules alone) |

@@ -42,6 +42,16 @@ Capability origins (Guard 3.1.1+):
 
 Finding classes emitted by rules: `CAPABILITY`, `EXPOSURE`, `SECURITY_FINDING`.
 
+Evidence strength (findings contract **1.2** / Guard **3.5**):
+
+| Strength | Meaning | Typical rules |
+| --- | --- | --- |
+| `LITERAL_CONFIG` | Value taken from config/instruction bytes | Unpinned launcher, HTTP URL, literal env secret |
+| `INFERRED_HINT` | Adapter hint / multi-signal inference | Most RULE-001…009 paths |
+| `NAME_MARKER` | Path/name only — weak triage signal | RULE-010 |
+
+Findings may also include `verify_in_60s` (reproduction hint) and `fix_snippet`.
+
 ---
 
 ## Evidence classes

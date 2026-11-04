@@ -1,6 +1,6 @@
 # AESA engineering plan
 
-Tracks implementation against independent assessments, the [AESA 3.0 product specification](AESA-3.0-PRODUCT-SPEC.md), and the strategic north-star: **AESA Guard — Continuous Agent Authority Security Gate**.
+Tracks implementation against independent assessments, the [AESA 3.0 product specification](AESA-3.0-PRODUCT-SPEC.md), and the strategic north-star: **AESA Guard — Authority Diff** (`doctor` / `vet` / `scan` + trusted PR gate).
 
 Authoritative release contract: [`../canonical/release-manifest.json`](../canonical/release-manifest.json).
 
@@ -49,7 +49,7 @@ Authoritative release contract: [`../canonical/release-manifest.json`](../canoni
 | --- | --- |
 | Version consistency + supported 3.x | Done |
 | `aesa scan` one-command UX | Done |
-| Deterministic rules AESA-RULE-001…010 | Done |
+| Deterministic rules AESA-RULE-001…016 (pack 1.2) | Done |
 | Capabilities / evidence / findings model | Done |
 | Baselines + risk delta + `--fail-on` | Done |
 | Action env-var hardening + SARIF note | Done |
@@ -136,8 +136,8 @@ Authoritative release contract: [`../canonical/release-manifest.json`](../canoni
 
 ## Milestone L — AESA Guard productization (3.4.0)
 
-North-star: local-first scanner + PR change gate. Detailed backlog:
-[`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md).
+North-star (then): local-first scanner + PR change gate. Historical backlog:
+[`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md). **Superseded by Milestone M.**
 
 | Item | Status |
 | --- | --- |
@@ -155,14 +155,32 @@ North-star: local-first scanner + PR change gate. Detailed backlog:
 | First external AgentSecBench intake | Channel open; N=0 |
 | Hosted SaaS / marketplace / MCP server | Deferred |
 
+## Milestone M — Authority Diff (3.5.0)
+
+North-star: `doctor` + `vet` + `diff` (scan/PR gate) on one engine. Detailed
+backlog: [`GUARD-3.5-BACKLOG.md`](GUARD-3.5-BACKLOG.md).
+
+| Item | Status |
+| --- | --- |
+| README collapsed to doctor → vet → init-gate → scan | Done |
+| `aesa doctor` / `aesa vet` / `aesa init-gate` | Done |
+| Policy discovery bounded to scan target | Done |
+| Action `trusted-policy` + refuse PR-controlled tools install | Done |
+| Rule pack 1.2 (RULE-011…016) + evidence_strength | Done |
+| Self-contained auditor skill | Done |
+| GitHub About / topics refresh | Done |
+| Tag `v3.5.0` + PyPI publish | Next |
+| Delta-first PR comment | Next |
+| Demo vulnerable repo | Next |
+| Hosted SaaS / MCP server / attestations | Deferred |
+
 ### Deliberately avoided (next 90 days)
 
 - SaaS dashboard / marketplace / certification badges
-- Dozens of speculative HIGH rules
-- Tooling stack rewrite
+- Expanding the prompt framework as the primary investment
 - Treating every capability observation as a vulnerability
 - Claiming comprehensive security coverage or certification
-- Expanding the prompt framework as the primary investment
+- Shipping an MCP server that is itself a large new authority surface
 
 ## Breaking change policy
 

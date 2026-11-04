@@ -44,6 +44,18 @@ def discover_github_workflows(
             hints.append("manual_dispatch")
         if any(tok in lowered for tok in ("curl ", "wget ", "pip install", "npm install")):
             hints.append("install_or_network_step_reference")
+        agent_tokens = (
+            "aesa ",
+            "claude",
+            "cursor",
+            "openai",
+            "codex",
+            "agent ",
+            "mcp",
+            "anthropic",
+        )
+        if "pull_request_target" in lowered and any(tok in lowered for tok in agent_tokens):
+            hints.append("pull_request_target_with_agent")
 
         results.append(
             {
