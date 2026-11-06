@@ -52,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Ignore .aesa.yml even if present",
     )
+    scan.add_argument(
+        "--agent",
+        action="store_true",
+        help="Emit compact agent JSON digest (fenced evidence; token-bounded)",
+    )
 
     doctor = sub.add_parser(
         "doctor",
@@ -74,6 +79,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional exit policy across host surfaces",
     )
+    doctor.add_argument(
+        "--agent",
+        action="store_true",
+        help="Emit compact agent JSON digest instead of the text map",
+    )
 
     vet = sub.add_parser(
         "vet",
@@ -90,6 +100,50 @@ def build_parser() -> argparse.ArgumentParser:
         "--keep-clone",
         action="store_true",
         help="Keep the temporary clone directory (remote sources only)",
+    )
+    vet.add_argument(
+        "--agent",
+        action="store_true",
+        help="Emit compact agent JSON digest (verdict + gated findings)",
+    )
+
+    harden = sub.add_parser(
+        "harden",
+        help="Propose least-privilege config patches from a prior findings.json (dry-run)",
+    )
+    harden.add_argument(
+        "--findings",
+        type=Path,
+        default=Path("aesa-out/findings.json"),
+        help="Path to findings.json (default: aesa-out/findings.json)",
+    )
+    harden.add_argument(
+        "--apply",
+        action="store_true",
+        help="Request automatic apply (disabled; always dry-run in this release)",
+    )
+
+    init_manifest = sub.add_parser(
+        "init-manifest",
+        help="Draft AUTHORITY.yml from observed inventory (declared vs observed)",
+    )
+    init_manifest.add_argument("path", type=Path, nargs="?", default=Path("."))
+    init_manifest.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing AUTHORITY.yml",
+    )
+
+    verify_manifest = sub.add_parser(
+        "verify-manifest",
+        help="Diff observed inventory against AUTHORITY.yml",
+    )
+    verify_manifest.add_argument("path", type=Path, nargs="?", default=Path("."))
+    verify_manifest.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Optional path to write the verify report JSON",
     )
 
     init_gate = sub.add_parser(
@@ -111,6 +165,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("aesa-out"),
         help="Directory containing findings.json (default: aesa-out)",
+    )
+    explain.add_argument(
+        "--agent",
+        action="store_true",
+        help="Emit structured remediation JSON for agents",
     )
 
     baseline = sub.add_parser("baseline", help="Save or show Guard baselines")
@@ -242,10 +301,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     annotate.add_argument(
         "--format",
-        choices=["github", "text"],
+        choices=["github", "text", "pr-comment"],
         default="github",
         dest="annotate_format",
-        help="Annotation format (default: github)",
+        help="Annotation format (default: github; pr-comment = ≤12-line Authority Diff)",
+    )
+    annotate.add_argument(
+        "--risk-delta",
+        type=Path,
+        help="Optional risk-delta.json for delta-first PR comments",
     )
 
     pilots = sub.add_parser("pilots", help="Run curated pilot-repository Guard scans")

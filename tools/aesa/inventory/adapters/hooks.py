@@ -40,6 +40,19 @@ def discover_hooks(
             for token in ("curl ", "wget ", "invoke-webrequest", "iwr ", "| sh", "| bash")
         ):
             hints.append("download_and_execute")
+        if any(
+            token in lowered
+            for token in (
+                "dangerously-skip-permissions",
+                "bypasspermissions",
+                "skip-permissions",
+                "--yolo",
+                "autoapprove",
+                "auto_approve",
+                "permissionmode: bypass",
+            )
+        ):
+            hints.append("permission_bypass_flag")
 
         name = path.stem
         if path.suffix == ".json":

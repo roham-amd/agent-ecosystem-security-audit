@@ -233,6 +233,37 @@ runs:
         fi
         aesa annotate "$FINDINGS" --format github
 
+    - name: Authority Diff PR comment
+      if: inputs.mode == 'scan' && inputs.annotate == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        FINDINGS="$AESA_OUTPUT_DIR/findings.json"
+        COMMENT="$AESA_OUTPUT_DIR/pr-comment.md"
+        DELTA="$AESA_OUTPUT_DIR/risk-delta.json"
+        if [[ ! -f "$FINDINGS" ]]; then
+          echo "No findings.json; skipping PR comment."
+          exit 0
+        fi
+        if [[ ! -f "$COMMENT" ]]; then
+          if [[ -f "$DELTA" ]]; then
+            aesa annotate "$FINDINGS" --format pr-comment --risk-delta "$DELTA" >"$COMMENT"
+          else
+            aesa annotate "$FINDINGS" --format pr-comment >"$COMMENT"
+          fi
+        fi
+        echo "## AESA Authority Diff" >> "$GITHUB_STEP_SUMMARY"
+        cat "$COMMENT" >> "$GITHUB_STEP_SUMMARY"
+        # Best-effort sticky comment via gh when available; never fail the gate on comment UX.
+        if command -v gh >/dev/null 2>&1 && [[ -n "${GITHUB_TOKEN:-}" ]]; then
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file "$COMMENT" || true
+        else
+          echo "gh unavailable; Authority Diff written to $COMMENT and job summary."
+        fi
+
     - name: Run AESA audit (legacy profile handoff)
       if: inputs.mode == 'audit'
       shell: bash

@@ -5,9 +5,10 @@ security observations, and a CI-oriented change gate.
 
 | Item | Value |
 | --- | --- |
-| Product release | **3.5.0** |
+| Product release | **3.5.1** |
 | Procedure | **1.0** |
-| Tooling package | **0.8.0** |
+| Tooling package | **0.8.1** (`aesa-tools`) |
+| Rule pack | **1.3** |
 | Rule pack | **1.2** |
 | Primary path | `aesa doctor` → `aesa vet` → `aesa init-gate` → `aesa scan` |
 | Policy file | `.aesa.yml` (optional; trusted from PR base ref in CI) |
@@ -45,7 +46,7 @@ Never let an unsupported LLM interpretation become an enforced finding.
 ## First user journey
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools
 
 aesa doctor                          # host authority map
 aesa vet github.com/org/some-skill   # pre-install verdict

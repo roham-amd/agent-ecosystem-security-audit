@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from aesa.security.decision import (
+    compute_decision,
+    coverage_score_line,
+    decision_sentences,
+)
 from aesa.security.engine import ScanResult
 from aesa.security.gating import HIGH_SEVERITIES, is_gate_finding, is_high_gate_finding
 from aesa.security.models import Finding
@@ -91,7 +98,11 @@ def _adapter_maturity_lines(scan: ScanResult) -> list[str]:
     return lines
 
 
-def render_terminal_report(scan: ScanResult) -> str:
+def render_terminal_report(
+    scan: ScanResult,
+    *,
+    risk_delta: dict[str, Any] | None = None,
+) -> str:
     counts = scan.inventory.get("coverage", {}).get("component_counts_by_type") or {}
     sev = scan.findings_by_severity()
     by_class = scan.findings_by_class()
@@ -100,11 +111,19 @@ def render_terminal_report(scan: ScanResult) -> str:
         1 for f in scan.findings if f.severity in HIGH_SEVERITIES and is_gate_finding(f)
     )
     unverified = len(scan.coverage.get("not_verified") or [])
+    decision = compute_decision(scan.findings, coverage=scan.coverage, risk_delta=risk_delta)
+    lead = decision_sentences(decision, scan.findings, risk_delta=risk_delta)
     lines = [
         "AESA Guard — Authority Diff for AI agents",
         f"Product: AESA Guard {scan.product_version}  (tooling {scan.package_version})",
         f"Repository: {scan.repository_path}",
         f"Commit: {scan.commit or 'unknown'}",
+        "",
+        f"DECISION: {decision}",
+        f"  {lead[0]}",
+        f"  {lead[1]}",
+        f"  {lead[2]}",
+        f"  {coverage_score_line(scan.coverage)}",
         "",
         "DECISION SUMMARY",
         f"  Components discovered              {len(scan.inventory.get('components') or [])}",
@@ -258,10 +277,22 @@ def render_finding_explanation(scan: ScanResult, finding: Finding) -> str:
             "## Verification requirements",
             "",
             "- Do not promote this to CONFIRMED / Verified impact without independent evidence.",
-            "- Optional: load matching `modules/*.md` and investigate with the auditor skill.",
+            "- Optional: `aesa harden` for dry-run fix patches; deep kit under `kit/`.",
             "",
         ]
     )
+    if finding.fix_snippet:
+        lines.extend(["", "## Fix snippet", "", "```", finding.fix_snippet, "```", ""])
+    if finding.verify_in_60s:
+        lines.extend(
+            [
+                "",
+                "## What would change this verdict",
+                "",
+                finding.verify_in_60s,
+                "",
+            ]
+        )
     return "\n".join(lines)
 
 

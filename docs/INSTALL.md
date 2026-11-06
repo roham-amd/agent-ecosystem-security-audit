@@ -16,10 +16,10 @@ aesa scan /path/to/target-repo
 Pin a release tag when you need reproducibility:
 
 ```bash
-uv tool install "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools"
+uv tool install "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools"
 ```
 
-(If `v3.5.0` is not published yet, pin a commit SHA or use `@main` knowingly.)
+(If `v3.5.1` is not published yet, pin a commit SHA or use `@main` knowingly.)
 
 Upgrade:
 

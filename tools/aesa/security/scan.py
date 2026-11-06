@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from aesa.export.pr_comment import render_authority_diff_comment
 from aesa.export.sarif import findings_doc_to_sarif
 from aesa.jsonio import write_json, write_text
 from aesa.paths import resolve_default_output_dir
@@ -15,10 +16,17 @@ from aesa.security.gating import compute_exit_code
 from aesa.security.report import render_markdown_summary, render_terminal_report
 
 
-def write_scan_artifacts(scan: ScanResult, output_dir: Path) -> dict[str, Any]:
+def write_scan_artifacts(
+    scan: ScanResult,
+    output_dir: Path,
+    *,
+    risk_delta: dict[str, Any] | None = None,
+    risk_delta_doc: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Persist inventory, findings, reports, SARIF, and Authority Diff PR comment."""
     output_dir.mkdir(parents=True, exist_ok=True)
     findings_doc = scan.to_findings_doc()
-    summary = render_terminal_report(scan)
+    summary = render_terminal_report(scan, risk_delta=risk_delta)
     write_json(output_dir / "inventory.json", scan.inventory)
     write_json(output_dir / "ecosystem-graph.json", scan.graph)
     write_json(output_dir / "findings.json", findings_doc)
@@ -26,6 +34,8 @@ def write_scan_artifacts(scan: ScanResult, output_dir: Path) -> dict[str, Any]:
     write_text(output_dir / "scan-report.md", render_markdown_summary(scan, terminal=summary))
     write_text(output_dir / "scan-summary.txt", summary)
     write_json(output_dir / "findings.sarif.json", findings_doc_to_sarif(findings_doc))
+    comment = render_authority_diff_comment(findings_doc, risk_delta=risk_delta_doc)
+    write_text(output_dir / "pr-comment.md", comment)
     write_json(
         output_dir / "profile.json",
         {
@@ -44,6 +54,7 @@ def write_scan_artifacts(scan: ScanResult, output_dir: Path) -> dict[str, Any]:
         "finding_count": len(scan.findings),
         "component_count": len(scan.inventory.get("components") or []),
         "summary": summary,
+        "pr_comment": comment,
     }
 
 
@@ -97,7 +108,24 @@ def run_scan(
     scan = run_security_scan(target)
     suppressed = apply_suppressions(scan, policy)
     out = (output_dir or resolve_default_output_dir()).resolve()
-    payload = write_scan_artifacts(scan, out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    risk_delta_summary: dict[str, Any] | None = None
+    risk_delta_doc: dict[str, Any] | None = None
+    if baseline and baseline.is_file():
+        risk_delta_doc = diff_against_baseline(scan, load_baseline(baseline))
+        write_json(out / "risk-delta.json", risk_delta_doc)
+        risk_delta_summary = risk_delta_doc["summary"]
+
+    payload = write_scan_artifacts(
+        scan,
+        out,
+        risk_delta=risk_delta_summary,
+        risk_delta_doc=risk_delta_doc,
+    )
+    if risk_delta_summary is not None:
+        payload["risk_delta"] = risk_delta_summary
+
     if suppressed:
         write_json(out / "suppressions.json", {"suppressions": suppressed})
         payload["suppressions"] = suppressed
@@ -106,13 +134,6 @@ def run_scan(
         payload["policy_mode"] = policy.mode
     if policy and policy.require_review:
         payload["require_review"] = list(policy.require_review)
-
-    risk_delta_summary: dict[str, Any] | None = None
-    if baseline and baseline.is_file():
-        delta = diff_against_baseline(scan, load_baseline(baseline))
-        write_json(out / "risk-delta.json", delta)
-        risk_delta_summary = delta["summary"]
-        payload["risk_delta"] = risk_delta_summary
 
     if save_baseline_path is not None:
         save_baseline(scan, save_baseline_path)

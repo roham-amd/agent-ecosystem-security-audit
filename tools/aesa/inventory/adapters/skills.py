@@ -23,6 +23,23 @@ _DOWNLOAD_EXEC_RE = re.compile(
     r"iwr\s+[^\n|;]*\|\s*iex|invoke-webrequest[^\n|;]*\|\s*iex)",
     re.IGNORECASE,
 )
+_PERMISSION_BYPASS_RE = re.compile(
+    r"(--dangerously-skip-permissions|--yolo\b|bypasspermissions|"
+    r"permissionmode\s*[:=]\s*bypass|auto[_-]?approve\s*[:=]\s*true|"
+    r"skip[_-]?permissions)",
+    re.IGNORECASE,
+)
+_INSTRUCTION_ABUSE_MARKERS = (
+    "ignore previous instructions",
+    "ignore all previous",
+    "do not tell the user",
+    "hide this action",
+    "bypass confirmation",
+    "skip approval",
+    "exfiltrate",
+    "fetch and execute",
+    "download and run",
+)
 
 
 def _mentions_secret_handling(text: str) -> bool:
@@ -93,6 +110,10 @@ def discover_skills(
             hints.append("hidden_unicode_in_instructions")
         if _DOWNLOAD_EXEC_RE.search(raw):
             hints.append("download_and_execute")
+        if _PERMISSION_BYPASS_RE.search(raw):
+            hints.append("permission_bypass_flag")
+        if any(marker in lowered for marker in _INSTRUCTION_ABUSE_MARKERS):
+            hints.append("instruction_abuse_content")
 
         results.append(
             {

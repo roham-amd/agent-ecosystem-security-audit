@@ -4,7 +4,31 @@ All notable changes to the AESA framework are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
-The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/`).
+The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/` / `kit/`).
+
+## [3.5.1] — 2026-11-07
+
+### Added
+
+- **Authority Diff PR comment** (`pr-comment.md`, `aesa annotate --format pr-comment`) —
+  ≤12 lines, decision-led, markdown-escaped; Action posts to job summary / `gh`.
+- Decision labels `BLOCK` / `REVIEW` / `PASS-WITH-COVERAGE-GAPS` + coverage score line.
+- **`--agent`** digests for `scan` / `vet` / `doctor` / `explain` (fenced untrusted evidence).
+- **`aesa harden`** dry-run least-privilege patch templates (apply disabled).
+- **`aesa init-manifest` / `verify-manifest`** for declared vs observed `AUTHORITY.yml`.
+- Rule pack **1.3**: AESA-RULE-017 (permission-bypass / auto-approve); RULE-010 content path.
+- Ecosystem Atlas scaffolding (`docs/atlas/`) and seeded demo (`examples/demo-vulnerable/`).
+- `kit/README.md` pointing deep methodology away from the product path.
+- Doctor “top 3 risks” + harden next-step.
+
+### Changed
+
+- Product **3.5.1**; tooling **0.8.1**; rule pack **1.3**.
+- Skill collapsed to a short “run CLI → read JSON” workflow.
+- AgentSecBench intake/outreach expansion frozen in favor of Atlas precision work.
+- Threat scenarios table maps each scenario to primary rules.
+- Scan artifact writes are single-pass (summary + PR comment); doctor cleans ephemeral dirs;
+  harden dry-run contract clarified; CLI reference / tools README synced to new commands.
 
 ## [3.5.0] — 2026-11-05
 

@@ -4,7 +4,7 @@ AESA Guard is an **Authority Diff** for AI-agent ecosystems: host and repo
 discovery, deterministic security rules, CI gating with tamper-resistant policy,
 and an optional AI auditor skill.
 
-Release **3.5.0** centers on **`aesa doctor` → `aesa vet` → `aesa scan`**.
+Release **3.5.1** centers on **`aesa doctor` → `aesa vet` → `aesa scan`** (Authority Diff).
 Profile-based `aesa audit` remains for agent handoff packages. Optional
 `.aesa.yml` sets fail-on / baseline / suppressions (CI loads it from the PR
 **base ref** when `trusted-policy` is on). AESA is **not** a certification
@@ -45,7 +45,7 @@ Fill audit inputs in Section 2 of [`../prompts/01-core-prompt.md`](../prompts/01
 ### Step 1 — host map (usually non-empty)
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools
 aesa doctor
 ```
 

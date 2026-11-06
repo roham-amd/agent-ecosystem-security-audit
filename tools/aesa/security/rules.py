@@ -573,35 +573,67 @@ def rule_instruction_injection_markers(
     findings: list[Finding],
     ctx: EvidenceContext,
 ) -> None:
-    """Flag skills/rules that look injection-oriented via path/name (weak indicator)."""
+    """Flag skills/rules with injection-oriented name markers or abuse-shaped content.
+
+    NAME_MARKER hits stay CAPABILITY/LOW. Content-based
+    ``instruction_abuse_content`` escalates to EXPOSURE/MEDIUM with INFERRED_HINT.
+    """
     ctype = str(component.get("type") or "")
     if ctype not in {"Skill", "Rule pack"}:
         return
+    hints = set(component.get("priority_hints") or [])
     path = str(component.get("repository_path") or "").lower()
     name = str(component.get("name") or "").lower()
     markers = ("injection", "exfil", "ignore previous", "jailbreak")
-    if not any(m in path or m in name for m in markers):
+    name_hit = any(m in path or m in name for m in markers)
+    content_hit = "instruction_abuse_content" in hints
+    if not name_hit and not content_hit:
         return
+
+    if content_hit:
+        strength: EvidenceStrength = "INFERRED_HINT"
+        finding_class: FindingClass = "EXPOSURE"
+        severity: Severity = "MEDIUM"
+        confidence: VerificationStatus = "OBSERVED"
+        summary = "Instruction text contains hide/bypass/fetch-execute style directives."
+        title = "Instruction text directs hide, bypass, or fetch-execute behavior"
+        description = (
+            f"`{component.get('name')}` contains instruction patterns that hide actions, "
+            "bypass confirmation, or fetch-and-execute remote content. Review before trusting."
+        )
+        recommended = "Rewrite instructions; forbid hide/bypass/remote-exec directives in skills."
+        verify = "Search the SKILL.md for hide/bypass/fetch-and-execute phrasing."
+    else:
+        strength = "NAME_MARKER"
+        finding_class = "CAPABILITY"
+        severity = "LOW"
+        confidence = "POTENTIAL"
+        summary = "Component path/name suggests prompt-injection oriented content."
+        title = "Potential prompt-injection oriented instruction surface"
+        description = (
+            f"`{component.get('name')}` appears related to prompt-injection patterns by "
+            "name/path. Naming alone is a weak signal — treat as triage, not confirmed abuse."
+        )
+        recommended = "Review full instruction text; do not auto-activate in privileged hosts."
+        verify = "Open the file; naming alone is weak — read the instruction text."
+
     ev = build_rule_evidence(
         evidences,
         component=component,
-        summary="Component path/name suggests prompt-injection oriented content.",
+        summary=summary,
         ctx=ctx,
-        status="OBSERVED",
+        status="OBSERVED" if content_hit else "POTENTIAL",
         limitations=[
-            "Naming is a weak indicator of exploitation; review instruction text before acting.",
+            "Content markers are heuristic; confirm intent before treating as malicious.",
         ],
     )
     _add_finding(
         findings,
         rule_id="AESA-RULE-010",
-        title="Potential prompt-injection oriented instruction surface",
-        severity="LOW",
-        confidence="POTENTIAL",
-        description=(
-            f"`{component.get('name')}` appears related to prompt-injection patterns by "
-            "name/path. Naming alone is a weak signal — treat as triage, not confirmed abuse."
-        ),
+        title=title,
+        severity=severity,
+        confidence=confidence,
+        description=description,
         component=component,
         evidence=ev,
         capabilities=["modify_agent_instructions"],
@@ -610,10 +642,57 @@ def rule_instruction_injection_markers(
         trust_boundary="Untrusted instructions → privileged agent tools",
         impact="Agent may follow injected instructions leading to privileged actions",
         missing_controls=["Instruction isolation", "Tool allowlists for untrusted content"],
-        recommended_action="Review full instruction text; do not auto-activate in privileged hosts.",
-        finding_class="CAPABILITY",
-        evidence_strength="NAME_MARKER",
-        verify_in_60s="Open the file; naming alone is weak — read the instruction text.",
+        recommended_action=recommended,
+        finding_class=finding_class,
+        evidence_strength=strength,
+        verify_in_60s=verify,
+    )
+
+
+def rule_permission_bypass_flag(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if "permission_bypass_flag" not in set(component.get("priority_hints") or []):
+        return
+    ctype = str(component.get("type") or "")
+    if ctype not in {"Skill", "Hook", "MCP Server Registration", "CI Workflow", "Automation"}:
+        return
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary="Component references a permission-bypass or auto-approve flag.",
+        ctx=ctx,
+        status="OBSERVED",
+        needle="skip-permissions",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-017",
+        title="Permission-bypass or auto-approve flag in agent surface",
+        severity="HIGH",
+        confidence="OBSERVED",
+        description=(
+            f"`{component.get('name')}` references a flag that disables human approval "
+            "(e.g. `--dangerously-skip-permissions`, `--yolo`, auto-approve). That expands "
+            "effective authority without a corresponding control."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["modify_approvals", "execute_commands", "unattended_operation"],
+        attacker_control="Anyone who can influence the command/config that sets the flag",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Human approval gate → bypassed automated agent",
+        impact="Privileged tool use without interactive confirmation",
+        missing_controls=["Require approval for high-impact tools", "Disallow bypass flags in CI"],
+        recommended_action="Remove bypass flags; keep approval required for privileged actions.",
+        finding_class="SECURITY_FINDING",
+        exposure="PERMISSION_BYPASS",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="grep for dangerously-skip-permissions / yolo / autoApprove / bypass.",
+        fix_snippet="Delete the bypass flag; keep interactive or policy-gated approvals.",
     )
 
 
@@ -929,6 +1008,12 @@ RULES: list[RuleSpec] = [
         "pull_request_target with agent steps",
         "1.0",
         rule_pull_request_target_with_agent,
+    ),
+    RuleSpec(
+        "AESA-RULE-017",
+        "Permission-bypass / auto-approve flag",
+        "1.0",
+        rule_permission_bypass_flag,
     ),
 ]
 

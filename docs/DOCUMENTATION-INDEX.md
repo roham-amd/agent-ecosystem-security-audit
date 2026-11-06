@@ -1,7 +1,7 @@
 # AESA documentation index
 
-Complete map of project documentation for **AESA Guard 3.5.0** (Authority Diff;
-procedure **1.0**, tooling **0.8.0**, rule pack **1.2**).
+Complete map of project documentation for **AESA Guard 3.5.1** (Authority Diff;
+procedure **1.0**, tooling **0.8.1**, rule pack **1.3**).
 
 Use this file as the table of contents. Prefer the **primary** doc for each topic; secondary docs add depth or history.
 
@@ -27,6 +27,9 @@ Use this file as the table of contents. Prefer the **primary** doc for each topi
 | [`../README.md`](../README.md) | Authority Diff identity: doctor → vet → init-gate → scan |
 | [`AESA-GATE.md`](AESA-GATE.md) | Short Guard primer: discover / assess / govern |
 | [`GUARD-3.5-BACKLOG.md`](GUARD-3.5-BACKLOG.md) | **Current** Authority Diff backlog |
+| [`atlas/README.md`](atlas/README.md) | Ecosystem Atlas precision program |
+| [`../kit/README.md`](../kit/README.md) | Optional methodology kit (not the product path) |
+| [`../examples/demo-vulnerable/`](../examples/demo-vulnerable/) | Seeded Authority Diff demo repo |
 | [`GUARD-3.4-BACKLOG.md`](GUARD-3.4-BACKLOG.md) | Historical 3.4 productization backlog |
 | [`POLICY.md`](POLICY.md) | `.aesa.yml` policy contract + CI trusted-policy |
 | [`COVERAGE-MATRIX.md`](COVERAGE-MATRIX.md) | Automated vs manual coverage |

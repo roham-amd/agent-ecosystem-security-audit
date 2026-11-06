@@ -21,7 +21,7 @@ jobs:
         with:
           repository: roham-amd/agent-ecosystem-security-audit
           path: .aesa-kit
-          ref: v3.5.0
+          ref: v3.5.1
 
       - name: AESA Guard
         uses: ./.aesa-kit/.github/actions/aesa-gate

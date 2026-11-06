@@ -1,6 +1,6 @@
 # Operator guide: AESA Kit (procedure 1.0) + Guard tooling
 
-This guide orients humans who run AESA engagements. Product release **3.5.0**
+This guide orients humans who run AESA engagements. Product release **3.5.1**
 centers on **AESA Guard** as an Authority Diff (`aesa doctor` / `aesa vet` /
 `aesa scan`); the audit **procedure version remains 1.0**.
 

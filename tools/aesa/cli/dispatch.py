@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from aesa.audit import ProfileName, run_audit
 from aesa.audit_diff import diff_graphs, diff_reports
+from aesa.authority_manifest import init_manifest, verify_manifest, write_verify_report
 from aesa.benchmark.governance import verify_dataset_integrity
 from aesa.benchmark.intake import (
     build_submitter_package,
@@ -23,8 +24,11 @@ from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
 from aesa.doctor import run_doctor
+from aesa.export.agent_digest import fence_untrusted, render_agent_digest
 from aesa.export.annotate import render_github_annotations, render_text_annotations
+from aesa.export.pr_comment import render_authority_diff_comment
 from aesa.export.sarif import report_to_sarif
+from aesa.harden import run_harden
 from aesa.hosts.profiles import get_host_profile, list_host_profiles
 from aesa.inventory.collector import collect_inventory, inventory_to_json
 from aesa.jsonio import print_json, read_json, write_json
@@ -81,6 +85,12 @@ def dispatch(args: argparse.Namespace) -> int:
             return _cmd_doctor(args)
         case "vet":
             return _cmd_vet(args)
+        case "harden":
+            return _cmd_harden(args)
+        case "init-manifest":
+            return _cmd_init_manifest(args)
+        case "verify-manifest":
+            return _cmd_verify_manifest(args)
         case "init-gate":
             return _cmd_init_gate(args)
         case "explain":
@@ -144,7 +154,7 @@ def _cmd_scan(args: argparse.Namespace) -> int:
     if baseline is None and policy is not None and policy.baseline is not None:
         baseline = policy.baseline
 
-    _scan, payload, code = run_scan(
+    scan, payload, code = run_scan(
         args.path,
         output_dir=output_dir,
         baseline=baseline,
@@ -152,6 +162,13 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         fail_on=fail_on,
         policy=policy,
     )
+    if getattr(args, "agent", False):
+        _emit_agent_digest(
+            scan.to_findings_doc(),
+            risk_delta={"summary": payload["risk_delta"]} if payload.get("risk_delta") else None,
+            write_to=Path(payload["output_dir"]) / "agent-digest.json",
+        )
+        return code
     print(payload["summary"])
     if payload.get("risk_delta"):
         print_json({"risk_delta": payload["risk_delta"]})
@@ -171,6 +188,20 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         output_dir=getattr(args, "output_dir", None),
         fail_on=getattr(args, "fail_on", None),
     )
+    if getattr(args, "agent", False):
+        out = getattr(args, "output_dir", None)
+        findings_path = None
+        if out is not None and Path(out).is_dir():
+            candidates = sorted(Path(out).glob("*/findings.json"))
+            if candidates:
+                findings_path = candidates[0]
+        doc: dict[str, Any] = (
+            read_json(findings_path)
+            if findings_path and findings_path.is_file()
+            else {"findings": []}
+        )
+        _emit_agent_digest(doc)
+        return code
     print(text)
     return code
 
@@ -181,7 +212,54 @@ def _cmd_vet(args: argparse.Namespace) -> int:
         output_dir=getattr(args, "output_dir", None),
         keep_clone=bool(getattr(args, "keep_clone", False)),
     )
+    if getattr(args, "agent", False):
+        out = getattr(args, "output_dir", None)
+        findings_path = Path(out) / "findings.json" if out else None
+        doc = (
+            read_json(findings_path)
+            if findings_path and findings_path.is_file()
+            else {"findings": []}
+        )
+        _emit_agent_digest(doc)
+        return code
     print(text)
+    return code
+
+
+def _emit_agent_digest(
+    findings_doc: dict[str, Any],
+    *,
+    risk_delta: dict[str, Any] | None = None,
+    write_to: Path | None = None,
+) -> int:
+    digest = render_agent_digest(findings_doc, risk_delta=risk_delta)
+    if write_to is not None:
+        write_json(write_to, digest)
+    print_json(digest)
+    return 0
+
+
+def _cmd_harden(args: argparse.Namespace) -> int:
+    text, code = run_harden(
+        findings_path=args.findings,
+        apply=bool(getattr(args, "apply", False)),
+    )
+    print(text)
+    return code
+
+
+def _cmd_init_manifest(args: argparse.Namespace) -> int:
+    text, code = init_manifest(args.path, force=bool(args.force))
+    print(text)
+    return code
+
+
+def _cmd_verify_manifest(args: argparse.Namespace) -> int:
+    report, code = verify_manifest(args.path)
+    if getattr(args, "output", None):
+        write_verify_report(report, args.output)
+        print(f"Wrote {args.output}")
+    print_json(report)
     return code
 
 
@@ -231,6 +309,23 @@ def _cmd_explain(args: argparse.Namespace) -> int:
     if finding is None:
         print(f"Finding {args.finding_id} not found in {findings_path}")
         return 1
+    if getattr(args, "agent", False):
+        print_json(
+            {
+                "finding_id": finding.finding_id,
+                "rule_id": finding.rule_id,
+                "decision_hint": finding.severity,
+                "title": fence_untrusted(finding.title),
+                "who_gains": fence_untrusted(finding.attacker_control or finding.entry_point),
+                "reach": fence_untrusted(finding.impact),
+                "recommended_action": fence_untrusted(finding.recommended_action),
+                "fix_snippet": fence_untrusted(finding.fix_snippet),
+                "what_would_change_verdict": fence_untrusted(finding.verify_in_60s),
+                "evidence_strength": finding.evidence_strength,
+                "safety": {"target_is_untrusted_data": True, "evidence_fenced": True},
+            }
+        )
+        return 0
     print(render_finding_explanation(scan, finding))
     return 0
 
@@ -406,7 +501,13 @@ def _cmd_annotate(args: argparse.Namespace) -> int:
         print(f"Findings not found: {args.findings}")
         return 1
     doc = read_json(args.findings)
-    if args.annotate_format == "text":
+    if args.annotate_format == "pr-comment":
+        risk = None
+        risk_path = getattr(args, "risk_delta", None)
+        if risk_path and Path(risk_path).is_file():
+            risk = read_json(Path(risk_path))
+        text = render_authority_diff_comment(doc, risk_delta=risk)
+    elif args.annotate_format == "text":
         text = render_text_annotations(doc)
     else:
         text = render_github_annotations(doc)

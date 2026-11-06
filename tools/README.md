@@ -8,7 +8,7 @@ report validation, corpus, and AgentSecBench harness.
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.8.0** · Product: AESA Guard **3.5.0**
+Package: `aesa-tools` **0.8.1** · Product: AESA Guard **3.5.1**
 
 ---
 
@@ -35,7 +35,7 @@ Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
 **User tool (recommended):**
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools
 aesa doctor
 aesa vet github.com/org/some-skill
 aesa scan /path/to/target-repo
@@ -121,11 +121,15 @@ uv run --locked aesa benchmark run
 
 ```bash
 # Primary product surface
-uv run aesa doctor [--home DIR]
-uv run aesa vet SOURCE [-o DIR]
+uv run aesa doctor [--home DIR] [-o DIR] [--agent]
+uv run aesa vet SOURCE [-o DIR] [--agent]
 uv run aesa init-gate [PATH] [--force]
-uv run aesa scan PATH [-o DIR] [--baseline B] [--save-baseline B] [--fail-on never|high|any]
-uv run aesa explain F-001 -o DIR
+uv run aesa scan PATH [-o DIR] [--baseline B] [--save-baseline B] [--fail-on never|high|any] [--agent]
+uv run aesa harden [--findings PATH]
+uv run aesa init-manifest [PATH] [--force]
+uv run aesa verify-manifest [PATH] [-o REPORT.json]
+uv run aesa explain F-001 -o DIR [--agent]
+uv run aesa annotate FINDINGS.json --format github|text|pr-comment
 uv run aesa baseline save|show …
 
 # Agent handoff / discovery
@@ -156,12 +160,15 @@ uv run aesa lint [--fix] [--format] [--check-format]
 | --- | --- |
 | `cli/` | argparse construction + command dispatch |
 | `security/` | Guard engine: capabilities, rules, scan, baseline, report |
-| `security/rules.py` | Deterministic rules AESA-RULE-001…016 (pack 1.2) |
-| `security/scan.py` | Artifact writer + policy fail-on |
+| `security/rules.py` | Deterministic rules AESA-RULE-001…017 (pack 1.3) |
+| `security/scan.py` | Artifact writer + policy fail-on + PR comment |
+| `security/decision.py` | BLOCK / REVIEW / PASS-WITH-COVERAGE-GAPS |
+| `harden.py` / `authority_manifest.py` | Dry-run patches + AUTHORITY.yml |
+| `doctor.py` / `vet.py` | Host map + pre-install verdict |
 | `inventory/` | Bounded I/O, adapter registry, collector, coverage |
 | `inventory/adapters/` | Skills, MCP, hooks, plugins, subagents, automations, A2A, workflows |
 | `audit.py` / `preflight.py` | Profile orchestration + graph seed + audit-context |
-| `export/sarif.py` | SARIF 2.1.0 export |
+| `export/` | SARIF, annotations, PR comment, agent digest |
 | `validate_report.py` / `semantic.py` | Schema + semantic validation |
 | `graph/analysis.py` | Graph path helpers |
 | `benchmark/` / `corpus/` | AgentSecBench + tooling corpus runners |

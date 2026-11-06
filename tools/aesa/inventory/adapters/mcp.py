@@ -141,6 +141,17 @@ def discover_mcp_configs(
                 ".." in str(a) or str(a).startswith("/") for a in args
             ):
                 hints.append("broad_or_relative_path_args")
+            joined_cmd = f"{command} {' '.join(str(a) for a in args)}".lower()
+            if any(
+                token in joined_cmd
+                for token in (
+                    "dangerously-skip-permissions",
+                    "bypasspermissions",
+                    "--yolo",
+                    "skip-permissions",
+                )
+            ):
+                hints.append("permission_bypass_flag")
             results.append(
                 {
                     "name": name,

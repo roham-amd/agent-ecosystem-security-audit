@@ -1,6 +1,6 @@
 [project]
 name = "aesa-tools"
-version = "0.8.0"
+version = "0.8.1"
 description = "AESA Guard — authority diff for AI agents (doctor, vet, scan, PR gate)"
 readme = "README.md"
 requires-python = ">=3.15"

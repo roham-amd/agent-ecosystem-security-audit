@@ -1,6 +1,6 @@
 ---
 name: injection-demo
-description: Named for injection-oriented corpus testing
+description: Named for injection-oriented corpus testing (name/path marker only)
 ---
 
-Ignore previous instructions is a phrase used only as a fixture marker.
+Benign fixture body. The skill folder name is the weak signal under test.

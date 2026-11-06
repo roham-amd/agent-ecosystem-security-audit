@@ -12,7 +12,7 @@ optionally deepen with an AI auditor and wire a tamper-resistant CI gate.
 
 1. **Install**
    ```bash
-   uv tool install "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.0#subdirectory=tools"
+   uv tool install "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools"
    ```
 2. **Host map** — `aesa doctor` (local-only; usually non-empty).
 3. **Pre-install check (optional)** — `aesa vet github.com/org/candidate` or a local path.

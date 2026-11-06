@@ -121,3 +121,14 @@ def test_rule_010_name_marker_strength():
     scan = run_security_scan(root)
     hit = next(f for f in scan.findings if f.rule_id == "AESA-RULE-010")
     assert hit.evidence_strength == "NAME_MARKER"
+    assert hit.finding_class == "CAPABILITY"
+    assert hit.severity == "LOW"
+
+
+def test_rule_010_content_abuse_strength():
+    root = Path(__file__).resolve().parents[0] / "rules" / "fixtures" / "rule-010-positive-content"
+    scan = run_security_scan(root)
+    hit = next(f for f in scan.findings if f.rule_id == "AESA-RULE-010")
+    assert hit.evidence_strength == "INFERRED_HINT"
+    assert hit.finding_class == "EXPOSURE"
+    assert hit.severity == "MEDIUM"
