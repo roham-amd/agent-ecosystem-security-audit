@@ -6,10 +6,17 @@ from pathlib import Path
 from typing import Any
 
 from aesa.inventory.io import safe_read_text, select_files
+from aesa.inventory.jsonc import loads_json_tolerant
 from aesa.inventory.limits import CollectorLimits
 
 _SECRETISH_ENV_RE = re.compile(
     r"(api[_-]?key|token|secret|password|passwd|authorization|credential|private[_-]?key)",
+    re.IGNORECASE,
+)
+_DOWNLOAD_EXEC_RE = re.compile(
+    r"(curl\s+[^\n|;]*\|\s*(?:sudo\s+)?(?:ba)?sh|"
+    r"wget\s+[^\n|;]*\|\s*(?:sudo\s+)?(?:ba)?sh|"
+    r"iwr\s+[^\n|;]*\|\s*iex|invoke-webrequest[^\n|;]*\|\s*iex)",
     re.IGNORECASE,
 )
 
@@ -55,14 +62,53 @@ def _env_has_literal_secret(env: Any) -> bool:
     return False
 
 
+def _env_passes_host_secrets(env: Any) -> bool:
+    """True when env keys look credential-shaped and values are host expansions."""
+    if not isinstance(env, dict):
+        return False
+    for key, value in env.items():
+        if not _SECRETISH_ENV_RE.search(str(key)):
+            continue
+        val_s = str(value) if value is not None else ""
+        if (
+            val_s.startswith("${")
+            or val_s.startswith("$(")
+            or (val_s.startswith("$") and not val_s.startswith("$$"))
+        ):
+            return True
+    return False
+
+
+def _is_broad_path_arg(arg: Any) -> bool:
+    """True only for root / home / parent-traversal roots — not project abs paths."""
+    s = str(arg).strip()
+    if not s:
+        return False
+    lowered = s.lower()
+    if lowered in {"/", "~", "$home", "${home}", "%userprofile%", "%homepath%"}:
+        return True
+    if s.startswith("~/") or s.startswith("~\\"):
+        return True
+    if s in {".."} or s.startswith("../") or s.startswith("..\\"):
+        return True
+    # Windows drive root: C:\ or C:/
+    if re.fullmatch(r"[A-Za-z]:[\\/]?", s):
+        return True
+    try:
+        parts = Path(s).parts
+    except (TypeError, ValueError):
+        return False
+    return ".." in parts
+
+
 def _is_mcp_config_candidate(path: Path, root: Path) -> bool:
     rel = path.relative_to(root).as_posix().lower()
     name = path.name.lower()
-    if name in {"mcp.json", "mcp_config.json", "mcp_example.json"}:
+    if name in {"mcp.json", "mcp_config.json", "mcp_example.json", ".mcp.json"}:
         return True
     if name.endswith(".json") and "mcp" in name:
         return True
-    return rel in {".cursor/mcp.json", ".vscode/mcp.json", "mcp.json"}
+    return rel in {".cursor/mcp.json", ".vscode/mcp.json", "mcp.json", ".mcp.json"}
 
 
 def _is_mcp_server_source(path: Path) -> bool:
@@ -90,15 +136,33 @@ def discover_mcp_configs(
             continue
         seen.add(key)
         raw = safe_read_text(path, root=root, limits=limits, events=events, adapter="mcp_config")
-        if raw is None:
-            continue
         rel = path.relative_to(root).as_posix()
+        if raw is None:
+            # Oversize / unreadable agent config — fail closed via coverage events.
+            events.append(
+                {
+                    "type": "unparsed_agent_config",
+                    "adapter": "mcp_config",
+                    "path": rel,
+                    "message": "MCP config could not be read (oversize, truncated, or I/O error)",
+                }
+            )
+            continue
         try:
-            data = json.loads(raw)
+            data = loads_json_tolerant(raw)
         except json.JSONDecodeError as exc:
             events.append(
                 {
                     "type": "parse_error",
+                    "adapter": "mcp_config",
+                    "path": rel,
+                    "message": str(exc),
+                    "agent_config": True,
+                }
+            )
+            events.append(
+                {
+                    "type": "unparsed_agent_config",
                     "adapter": "mcp_config",
                     "path": rel,
                     "message": str(exc),
@@ -129,21 +193,24 @@ def discover_mcp_configs(
                     hints.append("unpinned_package_launcher")
             env = cfg.get("env") or cfg.get("environment")
             if env:
-                hints.append("inherits_or_sets_environment")
+                hints.append("sets_environment")
                 if _env_has_literal_secret(env):
                     hints.append("literal_secret_in_env")
+                elif _env_passes_host_secrets(env):
+                    # Only credential-shaped keys with host expansion escalate RULE-002.
+                    hints.append("inherits_or_sets_environment")
             url = str(cfg.get("url") or "")
             if url:
                 hints.append("remote_endpoint")
                 if url.lower().startswith("http://"):
                     hints.append("insecure_http_remote")
-            if isinstance(args, list) and any(
-                ".." in str(a) or str(a).startswith("/") for a in args
-            ):
+            if isinstance(args, list) and any(_is_broad_path_arg(a) for a in args):
                 hints.append("broad_or_relative_path_args")
-            joined_cmd = f"{command} {' '.join(str(a) for a in args)}".lower()
+            joined_cmd = f"{command} {' '.join(str(a) for a in args)}"
+            if _DOWNLOAD_EXEC_RE.search(joined_cmd):
+                hints.append("download_and_execute")
             if any(
-                token in joined_cmd
+                token in joined_cmd.lower()
                 for token in (
                     "dangerously-skip-permissions",
                     "bypasspermissions",

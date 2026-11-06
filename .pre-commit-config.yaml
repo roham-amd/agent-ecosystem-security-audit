@@ -1,4 +1,4 @@
-# Local hooks (kept out of tools/ dependency-groups so Windows 3.15 hosts
+# Local hooks (kept out of tools/ dependency-groups so Windows hosts
 # are not forced to build PyYAML for pre-commit).
 # Install once:  uvx pre-commit install
 # Run manually:  uvx pre-commit run --all-files

@@ -16,7 +16,7 @@ with the auditor skill.
 ## Shared prerequisites
 
 1. Authorization and scope (`docs/usage.md`)
-2. Passive guardrails (`prompts/04-passive-guardrails.md`)
+2. Passive guardrails (`archive/methodology/prompts/04-passive-guardrails.md`)
 3. Guard scan artifacts (`docs/GUARD-SCAN.md`) when possible
 4. Evidence discipline (`docs/EVIDENCE-MODEL.md`)
 5. Matching modules only (`modules/README.md`)

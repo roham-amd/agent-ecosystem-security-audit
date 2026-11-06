@@ -61,7 +61,7 @@ def collect_inventory(
         tree_summary=tree_summary,
         components=components,
         parser_events=events,
-        coverage=summarize_coverage(components),
+        coverage=summarize_coverage(components, parser_events=events),
         mode="passive_read_only",
     )
 

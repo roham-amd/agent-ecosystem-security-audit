@@ -1,58 +1,45 @@
-# Install AESA Guard
+# Install authdiff
 
-## Recommended: `uv tool install` from Git
+## Requirements
 
-Until the PyPI release finishes Trusted Publisher setup, install the CLI as a
-user tool from this repository’s `tools/` package:
+- Python **3.12+** (uv can fetch a managed interpreter)
+- Git (for `authdiff open` / `vet` of remote URLs)
+- Optional: Docker for the digest-pinned image
 
-```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@main#subdirectory=tools
-
-aesa doctor
-aesa vet github.com/org/some-skill
-aesa scan /path/to/target-repo
-```
-
-Pin a release tag when you need reproducibility:
+## Recommended: uv tool
 
 ```bash
-uv tool install "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools"
+uv tool install --python 3.12 \
+  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.0#subdirectory=tools"
+
+authdiff --help
+authdiff doctor
 ```
 
-(If `v3.5.1` is not published yet, pin a commit SHA or use `@main` knowingly.)
+The `aesa` console script remains a compatibility alias.
 
-Upgrade:
-
-```bash
-uv tool upgrade aesa-tools
-```
-
-## PyPI (when published)
-
-```bash
-uv tool install aesa-tools
-# or: pipx install aesa-tools
-aesa doctor
-```
-
-Publishing workflow: [`.github/workflows/publish-pypi.yml`](../.github/workflows/publish-pypi.yml)
-(OIDC trusted publishing on tagged releases). Requires the PyPI project
-`aesa-tools` with GitHub as a trusted publisher.
-
-## From a local clone (development)
+## From a checkout
 
 ```bash
 cd tools
 uv sync --locked
-uv run aesa doctor
-uv run aesa scan /path/to/target-repo
-# optional: uv tool install . --force
+uv run authdiff scan ../examples/demo-vulnerable
 ```
 
-## Requirements
+## Docker
 
-- Python **3.15+**
-- [uv](https://docs.astral.sh/uv/)
-- `git` on PATH for `aesa vet` remote sources
+```bash
+docker compose build
+TARGET=/path/to/repo docker compose run --rm authdiff scan /work -o /tmp/authdiff-out
+```
 
-Artifacts default to `./aesa-out` in the current working directory.
+Image base: `python:3.12.16-slim-trixie` (digest-pinned in `Dockerfile`).
+
+## GitHub Action
+
+See [`AESA-GATE.md`](AESA-GATE.md) and `authdiff init` (writes an advisory workflow stub).
+
+## PyPI
+
+Trusted-publishing workflow: [`.github/workflows/publish-pypi.yml`](../.github/workflows/publish-pypi.yml).
+Package name: `aesa-tools` (CLI: `authdiff` / `aesa`).

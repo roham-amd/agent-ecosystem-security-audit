@@ -172,7 +172,7 @@ def _run_uv(args: list[str]) -> subprocess.CompletedProcess[str]:
 def upgrade_pins(
     *,
     dry_run: bool = False,
-    requires_python: str = ">=3.15",
+    requires_python: str = ">=3.12",
     as_of: date | None = None,
 ) -> dict[str, Any]:
     """Bump locked deps via ``uv lock --upgrade`` (constraints stay in pyproject.toml)."""
@@ -242,7 +242,7 @@ def outdated_report() -> dict[str, Any]:
         "outdated": outdated,
         "errors": errors,
         "all": [asdict(status) for status in statuses],
-        "requires_python_expected": ">=3.15",
+        "requires_python_expected": ">=3.12",
         "lock": str(lock_path().relative_to(repo_root()).as_posix()),
     }
 

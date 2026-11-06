@@ -85,20 +85,20 @@ PROFILES: dict[ProfileName, ProfileSpec] = {
 }
 
 _MODULE_BY_TYPE: dict[str, str] = {
-    "Skill": "modules/skills.md",
-    "MCP Server": "modules/mcp.md",
-    "MCP Client": "modules/mcp.md",
-    "MCP Server Registration": "modules/mcp.md",
-    "MCP Server Implementation": "modules/mcp.md",
-    "MCP": "modules/mcp.md",
-    "Plugin": "modules/plugins.md",
-    "Hook": "modules/hooks.md",
-    "Subagent": "modules/subagents.md",
-    "Automation": "modules/automations.md",
-    "A2A": "modules/a2a.md",
-    "Workflow": "modules/automations.md",
-    "CI Workflow": "modules/automations.md",
-    "Rule pack": "modules/skills.md",
+    "Skill": "archive/methodology/modules/skills.md",
+    "MCP Server": "archive/methodology/modules/mcp.md",
+    "MCP Client": "archive/methodology/modules/mcp.md",
+    "MCP Server Registration": "archive/methodology/modules/mcp.md",
+    "MCP Server Implementation": "archive/methodology/modules/mcp.md",
+    "MCP": "archive/methodology/modules/mcp.md",
+    "Plugin": "archive/methodology/modules/plugins.md",
+    "Hook": "archive/methodology/modules/hooks.md",
+    "Subagent": "archive/methodology/modules/subagents.md",
+    "Automation": "archive/methodology/modules/automations.md",
+    "A2A": "archive/methodology/modules/a2a.md",
+    "Workflow": "archive/methodology/modules/automations.md",
+    "CI Workflow": "archive/methodology/modules/automations.md",
+    "Rule pack": "archive/methodology/modules/skills.md",
 }
 
 
@@ -119,9 +119,9 @@ def suggest_modules(components: list[dict[str, Any]]) -> list[str]:
             suggested.append(module)
     if (
         any("multimodal" in str(c.get("priority_hints")).lower() for c in components)
-        and "modules/multimodal.md" not in seen
+        and "archive/methodology/modules/multimodal.md" not in seen
     ):
-        suggested.append("modules/multimodal.md")
+        suggested.append("archive/methodology/modules/multimodal.md")
     return suggested
 
 

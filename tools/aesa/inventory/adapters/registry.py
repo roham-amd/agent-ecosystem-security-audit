@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from aesa.inventory.adapters.claude_settings import discover_claude_settings
 from aesa.inventory.adapters.hooks import discover_hooks
 from aesa.inventory.adapters.host_components import (
     discover_automations,
@@ -19,6 +20,7 @@ from aesa.inventory.types import DiscoveryAdapter
 DISCOVERY_ADAPTERS: tuple[DiscoveryAdapter, ...] = (
     discover_skills,
     discover_mcp_configs,
+    discover_claude_settings,
     discover_agent_cards,
     discover_instruction_rules,
     discover_hooks,

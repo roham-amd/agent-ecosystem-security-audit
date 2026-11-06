@@ -1,4 +1,6 @@
-# AESA Guard CLI reference
+# authdiff CLI reference
+
+Primary command: **`authdiff`**. Compatibility alias: **`aesa`**.
 
 Complete reference for the `aesa` console script (package `aesa-tools` **0.8.1**,
 product **3.5.1**).
@@ -327,7 +329,7 @@ aesa build [all|schemas|prompts] [--write]
 | --- | --- |
 | `all` | Schema parity, version metadata, dependency pins, example validation, monolith check |
 | `schemas` | Copy canonical audit-report schema to published aliases |
-| `prompts` | Check or (`--write`) regenerate `prompts/audit.full.md` |
+| `prompts` | Check or (`--write`) regenerate `archive/methodology/prompts/audit.full.md` |
 
 ---
 

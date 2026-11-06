@@ -28,6 +28,11 @@ aesa-out/
 aesa-out-smoke/
 aesa-out-test/
 aesa-out-demo/
+aesa-out-sbom/
+signatures/
+docs/atlas/ledger/runs/
+docs/atlas/ledger/index.json
+!docs/atlas/ledger/.gitkeep
 security-audit-report.md
 security-audit-summary.json
 audit-state.json

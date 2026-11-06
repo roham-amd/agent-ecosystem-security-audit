@@ -39,9 +39,9 @@ def _trim_block(text: str) -> str:
 
 def assemble_monolith() -> str:
     header = _read("canonical/prompt/monolithic-header.md").rstrip() + "\n\n"
-    core = _read("prompts/01-core-prompt.md")
-    modules = _read("prompts/02-modules.md")
-    contract = _read("prompts/03-report-contract.md")
+    core = _read("archive/methodology/prompts/01-core-prompt.md")
+    modules = _read("archive/methodology/prompts/02-modules.md")
+    contract = _read("archive/methodology/prompts/03-report-contract.md")
 
     core_body = _strip_core_kit_preamble(core)
     part_through_9 = _trim_block(
@@ -91,7 +91,7 @@ def write_monolith(*, check_only: bool = False) -> dict:
         if gen_hash != exist_hash:
             raise SystemExit(
                 f"Monolith drift: {out_rel} does not match generated content. "
-                f"Run: aesa build prompts --write"
+                f"Run: authdiff build prompts --write"
             )
         return {"status": "ok", "path": out_rel, "sha256": gen_hash}
 

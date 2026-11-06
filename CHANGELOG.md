@@ -4,7 +4,48 @@ All notable changes to the AESA framework are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
-The included audit procedure version remains independently numbered (procedure **1.0** under `prompts/` / `kit/`).
+The included audit procedure version remains independently numbered (procedure **1.0** under `archive/methodology/`).
+
+## [3.6.0] — 2026-11-07
+
+### Fixed
+
+- **Installed-wheel crash:** `product_version()` / `paths` no longer require a git
+  checkout `VERSION` file; packaged `aesa/data/*` + embedded fallbacks work under
+  `uv tool install` / PyPI wheels. Added **wheel-smoke** CI job.
+- **False positives:** bare MCP `env` (e.g. `LOG_LEVEL`) is INFO/CAPABILITY; broad
+  filesystem args require `/`, `~`, `$HOME`, or `..` roots; skill "token"/"password"
+  bag-of-words no longer gates without executable evidence; `curl | sudo bash` matches
+  download-and-execute.
+- **False confidence:** unparsed/oversize agent configs fail closed as `REVIEW`;
+  decision label renamed to `NO-GATED-FINDINGS` (legacy alias kept).
+- **PR comment:** finding IDs no longer print as `F\-004`; bullets include file path
+  and fix snippet; "+N more" when truncated.
+
+### Added
+
+- CLI aliases: `open`→`vet`, `fix`→`harden`, `init`→`init-gate`; `authdiff` entrypoint.
+- Packaged `aesa/data/VERSION` + `versions.json`.
+- Action **`authority-diff=true`** (default): on PRs, scan the base ref via
+  `git worktree` and feed its baseline into the head scan.
+- Claude Code **settings adapter** (hooks, `enableAllProjectMcpServers`, bypass,
+  base-URL overrides) + RULE-018 / RULE-019.
+- JSONC-tolerant MCP parsing (VS Code trailing commas / `//` comments).
+
+### Changed
+
+- Product **3.6.0**; tooling **0.9.0**; rule pack **1.4**.
+- Python floor **≥3.12** (was ≥3.15).
+- `init-gate` day-one policy is **advisory** / `fail_on: never`.
+- Docker base → **`python:3.12.16-slim-trixie`** (digest-pinned); image entrypoint `authdiff`.
+- Product name **authdiff** (CLI primary); `aesa` remains a compatibility alias.
+- Methodology trees physically moved to **`archive/methodology/`**.
+- **90-day MVPs:** `artifact-vet`, `snapshot` (tools/list hash pin), `atlas crawl`,
+  Sigstore release workflow + SBOM.
+- **Radical alts MVPs:** `run` broker, `examples/attack-replay/`, `lsp-validate` +
+  AUTHORITY schemas.
+- Shared `process_env.scrub_env` for broker/snapshot; clearer execute-path limitations;
+  docs aligned to authdiff + archive paths; expanded regression tests.
 
 ## [3.5.1] — 2026-11-07
 

@@ -115,7 +115,7 @@ class ScanResult:
         by_class = self.findings_by_class()
         return {
             "findings_version": "1.2",
-            "product": "AESA Guard",
+            "product": "authdiff",
             "product_version": self.product_version,
             "package_version": self.package_version,
             "repository": self.repository_path,

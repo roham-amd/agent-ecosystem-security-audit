@@ -72,6 +72,13 @@ inputs:
     description: If true (scan mode), emit GitHub Actions annotations from findings
     required: false
     default: "true"
+  authority-diff:
+    description: >-
+      On pull_request events, scan the base ref and pass its baseline into the
+      head scan so the PR comment is a true Authority Diff (facts added on head).
+      Requires fetch-depth: 0 (or enough history to resolve the base ref).
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -115,7 +122,7 @@ runs:
       uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         enable-cache: true
-        python-version: "3.15"
+        python-version: "3.12"
 
     - name: Install AESA tooling
       shell: bash
@@ -186,6 +193,52 @@ runs:
           echo "No base-ref .aesa.yml; scan will proceed without a trusted policy file."
         fi
 
+    - name: Build base-ref Authority Diff baseline
+      id: auth_diff
+      if: >-
+        inputs.mode == 'scan' &&
+        inputs.authority-diff == 'true' &&
+        github.event_name == 'pull_request' &&
+        inputs.baseline == ''
+      shell: bash
+      env:
+        AESA_PATH: ${{ inputs.path }}
+        AESA_BASE_REF: ${{ github.base_ref }}
+        AESA_NO_POLICY: ${{ inputs.no-policy }}
+        AESA_TRUSTED_POLICY: ${{ steps.trusted_policy.outputs.path }}
+      run: |
+        set -euo pipefail
+        echo "path=" >> "$GITHUB_OUTPUT"
+        base="origin/${AESA_BASE_REF}"
+        if ! git rev-parse --verify "$base" >/dev/null 2>&1; then
+          if ! git fetch --no-tags origin "${AESA_BASE_REF}:refs/remotes/origin/${AESA_BASE_REF}" 2>/dev/null; then
+            echo "Could not resolve base ref ${AESA_BASE_REF}; skipping Authority Diff baseline."
+            exit 0
+          fi
+          base="origin/${AESA_BASE_REF}"
+        fi
+        work="${RUNNER_TEMP}/aesa-base-worktree"
+        out="${RUNNER_TEMP}/aesa-base-out"
+        baseline="${RUNNER_TEMP}/aesa-base-baseline.json"
+        rm -rf "$work" "$out"
+        git worktree add --detach "$work" "$base"
+        # Scan the same relative path under the base worktree when possible.
+        target="$work"
+        rel="${AESA_PATH#./}"
+        if [[ "$rel" != "." && -d "$work/$rel" ]]; then
+          target="$work/$rel"
+        fi
+        base_args=(scan "$target" -o "$out" --save-baseline "$baseline" --fail-on never)
+        if [[ "${AESA_NO_POLICY}" == "true" ]]; then
+          base_args+=(--no-policy)
+        elif [[ -n "${AESA_TRUSTED_POLICY:-}" ]]; then
+          base_args+=(--policy "$AESA_TRUSTED_POLICY")
+        fi
+        aesa "${base_args[@]}"
+        echo "Base-ref baseline written: $baseline"
+        echo "path=${baseline}" >> "$GITHUB_OUTPUT"
+        git worktree remove --force "$work" || true
+
     - name: Run AESA Guard scan (passive)
       if: inputs.mode == 'scan'
       shell: bash
@@ -193,6 +246,7 @@ runs:
         AESA_PATH: ${{ inputs.path }}
         AESA_OUTPUT_DIR: ${{ inputs.output-dir }}
         AESA_BASELINE: ${{ inputs.baseline }}
+        AESA_AUTH_DIFF_BASELINE: ${{ steps.auth_diff.outputs.path }}
         AESA_FAIL_ON: ${{ inputs.fail-on }}
         AESA_POLICY: ${{ inputs.policy }}
         AESA_NO_POLICY: ${{ inputs.no-policy }}
@@ -214,8 +268,13 @@ runs:
         if [[ -n "${AESA_FAIL_ON}" ]]; then
           args+=(--fail-on "$AESA_FAIL_ON")
         fi
-        if [[ -n "${AESA_BASELINE}" ]]; then
-          args+=(--baseline "$AESA_BASELINE")
+        baseline="${AESA_BASELINE}"
+        if [[ -z "$baseline" && -n "${AESA_AUTH_DIFF_BASELINE:-}" ]]; then
+          baseline="${AESA_AUTH_DIFF_BASELINE}"
+          echo "Using Authority Diff base-ref baseline: $baseline"
+        fi
+        if [[ -n "$baseline" ]]; then
+          args+=(--baseline "$baseline")
         fi
         aesa "${args[@]}"
 

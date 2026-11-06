@@ -76,7 +76,12 @@ def _write_or_print(data: object, output: Path | None) -> int:
 
 
 def dispatch(args: argparse.Namespace) -> int:
-    command = args.command
+    # Normalize product-path aliases (open/fix/init) to canonical commands.
+    command = {
+        "open": "vet",
+        "fix": "harden",
+        "init": "init-gate",
+    }.get(args.command, args.command)
 
     match command:
         case "scan":
@@ -129,6 +134,16 @@ def dispatch(args: argparse.Namespace) -> int:
             return _cmd_deps(args)
         case "lint":
             return _cmd_lint(args)
+        case "run":
+            return _cmd_run(args)
+        case "snapshot":
+            return _cmd_snapshot(args)
+        case "artifact-vet":
+            return _cmd_artifact_vet(args)
+        case "atlas":
+            return _cmd_atlas(args)
+        case "lsp-validate":
+            return _cmd_lsp_validate(args)
         case _:
             return 2
 
@@ -658,7 +673,7 @@ def _cmd_deps(args: argparse.Namespace) -> int:
             print_json(report)
             return 1 if report.get("outdated_count") or report.get("errors") else 0
         case "upgrade":
-            result = upgrade_pins(dry_run=args.dry_run, requires_python=">=3.15")
+            result = upgrade_pins(dry_run=args.dry_run, requires_python=">=3.12")
             print_json(result)
             return 0 if result.get("ok") else 1
         case _:
@@ -672,3 +687,76 @@ def _cmd_lint(args: argparse.Namespace) -> int:
         check_format=args.check_format and not args.format_code,
     )
     return 0 if summary.get("ok") else 1
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    from aesa.broker import run_brokered
+
+    cmd = list(args.command or [])
+    if cmd and cmd[0] == "--":
+        cmd = cmd[1:]
+    if not cmd:
+        print("usage: authdiff run [--lock AUTHORITY.lock] -- <command…>")
+        return 2
+    return run_brokered(cmd, lock_path=args.lock)
+
+
+def _cmd_snapshot(args: argparse.Namespace) -> int:
+    from aesa.jsonio import print_json, write_json
+    from aesa.mcp_snapshot import snapshot_execute, snapshot_from_file
+
+    if args.from_file:
+        doc = snapshot_from_file(args.from_file)
+    elif args.execute is not None:
+        cmd = list(args.execute or [])
+        if cmd and cmd[0] == "--":
+            cmd = cmd[1:]
+        if not cmd:
+            print("usage: authdiff snapshot --execute -- <command…>")
+            return 2
+        doc = snapshot_execute(cmd, allow_network=bool(args.allow_network))
+    else:
+        print("usage: authdiff snapshot --from-file tools.json | --execute -- <cmd>")
+        return 2
+    if args.output:
+        write_json(args.output, doc)
+        print(f"Wrote {args.output}")
+    else:
+        print_json(doc)
+    return 0 if doc.get("ok", True) else 1
+
+
+def _cmd_artifact_vet(args: argparse.Namespace) -> int:
+    from aesa.artifact_vet import run_artifact_vet, write_artifact_report
+    from aesa.jsonio import print_json
+
+    report = run_artifact_vet(args.spec)
+    if args.output:
+        write_artifact_report(report, args.output)
+        print(f"Wrote {args.output}")
+    print_json(report.to_dict())
+    return 0 if report.verdict == "ALLOW_WITH_GAPS" else 1
+
+
+def _cmd_atlas(args: argparse.Namespace) -> int:
+    from aesa.atlas.crawl import run_crawl
+    from aesa.jsonio import print_json
+
+    if args.atlas_cmd != "crawl":
+        return 2
+    summary = run_crawl(
+        seed_file=args.seed,
+        demo_seed=bool(args.demo_seed) or args.seed is None,
+        out_dir=args.output_dir,
+    )
+    print_json(summary)
+    return 0 if summary.get("scanned_ok") else 1
+
+
+def _cmd_lsp_validate(args: argparse.Namespace) -> int:
+    from aesa.jsonio import print_json
+    from aesa.lsp_stub import validate_authority_doc
+
+    diags = validate_authority_doc(args.path)
+    print_json({"path": str(args.path), "diagnostics": diags})
+    return 1 if any(d.get("severity") == "error" for d in diags) else 0

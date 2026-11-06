@@ -6,10 +6,10 @@
   "expect": {
     "rule_fired": true,
     "finding_class": "SECURITY_FINDING",
-    "severity": "CRITICAL",
+    "severity": "HIGH",
     "confidence": "POTENTIAL"
   },
   "notes": [
-    "Env inheritance escalates to CRITICAL"
+    "Credential-shaped env inheritance escalates to HIGH (literal secrets are RULE-012 CRITICAL)"
   ]
 }

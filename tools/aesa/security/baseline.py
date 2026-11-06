@@ -49,7 +49,7 @@ def save_baseline(scan: ScanResult, path: Path) -> dict[str, Any]:
     doc = {
         "baseline_version": BASELINE_VERSION,
         "saved_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "product": "AESA Guard",
+        "product": "authdiff",
         "product_version": scan.product_version,
         "repository": scan.repository_path,
         "audited_commit": scan.commit,

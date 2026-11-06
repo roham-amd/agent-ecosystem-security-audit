@@ -65,9 +65,9 @@ def check_requires_python() -> None:
     if not match:
         raise SystemExit("tools/pyproject.toml missing requires-python")
     required = match.group(1).strip()
-    if required != ">=3.15":
+    if required != ">=3.12":
         raise SystemExit(
-            f"tools/pyproject.toml requires-python must be '>=3.15' (found {required!r})"
+            f"tools/pyproject.toml requires-python must be '>=3.12' (found {required!r})"
         )
 
 
@@ -161,6 +161,7 @@ _SKIP_MD_PARTS = frozenset(
         "site-packages",
         ".git",
         "aesa-independent-assessment",
+        "archive",  # historical methodology; links may be relative to old roots
     }
 )
 

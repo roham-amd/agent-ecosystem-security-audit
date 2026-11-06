@@ -96,22 +96,32 @@ def rule_skill_bundled_scripts(
     ):
         return
     # Capability observation unless stronger host/credential evidence exists.
+    # HIGH requires literal bundled scripts *and* credential handling with
+    # executable evidence — bag-of-words alone must not escalate.
     finding_class: FindingClass = "CAPABILITY"
     severity: Severity = "INFORMATIONAL"
-    if "bundled_scripts_directory" in hints and "secrets_or_credential_handling" in hints:
+    strength: EvidenceStrength = "INFERRED_HINT"
+    if (
+        "bundled_scripts_directory" in hints
+        and "secrets_or_credential_handling" in hints
+        and "executable_evidence" in hints
+    ):
         finding_class = "SECURITY_FINDING"
         severity = "HIGH"
+        strength = "INFERRED_HINT"  # still inferred: scripts + wording, not a proven exfil path
     elif "bundled_scripts_directory" in hints:
         finding_class = "EXPOSURE"
         severity = "MEDIUM"
+        strength = "LITERAL_CONFIG"
 
+    needle = "scripts/" if "bundled_scripts_directory" in hints else "```"
     ev = build_rule_evidence(
         evidences,
         component=component,
         summary="Skill references or bundles executable script content.",
         ctx=ctx,
         status="OBSERVED",
-        needle="script",
+        needle=needle,
     )
     _add_finding(
         findings,
@@ -140,9 +150,7 @@ def rule_skill_bundled_scripts(
             "environment variables and whether execution requires independent approval."
         ),
         finding_class=finding_class,
-        evidence_strength="LITERAL_CONFIG"
-        if "bundled_scripts_directory" in hints
-        else "INFERRED_HINT",
+        evidence_strength=strength,
         verify_in_60s="ls the skill directory; confirm whether scripts/ is present and executed.",
     )
 
@@ -161,35 +169,49 @@ def rule_mcp_local_command(
 
     inherits_env = "inherits_or_sets_environment" in hints
     broad_args = "broad_or_relative_path_args" in hints
+    sets_env_only = "sets_environment" in hints and not inherits_env
 
     # Local process alone = capability. Escalate only with exposure conditions.
+    # Mere presence of an `env` block (LOG_LEVEL, NODE_ENV, …) stays INFORMATIONAL.
     if inherits_env:
         finding_class: FindingClass = "SECURITY_FINDING"
-        severity: Severity = "CRITICAL"
+        severity: Severity = "HIGH"
         confidence: VerificationStatus = "POTENTIAL"
         title = "MCP local command may inherit host credentials"
         exposure = "HOST_ENV_INHERITANCE"
+        strength: EvidenceStrength = "INFERRED_HINT"
     elif broad_args:
         finding_class = "SECURITY_FINDING"
         severity = "HIGH"
-        confidence = "POTENTIAL"
+        confidence = "OBSERVED"
         title = "MCP local command with broad filesystem arguments"
         exposure = "BROAD_PATH_ARGS"
+        strength = "LITERAL_CONFIG"
     else:
         finding_class = "CAPABILITY"
         severity = "INFORMATIONAL"
         confidence = "OBSERVED"
         title = "MCP server launched via local command"
         exposure = "REPO_CONFIG"
+        strength = "LITERAL_CONFIG"
+        if sets_env_only:
+            title = "MCP local command sets non-secret environment"
 
     command = str(component.get("command") or "")
+    needle = command or None
+    if broad_args and isinstance(component.get("args"), list):
+        for arg in component.get("args") or []:
+            arg_s = str(arg)
+            if arg_s in {"/", "~"} or arg_s.startswith("~/") or ".." in arg_s:
+                needle = arg_s
+                break
     ev = build_rule_evidence(
         evidences,
         component=component,
         summary=f"MCP registration launches local command `{command}`.",
         ctx=ctx,
         status="OBSERVED",
-        needle=command or None,
+        needle=needle,
     )
     caps = ["execute_commands", "invoke_tools"]
     if inherits_env:
@@ -207,8 +229,8 @@ def rule_mcp_local_command(
             f"MCP server `{component.get('name')}` is registered with a local command "
             "transport. "
             + (
-                "Environment inheritance or broad path arguments elevate this beyond a "
-                "simple capability observation."
+                "Credential-shaped environment inheritance or broad path arguments "
+                "elevate this beyond a simple capability observation."
                 if inherits_env or broad_args
                 else "Presence of a local process is a capability observation, not proof of abuse."
             )
@@ -234,7 +256,7 @@ def rule_mcp_local_command(
         ),
         finding_class=finding_class,
         exposure=exposure,
-        evidence_strength="LITERAL_CONFIG",
+        evidence_strength=strength,
         verify_in_60s=f"Open the MCP config and inspect command=`{command}` plus env/args.",
         fix_snippet="Pin the MCP binary/package; drop broad path args; avoid inheriting secrets.",
     )
@@ -395,24 +417,37 @@ def rule_skill_secrets_handling(
     hints = set(component.get("priority_hints") or [])
     if "secrets_or_credential_handling" not in hints and "identity_or_auth_workflow" not in hints:
         return
-    # Credential-handling instructions need context; treat as potential finding.
+    # Bag-of-words alone is inventory. Gate only with executable evidence.
+    has_exec = "executable_evidence" in hints
+    if has_exec:
+        finding_class: FindingClass = "SECURITY_FINDING"
+        severity: Severity = "MEDIUM"
+        strength: EvidenceStrength = "INFERRED_HINT"
+    else:
+        finding_class = "CAPABILITY"
+        severity = "LOW"
+        strength = "INFERRED_HINT"
     ev = build_rule_evidence(
         evidences,
         component=component,
         summary="Skill text references secrets, credentials, or identity workflows.",
         ctx=ctx,
         status="OBSERVED",
-        needle="secret",
+        needle="api_key" if "secrets_or_credential_handling" in hints else "service_account",
     )
     _add_finding(
         findings,
         rule_id="AESA-RULE-006",
         title="Skill references secrets or identity workflows",
-        severity="MEDIUM",
+        severity=severity,
         confidence="POTENTIAL",
         description=(
             f"Skill `{component.get('name')}` discusses secrets or authentication workflows. "
-            "Confirm whether it can access live credentials and under which identity."
+            + (
+                "Executable evidence nearby elevates this beyond wording-only inventory."
+                if has_exec
+                else "Wording alone is inventory; confirm live credential access before gating."
+            )
         ),
         component=component,
         evidence=ev,
@@ -423,7 +458,8 @@ def rule_skill_secrets_handling(
         impact="Potential credential disclosure or misuse",
         missing_controls=["Secret redaction", "Separate credential broker with least privilege"],
         recommended_action="Ensure skills cannot print or forward live secrets; prefer brokers.",
-        finding_class="SECURITY_FINDING",
+        finding_class=finding_class,
+        evidence_strength=strength,
     )
 
 
@@ -658,7 +694,14 @@ def rule_permission_bypass_flag(
     if "permission_bypass_flag" not in set(component.get("priority_hints") or []):
         return
     ctype = str(component.get("type") or "")
-    if ctype not in {"Skill", "Hook", "MCP Server Registration", "CI Workflow", "Automation"}:
+    if ctype not in {
+        "Skill",
+        "Hook",
+        "MCP Server Registration",
+        "CI Workflow",
+        "Automation",
+        "Host Settings",
+    }:
         return
     ev = build_rule_evidence(
         evidences,
@@ -888,7 +931,7 @@ def rule_download_and_execute(
     ctx: EvidenceContext,
 ) -> None:
     ctype = str(component.get("type") or "")
-    if ctype not in {"Skill", "Hook"}:
+    if ctype not in {"Skill", "Hook", "MCP Server Registration", "Host Settings"}:
         return
     if "download_and_execute" not in set(component.get("priority_hints") or []):
         return
@@ -924,6 +967,98 @@ def rule_download_and_execute(
         evidence_strength="LITERAL_CONFIG",
         verify_in_60s="Search the file for `curl .*|` / `wget .*|` / `iwr .*| iex`.",
         fix_snippet="Replace with a pinned local script checked into the repo.",
+    )
+
+
+def rule_project_mcp_auto_approve(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "Host Settings":
+        return
+    if "project_mcp_auto_approve" not in set(component.get("priority_hints") or []):
+        return
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary="Host settings enable auto-approval of all project MCP servers.",
+        ctx=ctx,
+        status="OBSERVED",
+        needle="enableAllProjectMcpServers",
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-018",
+        title="Project MCP servers auto-approved",
+        severity="HIGH",
+        confidence="OBSERVED",
+        description=(
+            f"`{component.get('name')}` sets `enableAllProjectMcpServers`, so every MCP "
+            "server declared in the project's `.mcp.json` runs without a trust prompt."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["invoke_tools", "execute_commands", "modify_approvals"],
+        attacker_control="Anyone who can commit project MCP config",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Repo-controlled MCP registration → auto-approved tools",
+        impact="Unreviewed MCP servers gain tool authority on project open",
+        missing_controls=["Per-server trust prompt", "CODEOWNERS on .mcp.json / settings"],
+        recommended_action="Set enableAllProjectMcpServers to false; approve servers individually.",
+        finding_class="SECURITY_FINDING",
+        exposure="MCP_AUTO_APPROVE",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s="Open .claude/settings.json and check enableAllProjectMcpServers.",
+        fix_snippet='"enableAllProjectMcpServers": false',
+    )
+
+
+def rule_base_url_or_proxy_override(
+    component: dict[str, Any],
+    evidences: list[Evidence],
+    findings: list[Finding],
+    ctx: EvidenceContext,
+) -> None:
+    if component.get("type") != "Host Settings":
+        return
+    if "base_url_or_proxy_override" not in set(component.get("priority_hints") or []):
+        return
+    detail = component.get("settings_detail") or {}
+    key = str(detail.get("override_key") or "ANTHROPIC_BASE_URL")
+    ev = build_rule_evidence(
+        evidences,
+        component=component,
+        summary=f"Host settings override model/API routing via `{key}`.",
+        ctx=ctx,
+        status="OBSERVED",
+        needle=key,
+    )
+    _add_finding(
+        findings,
+        rule_id="AESA-RULE-019",
+        title="Base-URL or proxy override in project settings",
+        severity="HIGH",
+        confidence="OBSERVED",
+        description=(
+            f"`{component.get('name')}` sets `{key}` in project env. That can redirect "
+            "model traffic (and prompts/secrets in-flight) to an attacker-controlled endpoint."
+        ),
+        component=component,
+        evidence=ev,
+        capabilities=["access_network", "access_secrets", "modify_agent_instructions"],
+        attacker_control="Anyone who can edit project settings / env",
+        entry_point=str(component.get("repository_path") or ""),
+        trust_boundary="Repo-controlled env → model provider routing",
+        impact="Prompt and credential interception via rogue API base URL or proxy",
+        missing_controls=["Disallow project base-URL overrides", "Pin provider endpoints"],
+        recommended_action=f"Remove `{key}` from project settings; keep provider URL host-controlled.",
+        finding_class="SECURITY_FINDING",
+        exposure="BASE_URL_OVERRIDE",
+        evidence_strength="LITERAL_CONFIG",
+        verify_in_60s=f"grep {key} in .claude/settings.json / project env.",
+        fix_snippet=f"Delete the `{key}` entry from project env.",
     )
 
 
@@ -1015,6 +1150,8 @@ RULES: list[RuleSpec] = [
         "1.0",
         rule_permission_bypass_flag,
     ),
+    RuleSpec("AESA-RULE-018", "Project MCP auto-approve", "1.0", rule_project_mcp_auto_approve),
+    RuleSpec("AESA-RULE-019", "Base-URL or proxy override", "1.0", rule_base_url_or_proxy_override),
 ]
 
 

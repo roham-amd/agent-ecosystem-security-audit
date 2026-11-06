@@ -1,6 +1,6 @@
-# Using AESA Guard
+# Using authdiff
 
-AESA Guard is an **Authority Diff** for AI-agent ecosystems: host and repo
+`authdiff` (compat: `aesa`) is an **Authority Diff** for AI-agent ecosystems: host and repo
 discovery, deterministic security rules, CI gating with tamper-resistant policy,
 and an optional AI auditor skill.
 
@@ -25,7 +25,7 @@ human-authorized reviewer.
 
 ## 1. Choose your scope
 
-Fill audit inputs in Section 2 of [`../prompts/01-core-prompt.md`](../prompts/01-core-prompt.md). At minimum:
+Fill audit inputs in Section 2 of [`../archive/methodology/prompts/01-core-prompt.md`](../archive/methodology/prompts/01-core-prompt.md). At minimum:
 
 | Input | Why it matters |
 | --- | --- |
@@ -90,14 +90,14 @@ uv run aesa audit /path/to/target --profile quick|standard|deployment
 
 ## 3. Load the procedure (kit layout)
 
-1. Operators: [`../prompts/00-OPERATOR-GUIDE.md`](../prompts/00-OPERATOR-GUIDE.md).
-2. Attach [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) + [`../prompts/01-core-prompt.md`](../prompts/01-core-prompt.md).
+1. Operators: [`../archive/methodology/prompts/00-OPERATOR-GUIDE.md`](../archive/methodology/prompts/00-OPERATOR-GUIDE.md).
+2. Attach [`../archive/methodology/prompts/04-passive-guardrails.md`](../archive/methodology/prompts/04-passive-guardrails.md) + [`../archive/methodology/prompts/01-core-prompt.md`](../archive/methodology/prompts/01-core-prompt.md).
 3. Set `KIT_DIR` / `WORK_DIR`.
-4. Before deep audit, attach [`../prompts/02-modules.md`](../prompts/02-modules.md) and only matching [`../modules/`](../modules/) (see [`../modules/README.md`](../modules/README.md)).
-5. JSON contract: [`../prompts/03-report-contract.md`](../prompts/03-report-contract.md).
+4. Before deep audit, attach [`../archive/methodology/prompts/02-modules.md`](../archive/methodology/prompts/02-modules.md) and only matching [`../archive/methodology/modules/`](../archive/methodology/modules/) (see [`../archive/methodology/modules/README.md`](../archive/methodology/modules/README.md)).
+5. JSON contract: [`../archive/methodology/prompts/03-report-contract.md`](../archive/methodology/prompts/03-report-contract.md).
 6. Emit structured claims; validate with `aesa validate claim` ([`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md)).
 
-Monolith: [`../prompts/audit.full.md`](../prompts/audit.full.md). Index: [`../prompts/audit.md`](../prompts/audit.md).
+Monolith: [`../archive/methodology/prompts/audit.full.md`](../archive/methodology/prompts/audit.full.md). Index: [`../archive/methodology/prompts/audit.md`](../archive/methodology/prompts/audit.md).
 
 ### Module map (quick)
 

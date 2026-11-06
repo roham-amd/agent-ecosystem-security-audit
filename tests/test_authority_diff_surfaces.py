@@ -29,6 +29,7 @@ def test_pr_comment_is_compact_and_decision_led(tmp_path: Path):
     assert compute_decision(scan.findings, coverage=scan.coverage) in {
         "BLOCK",
         "REVIEW",
+        "NO-GATED-FINDINGS",
         "PASS-WITH-COVERAGE-GAPS",
     }
 
@@ -38,7 +39,12 @@ def test_agent_digest_fences_titles(tmp_path: Path):
     assert demo.is_dir()
     scan, _payload, _code = run_scan(demo, output_dir=tmp_path / "out")
     digest = render_agent_digest(scan.to_findings_doc())
-    assert digest["decision"] in {"BLOCK", "REVIEW", "PASS-WITH-COVERAGE-GAPS"}
+    assert digest["decision"] in {
+        "BLOCK",
+        "REVIEW",
+        "NO-GATED-FINDINGS",
+        "PASS-WITH-COVERAGE-GAPS",
+    }
     assert digest["safety"]["evidence_fenced"] is True
     if digest["gated_findings"]:
         assert "<untrusted_evidence>" in digest["gated_findings"][0]["title"]

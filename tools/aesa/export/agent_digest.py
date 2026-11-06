@@ -33,7 +33,7 @@ def render_agent_digest(
     if risk_delta:
         summary = risk_delta.get("summary") if "summary" in risk_delta else risk_delta
     decision = compute_decision(findings, coverage=coverage, risk_delta=summary)
-    sentences = decision_sentences(decision, findings, risk_delta=summary)
+    sentences = decision_sentences(decision, findings, risk_delta=summary, coverage=coverage)
 
     gated = [f for f in findings if is_gate_finding(f)]
     compact: list[dict[str, Any]] = []
@@ -73,7 +73,7 @@ def render_agent_digest(
 
     digest = {
         "format": "aesa.agent_digest.v1",
-        "product": findings_doc.get("product") or "AESA Guard",
+        "product": findings_doc.get("product") or "authdiff",
         "decision": decision,
         "lead": sentences,
         "coverage": coverage_score_line(coverage),

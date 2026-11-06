@@ -109,7 +109,44 @@ ADAPTER_COVERAGE: list[dict[str, str | None]] = [
 ]
 
 
-def summarize_coverage(components: list[dict[str, Any]]) -> dict[str, Any]:
+_AGENT_CONFIG_MARKERS = (
+    "mcp.json",
+    ".mcp.json",
+    "mcp_config",
+    ".claude/",
+    ".cursor/",
+    ".vscode/mcp",
+    "hooks.json",
+    "settings.json",
+    "skill.md",
+)
+
+
+def count_unparsed_agent_configs(events: list[Any] | None) -> int:
+    count = 0
+    for event in events or []:
+        if not isinstance(event, dict):
+            continue
+        etype = str(event.get("type") or "")
+        path = str(event.get("path") or "").replace("\\", "/").lower()
+        if etype == "unparsed_agent_config":
+            count += 1
+            continue
+        if etype in {
+            "parse_error",
+            "parse_skipped_size",
+            "skipped_oversize",
+            "file_too_large",
+        } and any(marker in path for marker in _AGENT_CONFIG_MARKERS):
+            count += 1
+    return count
+
+
+def summarize_coverage(
+    components: list[dict[str, Any]],
+    *,
+    parser_events: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     by_maturity: dict[str, int] = {
         "SUPPORTED": 0,
         "PARTIAL": 0,
@@ -139,12 +176,15 @@ def summarize_coverage(components: list[dict[str, Any]]) -> dict[str, Any]:
                 }
             )
 
+    unparsed = count_unparsed_agent_configs(parser_events)
     return {
         "adapter_matrix": ADAPTER_COVERAGE,
         "component_counts_by_type": by_type,
         "component_counts_by_maturity": by_maturity,
         "deterministically_discovered": by_maturity.get("SUPPORTED", 0)
         + by_maturity.get("PARTIAL", 0),
+        "unparsed_agent_config_count": unparsed,
+        "parser_events": list(parser_events or [])[:50],
         "manual_review_families": [
             row["family"]
             for row in ADAPTER_COVERAGE

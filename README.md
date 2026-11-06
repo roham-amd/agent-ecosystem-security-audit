@@ -1,4 +1,4 @@
-# AESA Guard
+# authdiff
 
 **Authority Diff for AI agents**
 
@@ -7,13 +7,15 @@ delegate — on your machine, before you install a package, and on every PR.
 
 > Trust Nothing. Verify Everything. Secure Every Agent.
 
-AESA Guard is a local-first scanner and CI gate. It inventories authority
-surfaces (skills, MCP, hooks, plugins, subagents, CI, host configs), applies
-deterministic rules, and emits evidence-backed findings. An AI agent is an
-optional explainer — never the source of truth.
+`authdiff` (product line formerly branded AESA Guard) is a local-first scanner
+and CI gate. It inventories authority surfaces (skills, MCP, hooks, plugins,
+subagents, CI, host configs), applies deterministic rules, and emits
+evidence-backed findings. An AI agent is an optional explainer — never the
+source of truth.
 
 It is **not** a certification, marketplace badge, runtime sandbox, or substitute
-for organizational risk acceptance.
+for organizational risk acceptance. The `aesa` CLI name remains a compatibility
+alias.
 
 ---
 
@@ -31,43 +33,38 @@ long report.
 ## First useful minute
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools
+# Requires Python ≥3.12 (uv will fetch a managed interpreter if needed)
+uv tool install --python 3.12 \
+  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.0#subdirectory=tools"
 
-# What authority does *this machine* already grant agents?
-aesa doctor
-
-# Should I install this skill / MCP package?
-aesa vet github.com/org/some-skill
-
-# Gate this repo
-aesa init-gate
-aesa scan .
-aesa harden --findings aesa-out/findings.json   # dry-run patches
+authdiff doctor
+authdiff open github.com/org/some-skill
+authdiff init
+authdiff scan .
+authdiff fix --findings aesa-out/findings.json   # dry-run patches
 ```
 
-Artifacts default to **`./aesa-out`** in the current working directory (outside
-the target tree). Use `--agent` on `scan` / `vet` / `explain` for a compact
-fenced JSON digest.
+Artifacts default to **`./aesa-out`**. Use `--agent` on `scan` / `open` /
+`explain` for a compact fenced JSON digest.
 
 | Command | Purpose |
 | --- | --- |
-| `aesa doctor` | Host authority map (Cursor / Claude Code / VS Code) |
-| `aesa vet <url\|path>` | Pre-install verdict (safe shallow clone; no hooks/submodules) |
-| `aesa scan <path>` | Repo scan → findings, SARIF, coverage, risk delta, `pr-comment.md` |
-| `aesa harden` | Dry-run least-privilege patch templates |
-| `aesa init-gate` | Write `.aesa.yml` + starter workflow |
-| `aesa init-manifest` / `verify-manifest` | Declared vs observed `AUTHORITY.yml` |
-| `aesa explain F-001` | Explain one finding from a prior scan |
+| `authdiff doctor` | Host authority map (Cursor / Claude Code / VS Code) |
+| `authdiff open` / `vet` | Pre-install verdict (safe shallow clone) |
+| `authdiff scan` | Repo scan → findings, SARIF, coverage, risk delta, `pr-comment.md` |
+| `authdiff fix` / `harden` | Dry-run least-privilege patch templates |
+| `authdiff init` / `init-gate` | Write advisory `.aesa.yml` + starter workflow |
+| `authdiff explain F-001` | Explain one finding from a prior scan |
+| `authdiff run -- …` | Authority broker MVP (env scrub + description-hash pin) |
+| `authdiff snapshot` | Sandboxed MCP `tools/list` snapshot (opt-in network) |
 
 Docs: [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md) ·
 [`docs/GUARD-SCAN.md`](docs/GUARD-SCAN.md) ·
-[`docs/POLICY.md`](docs/POLICY.md) ·
-[`docs/SECURITY-RULES.md`](docs/SECURITY-RULES.md) ·
-[`docs/atlas/README.md`](docs/atlas/README.md) ·
+[`docs/GUARD-3.6-BACKLOG.md`](docs/GUARD-3.6-BACKLOG.md) ·
 demo [`examples/demo-vulnerable/`](examples/demo-vulnerable/)
 
-Optional deep methodology kit: [`kit/README.md`](kit/README.md)
-(`prompts/`, `modules/`, `control-packs/` — not the product path).
+Archived methodology kit: [`archive/methodology/`](archive/methodology/)
+(prompts, modules, control-packs — not the product path).
 
 ---
 
@@ -81,65 +78,42 @@ Optional deep methodology kit: [`kit/README.md`](kit/README.md)
   with:
     repository: roham-amd/agent-ecosystem-security-audit
     path: .aesa-kit
-    ref: v3.5.1   # pin tag or SHA — never float on main
+    ref: v3.6.0   # pin tag or SHA — never float on main
 - uses: ./.aesa-kit/.github/actions/aesa-gate
   with:
     path: .
-    fail-on: high
-    trusted-policy: "true"          # load .aesa.yml from the PR base ref
+    trusted-policy: "true"
+    authority-diff: "true"
     install-tools-from: .aesa-kit/tools
 ```
 
-With `trusted-policy=true`, the Action loads policy from the **base ref** and
-fails if the PR edits `.aesa.yml`. The gate also writes an Authority Diff
-comment into the job summary (and via `gh` when available).
-
-Full example: [`docs/aesa-consumer-gate.example.yml`](docs/aesa-consumer-gate.example.yml).
+With `authority-diff=true`, the Action scans the PR **base** ref and diffs it
+against **head**. With `trusted-policy=true`, policy loads from the base ref.
 
 ---
 
-## What AESA evaluates
+## What authdiff evaluates
 
 Skills, MCP servers, hooks, plugins, subagents, rules, automations, CI
-workflows, and host agent configuration. Finding classes: only
-`SECURITY_FINDING` and `EXPOSURE` can fail CI. `CAPABILITY` is inventory.
-Rules carry `evidence_strength` (`LITERAL_CONFIG` / `INFERRED_HINT` /
-`NAME_MARKER`). Decisions are `BLOCK` / `REVIEW` /
-`PASS-WITH-COVERAGE-GAPS` — never a numeric trust score.
-
-A clean result on a mostly-PARTIAL repo is a **coverage gap**, not safety.
+workflows, and host agent configuration (including Claude Code settings).
+Finding classes: only `SECURITY_FINDING` and `EXPOSURE` can fail CI.
+`CAPABILITY` is inventory. Decisions are `BLOCK` / `REVIEW` /
+`NO-GATED-FINDINGS` — never a numeric trust score. Unparsed or oversize agent
+configs fail closed as `REVIEW`.
 
 ---
 
 ## Core principles
 
 - Prefer `NOT VERIFIED` over unsupported assurance.
-- Never execute, install, or contact target-controlled services during a passive audit.
+- Never execute, install, or contact target-controlled services during a passive audit
+  (except explicit opt-in commands: `snapshot`, `run`).
 - Never request or expose production secrets.
 - The AI auditor explains; it is never the evidence source of truth.
 - Policy that the PR author can edit is not a gate — use `trusted-policy`.
-- Target-derived strings in PR comments and agent digests are escaped/fenced.
 
 ---
 
-## Versioning
+## License
 
-| Kind | Current |
-| --- | --- |
-| Product | **3.5.1** (`VERSION`) |
-| Tooling (`aesa-tools`) | **0.8.1** |
-| Rule pack | **1.3** |
-
-Authoritative alignment: [`canonical/release-manifest.json`](canonical/release-manifest.json).
-
----
-
-## License / Contributing / Security
-
-MIT — [`LICENSE`](LICENSE) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md)
-
-```text
-AESA Guard — Authority Diff for AI agents
-Project: 3.5.1
-https://github.com/roham-amd/agent-ecosystem-security-audit
-```
+MIT — see [`LICENSE`](LICENSE).

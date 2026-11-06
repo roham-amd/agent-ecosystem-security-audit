@@ -10,7 +10,9 @@ real-world skills, MCP configs, and hook setups — then publish **per-rule prec
 | Item | Status |
 | --- | --- |
 | Schema for scan + label records | draft (`PRECISION.md`) |
-| Crawl of 300–1000 public repos | next |
+| Local benign + attack fixtures (`tests/atlas/`) | **seeded** (CI: `test_atlas_lite.py`) |
+| Crawl harness (`authdiff atlas crawl --demo-seed`) | **shipped** (ledger under `docs/atlas/ledger/`; target N≥300) |
+| Crawl of 300–1000 public repos | next (feed seed JSON) |
 | Blind label of ~100 findings | next |
 | Publish per-rule precision | next |
 | AgentSecBench intake vault / outreach funnel | **frozen** (keep schema; stop expanding governance) |

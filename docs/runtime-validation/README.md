@@ -4,7 +4,7 @@
 
 When organizational policy requires behavioral proof:
 
-1. Complete a separate written authorization (see `prompts/01-core-prompt.md` Phase 8).
+1. Complete a separate written authorization (see `archive/methodology/prompts/01-core-prompt.md` Phase 8).
 2. Use an isolated staging environment with synthetic data and default-deny egress.
 3. Record outcomes with [`schemas/runtime-test-record.schema.json`](../../schemas/runtime-test-record.schema.json).
 

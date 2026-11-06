@@ -1,18 +1,23 @@
-# Local AESA container — kit baked into the image; mount a target repo at /work.
+# Local authdiff container — kit baked into the image; mount a target repo at /work.
 #
 #   docker compose build
-#   TARGET=/path/to/repo docker compose run --rm aesa scan /work -o /tmp/aesa-out
-#   docker compose run --rm aesa doctor --home /work
+#   TARGET=/path/to/repo docker compose run --rm authdiff scan /work -o /tmp/authdiff-out
+#   docker compose run --rm authdiff doctor --home /work
 #
-# Prefer writing artifacts outside the mounted target (e.g. /tmp/aesa-out).
+# Prefer writing artifacts outside the mounted target (e.g. /tmp/authdiff-out).
 
 services:
-  aesa:
+  authdiff:
     build:
       context: .
       dockerfile: Dockerfile
-    image: aesa:local
+    image: authdiff:local
     working_dir: /work
     volumes:
       - ${TARGET:-.}:/work
     # Drop privileges already handled by USER in the Dockerfile.
+  # Compat alias
+  aesa:
+    extends:
+      service: authdiff
+    image: aesa:local

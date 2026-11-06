@@ -89,7 +89,7 @@ def findings_doc_to_sarif(
             {
                 "tool": {
                     "driver": {
-                        "name": "AESA Guard",
+                        "name": "authdiff",
                         "version": version,
                         "informationUri": (
                             "https://github.com/roham-amd/agent-ecosystem-security-audit"

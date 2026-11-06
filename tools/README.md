@@ -12,11 +12,11 @@ Package: `aesa-tools` **0.8.1** · Product: AESA Guard **3.5.1**
 
 ---
 
-## Stack (Python 3.15)
+## Stack (Python 3.12+)
 
 | Responsibility | Choice |
 | --- | --- |
-| Runtime | CPython 3.15 (`.python-version` = `3.15`; CI/Docker pin patch `3.15.2`) |
+| Runtime | CPython ≥3.12 (`.python-version` = `3.12`; CI/Docker pin `3.12.16`) |
 | Project / venv / lock | **uv** + `pyproject.toml` + `uv.lock` |
 | Dev deps | PEP 735 `[dependency-groups]` |
 | Lint / format | Ruff |
@@ -58,7 +58,7 @@ Primary path: **`doctor` / `vet` / `scan`**.
 `aesa audit --profile …` remains for agent handoff packages.
 `aesa annotate` emits PR annotations; `aesa pilots run` exercises curated targets.
 
-`.python-version` selects the **minor** interpreter (`3.15`). Patch pins belong in CI (`uv python install 3.15.2`) and the Docker base image.
+`.python-version` selects the **minor** interpreter (`3.12`). Patch pins belong in CI (`uv python install 3.12.16`) and the Docker base (`python:3.12.16-slim-trixie@sha256:…`).
 
 ### Dependency layout
 

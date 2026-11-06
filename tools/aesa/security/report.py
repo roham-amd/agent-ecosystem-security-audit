@@ -114,8 +114,8 @@ def render_terminal_report(
     decision = compute_decision(scan.findings, coverage=scan.coverage, risk_delta=risk_delta)
     lead = decision_sentences(decision, scan.findings, risk_delta=risk_delta)
     lines = [
-        "AESA Guard — Authority Diff for AI agents",
-        f"Product: AESA Guard {scan.product_version}  (tooling {scan.package_version})",
+        "authdiff — Authority Diff for AI agents",
+        f"Product: authdiff {scan.product_version}  (tooling {scan.package_version})",
         f"Repository: {scan.repository_path}",
         f"Commit: {scan.commit or 'unknown'}",
         "",
@@ -277,7 +277,7 @@ def render_finding_explanation(scan: ScanResult, finding: Finding) -> str:
             "## Verification requirements",
             "",
             "- Do not promote this to CONFIRMED / Verified impact without independent evidence.",
-            "- Optional: `aesa harden` for dry-run fix patches; deep kit under `kit/`.",
+            "- Optional: `authdiff fix` for dry-run patches; kit under `archive/methodology/`.",
             "",
         ]
     )
@@ -300,7 +300,7 @@ def render_markdown_summary(scan: ScanResult, *, terminal: str | None = None) ->
     summary = terminal if terminal is not None else render_terminal_report(scan)
     ordered = _ordered_findings(scan.findings)
     lines = [
-        "# AESA Guard — decision report",
+        "# authdiff — decision report",
         "",
         "Decision-oriented scan summary. Capability observations are not vulnerabilities.",
         "Absence of findings is not evidence of safety when coverage is incomplete.",

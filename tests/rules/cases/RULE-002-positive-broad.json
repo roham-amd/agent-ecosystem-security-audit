@@ -7,11 +7,11 @@
     "rule_fired": true,
     "finding_class": "SECURITY_FINDING",
     "severity": "HIGH",
-    "confidence": "POTENTIAL",
+    "confidence": "OBSERVED",
     "fail_on": "high",
     "fail_on_exit_code": 1
   },
   "notes": [
-    "Broad filesystem args escalate"
+    "Broad filesystem args (/, ~, ..) escalate with OBSERVED confidence"
   ]
 }

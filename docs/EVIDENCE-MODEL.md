@@ -2,7 +2,7 @@
 
 AESA Guard’s intellectual core is an **evidence-first** model. This document is normative for how deterministic tooling and AI auditors must treat facts.
 
-Related: [`SECURITY-RULES.md`](SECURITY-RULES.md), [`../prompts/03-report-contract.md`](../prompts/03-report-contract.md), [`../schemas/structured-claim.schema.json`](../schemas/structured-claim.schema.json).
+Related: [`SECURITY-RULES.md`](SECURITY-RULES.md), [`../archive/methodology/prompts/03-report-contract.md`](../archive/methodology/prompts/03-report-contract.md), [`../schemas/structured-claim.schema.json`](../schemas/structured-claim.schema.json).
 
 ---
 
@@ -222,4 +222,4 @@ Preserve rejected findings and reasons. Revalidate after changes. Prefer baselin
 | Developer | Exact file, what is wrong, how to fix, how to verify |
 | Security reviewer | Evidence, attack path, verified vs inferred, residual risk |
 
-Full narrative structure: [`../prompts/01-core-prompt.md`](../prompts/01-core-prompt.md) Section 21. JSON contract: [`../prompts/03-report-contract.md`](../prompts/03-report-contract.md).
+Full narrative structure: [`../archive/methodology/prompts/01-core-prompt.md`](../archive/methodology/prompts/01-core-prompt.md) Section 21. JSON contract: [`../archive/methodology/prompts/03-report-contract.md`](../archive/methodology/prompts/03-report-contract.md).

@@ -40,7 +40,7 @@ def write_scan_artifacts(
         output_dir / "profile.json",
         {
             "aesa_audit_profile": "scan",
-            "product": "AESA Guard",
+            "product": "authdiff",
             "product_version": scan.product_version,
             "package_version": scan.package_version,
             "purpose": "One-command discovery + deterministic security observations",

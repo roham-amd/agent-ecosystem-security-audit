@@ -1,4 +1,4 @@
-# AESA Guard scan — operator guide
+# authdiff scan — operator guide
 
 This document describes the Guard scan path current through **3.5.1**: deterministic
 discovery plus evidence-backed security observations via `aesa scan`, with explicit
@@ -179,9 +179,9 @@ Never `uv sync` a PR-controlled `tools/` directory as the scanner.
 ## Optional AI deep review after scan
 
 1. Attach [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md).
-2. Load [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md).
+2. Load [`../archive/methodology/prompts/04-passive-guardrails.md`](../archive/methodology/prompts/04-passive-guardrails.md).
 3. Point the agent at `aesa-out/findings.json` and `inventory.json`.
-4. Load only matching [`../modules/`](../modules/).
+4. Load only matching [`../archive/methodology/modules/`](../archive/methodology/modules/).
 5. Require structured claims → `aesa validate claim`.
 6. Produce narrative + audit-report JSON → `aesa validate report`.
 

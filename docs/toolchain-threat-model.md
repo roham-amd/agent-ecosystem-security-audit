@@ -1,6 +1,6 @@
 # AESA toolchain threat model (initial)
 
-Scope: **AESA deterministic tooling** (`tools/aesa/`) introduced in 2.0.0. Prompt-only guardrails remain in `prompts/04-passive-guardrails.md`.
+Scope: **AESA deterministic tooling** (`tools/aesa/`) introduced in 2.0.0. Prompt-only guardrails remain in `archive/methodology/prompts/04-passive-guardrails.md`.
 
 ## Assets
 

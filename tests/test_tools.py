@@ -32,7 +32,7 @@ def test_deps_outdated_report_structure(monkeypatch):
     monkeypatch.setattr(deps, "fetch_latest_version", fake_latest)
     report = deps.outdated_report()
     assert report["outdated_count"] == 0
-    assert report["requires_python_expected"] == ">=3.15"
+    assert report["requires_python_expected"] == ">=3.12"
     assert report["checked"] == len(pins)
     assert report["lock"] == "tools/uv.lock"
 

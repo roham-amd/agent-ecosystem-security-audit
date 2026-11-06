@@ -9,17 +9,29 @@ from aesa.inventory.limits import CollectorLimits
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
+# Bare "token" / "password" match design-token docs and PDF passwords — require
+# credential-shaped phrases instead.
 _SECRET_TOKEN_RE = re.compile(
-    r"\b(secrets?|api[_-]?key|apikey|password|token|credentials?|1password|op_service_account)\b",
+    r"\b("
+    r"secrets?|api[_-]?key|apikey|passwd|"
+    r"(?:api|access|auth|bearer|github|oauth|session|refresh)[_ -]?tokens?|"
+    r"credentials?|1password|op_service_account|"
+    r"(?:env|environment)[_ ](?:var(?:iable)?s?|secrets?)"
+    r")\b",
+    re.IGNORECASE,
+)
+_PASSWORD_CRED_RE = re.compile(
+    r"\b(password|passwd)\b(?![^\n]{0,40}\b(pdf|document|zip|archive|file)\b)",
     re.IGNORECASE,
 )
 _NEGATION_RE = re.compile(
-    r"\b(no|not|without|never|don't|do not|avoid|forbid(?:den)?)\b",
+    r"\b(no|not|without|never|don't|do not|avoid|forbid(?:den)?|remove|removing)\b",
     re.IGNORECASE,
 )
 _HIDDEN_UNICODE_RE = re.compile(r"[\u200b\u200c\u200d\u2060\ufeff\u202a-\u202e\u2066-\u2069]")
 _DOWNLOAD_EXEC_RE = re.compile(
-    r"(curl\s+[^\n|;]*\|\s*(?:ba)?sh|wget\s+[^\n|;]*\|\s*(?:ba)?sh|"
+    r"(curl\s+[^\n|;]*\|\s*(?:sudo\s+)?(?:ba)?sh|"
+    r"wget\s+[^\n|;]*\|\s*(?:sudo\s+)?(?:ba)?sh|"
     r"iwr\s+[^\n|;]*\|\s*iex|invoke-webrequest[^\n|;]*\|\s*iex)",
     re.IGNORECASE,
 )
@@ -40,14 +52,18 @@ _INSTRUCTION_ABUSE_MARKERS = (
     "fetch and execute",
     "download and run",
 )
+_HTML_COMMENT_RE = re.compile(r"<!--([\s\S]*?)-->")
+_EXECUTABLE_EVIDENCE = {
+    "bundled_scripts_directory",
+    "possible_code_execution_reference",
+    "download_and_execute",
+    "script_reference",
+}
 
 
 def _mentions_secret_handling(text: str) -> bool:
-    """True when secret-related tokens appear outside a short negation window.
-
-    Prevents false positives such as ``No credential handling``.
-    """
-    for match in _SECRET_TOKEN_RE.finditer(text):
+    """True when credential-shaped tokens appear outside a short negation window."""
+    for match in list(_SECRET_TOKEN_RE.finditer(text)) + list(_PASSWORD_CRED_RE.finditer(text)):
         start = max(0, match.start() - 48)
         window = text[start : match.start()]
         if _NEGATION_RE.search(window):
@@ -63,6 +79,16 @@ def _mentions_identity_workflow(text: str) -> bool:
             start_idx = text.find("op signin")
         window = text[max(0, start_idx - 48) : start_idx]
         return not bool(_NEGATION_RE.search(window))
+    return False
+
+
+def _html_comment_instruction_abuse(raw: str) -> bool:
+    for match in _HTML_COMMENT_RE.finditer(raw):
+        body = match.group(1).lower()
+        if any(marker in body for marker in _INSTRUCTION_ABUSE_MARKERS):
+            return True
+        if "ignore previous" in body or "system prompt" in body:
+            return True
     return False
 
 
@@ -114,6 +140,12 @@ def discover_skills(
             hints.append("permission_bypass_flag")
         if any(marker in lowered for marker in _INSTRUCTION_ABUSE_MARKERS):
             hints.append("instruction_abuse_content")
+        if _html_comment_instruction_abuse(raw):
+            hints.append("instruction_abuse_content")
+            hints.append("hidden_html_comment_instructions")
+        # Mark whether escalation to SECURITY_FINDING is justified.
+        if set(hints).intersection(_EXECUTABLE_EVIDENCE):
+            hints.append("executable_evidence")
 
         results.append(
             {

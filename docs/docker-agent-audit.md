@@ -10,7 +10,7 @@ This is the recommended path when you do not want a local Python/uv install, or 
 | [`CLI-REFERENCE.md`](CLI-REFERENCE.md) | Flags and exit codes |
 | [`AESA-3.0-PRODUCT-SPEC.md`](AESA-3.0-PRODUCT-SPEC.md) | Product contract |
 | [`DOCUMENTATION-INDEX.md`](DOCUMENTATION-INDEX.md) | Full docs map |
-| [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md) | Passive safety |
+| [`../archive/methodology/prompts/04-passive-guardrails.md`](../archive/methodology/prompts/04-passive-guardrails.md) | Passive safety |
 | [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) | Agent skill |
 
 ## Roles (do not collapse them)
@@ -119,13 +119,13 @@ Keep three trees distinct in the agent’s context:
 **Minimum attachments for the agent**
 
 1. [`../skills/aesa-auditor/SKILL.md`](../skills/aesa-auditor/SKILL.md) — or paste its workflow
-2. [`../prompts/04-passive-guardrails.md`](../prompts/04-passive-guardrails.md)
+2. [`../archive/methodology/prompts/04-passive-guardrails.md`](../archive/methodology/prompts/04-passive-guardrails.md)
 3. `aesa-out/scan-summary.txt`, `findings.json`, and `inventory.json` from the Docker run
 4. `aesa-out/profile.json`
-5. Only the matching files under [`../modules/`](../modules/) (see [`../modules/README.md`](../modules/README.md))
-6. Fill **Audit Inputs** in [`../prompts/01-core-prompt.md`](../prompts/01-core-prompt.md) (repo URL, commit, `KIT_DIR`, `WORK_DIR`, scope, host, data sensitivity)
+5. Only the matching files under [`../archive/methodology/modules/`](../archive/methodology/modules/) (see [`../archive/methodology/modules/README.md`](../archive/methodology/modules/README.md))
+6. Fill **Audit Inputs** in [`../archive/methodology/prompts/01-core-prompt.md`](../archive/methodology/prompts/01-core-prompt.md) (repo URL, commit, `KIT_DIR`, `WORK_DIR`, scope, host, data sensitivity)
 
-Optional: [`../prompts/03-report-contract.md`](../prompts/03-report-contract.md) when producing JSON; [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) for claim discipline.
+Optional: [`../archive/methodology/prompts/03-report-contract.md`](../archive/methodology/prompts/03-report-contract.md) when producing JSON; [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) for claim discipline.
 
 ### Starter prompt (paste into the agent)
 

@@ -19,7 +19,7 @@ def test_scan_emits_findings_and_sarif(tmp_path: Path):
     assert (out / "findings.json").is_file()
     assert (out / "findings.sarif.json").is_file()
     assert (out / "scan-summary.txt").is_file()
-    assert "AESA Guard" in payload["summary"]
+    assert "authdiff" in payload["summary"]
     assert "DECISION SUMMARY" in payload["summary"]
     assert "AUTHORITY SURFACES" in payload["summary"]
 

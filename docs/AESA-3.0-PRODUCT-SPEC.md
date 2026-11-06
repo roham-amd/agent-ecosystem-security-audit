@@ -197,7 +197,7 @@ agent-ecosystem-security-audit/
 
 ## 7. Profiles ↔ nine-stage methodology
 
-Procedure stages 0–8 remain under `prompts/`. Profiles select **how far** the orchestrator pushes the operator/agent:
+Procedure stages 0–8 remain under `archive/methodology/prompts/`. Profiles select **how far** the orchestrator pushes the operator/agent:
 
 | Stage | Quick | Standard | Deployment |
 | --- | --- | --- | --- |

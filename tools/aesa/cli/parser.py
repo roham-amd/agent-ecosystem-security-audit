@@ -1,17 +1,29 @@
-"""Argparse construction for the AESA Guard CLI."""
+"""Argparse construction for the authdiff CLI (`aesa` compatibility alias)."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
+_EPILOG = """
+product path:  doctor | open/vet | scan | fix/harden | init | explain | annotate
+opt-in:        run | snapshot | artifact-vet | atlas | lsp-validate
+maintainer:    build | lint | deps | corpus | benchmark | pilots | validate | …
+
+`aesa` is a compatibility alias for `authdiff`. Passive scans never execute target code;
+`run` / `snapshot --execute` are explicit opt-in and scrub env only (not a sandbox).
+"""
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="aesa",
+        prog="authdiff",
         description=(
-            "AESA Guard — discover what AI-agent ecosystems can access, execute, and trust"
+            "authdiff — git diff for what your AI agents can access, execute, and trust "
+            "(`aesa` remains a compatibility alias)"
         ),
+        epilog=_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -88,6 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
     vet = sub.add_parser(
         "vet",
         help="Pre-install verdict for a local path or GitHub URL (safe shallow clone)",
+        aliases=["open"],
     )
     vet.add_argument("source", help="Local path, Git URL, or owner/repo GitHub shorthand")
     vet.add_argument(
@@ -110,6 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
     harden = sub.add_parser(
         "harden",
         help="Propose least-privilege config patches from a prior findings.json (dry-run)",
+        aliases=["fix"],
     )
     harden.add_argument(
         "--findings",
@@ -149,6 +163,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_gate = sub.add_parser(
         "init-gate",
         help="Write a starter .aesa.yml and consumer workflow stub into a repo",
+        aliases=["init"],
     )
     init_gate.add_argument("path", type=Path, nargs="?", default=Path("."))
     init_gate.add_argument(
@@ -472,5 +487,87 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Fail if formatter would change files (CI mode)",
     )
+
+    run_cmd = sub.add_parser(
+        "run",
+        help="Authority broker MVP: scrub env and exec a command (after --)",
+    )
+    run_cmd.add_argument(
+        "--lock",
+        type=Path,
+        help="Optional AUTHORITY.lock / AUTHORITY.lock.json",
+    )
+    run_cmd.add_argument(
+        "command",
+        nargs=argparse.REMAINDER,
+        help="Command after -- , e.g. authdiff run -- npx -y server",
+    )
+
+    snap = sub.add_parser(
+        "snapshot",
+        help="MCP tools/list snapshot + description-hash pin",
+    )
+    snap.add_argument(
+        "--from-file",
+        type=Path,
+        help="Read a tools/list JSON payload from disk (no execute)",
+    )
+    snap.add_argument(
+        "--execute",
+        nargs=argparse.REMAINDER,
+        help="Opt-in: run command after -- expecting JSON tools/list on stdout",
+    )
+    snap.add_argument(
+        "--allow-network",
+        action="store_true",
+        help="Allow network in execute mode (still scrubbed env)",
+    )
+    snap.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Write snapshot JSON",
+    )
+
+    art = sub.add_parser(
+        "artifact-vet",
+        help="Vet an npm/PyPI artifact (registry metadata; no install)",
+    )
+    art.add_argument(
+        "spec",
+        help="npm:name[@ver] | pypi:name[==ver] | bare name (heuristic)",
+    )
+    art.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Write artifact report JSON",
+    )
+
+    atlas = sub.add_parser("atlas", help="Ecosystem Atlas crawl / ledger")
+    atlas_sub = atlas.add_subparsers(dest="atlas_cmd", required=True)
+    atlas_crawl = atlas_sub.add_parser("crawl", help="Scan seed repos into docs/atlas/ledger")
+    atlas_crawl.add_argument(
+        "--seed",
+        type=Path,
+        help="JSON seed file ({repos:[…]} or list)",
+    )
+    atlas_crawl.add_argument(
+        "--demo-seed",
+        action="store_true",
+        help="Include bundled demo/attack-replay seeds",
+    )
+    atlas_crawl.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Override ledger run directory",
+    )
+
+    lsp = sub.add_parser(
+        "lsp-validate",
+        help="Validate AUTHORITY.yml / AUTHORITY.lock.json (LSP stub)",
+    )
+    lsp.add_argument("path", type=Path)
 
     return parser

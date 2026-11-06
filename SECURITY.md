@@ -9,7 +9,7 @@
 | 1.x | Best-effort (security fixes only when practical) |
 | < 1.0.0 | No |
 
-The bundled audit procedure version (`prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
+The bundled audit procedure version (`archive/methodology/prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
 Tooling package version (`aesa-tools`, currently **0.8.1**) is tracked in
 `canonical/versions.json` as `build_tool` and must stay aligned with
@@ -17,7 +17,7 @@ Tooling package version (`aesa-tools`, currently **0.8.1**) is tracked in
 
 ## What this project is
 
-AESA Guard is an **Authority Diff** for AI-agent ecosystems: host doctor,
+`authdiff` (AESA Guard product line) is an **Authority Diff** for AI-agent ecosystems: host doctor,
 pre-install vet, deterministic repo scan (`aesa scan`), procedures, prompts,
 specialized modules, report schemas, validation helpers, baselines/CI gate with
 trusted policy, and an optional AI auditor skill.
@@ -54,7 +54,7 @@ Do **not** include production secrets, customer data, or live exploit payloads a
 
 ## Auditor safety expectations
 
-Operators and audit agents must treat target repositories as **untrusted data**. Passive audits must remain read-only: no install, no execute, no contact with target-controlled services. See `prompts/04-passive-guardrails.md` and `docs/toolchain-threat-model.md`.
+Operators and audit agents must treat target repositories as **untrusted data**. Passive audits must remain read-only: no install, no execute, no contact with target-controlled services. See `archive/methodology/prompts/04-passive-guardrails.md` and `docs/toolchain-threat-model.md`.
 
 Deterministic collectors apply resource limits (`max_files`, `max_depth`, `max_file_bytes`). Limits reduce abuse risk; they are not a full sandbox.
 
