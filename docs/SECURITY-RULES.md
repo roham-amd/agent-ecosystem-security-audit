@@ -1,10 +1,10 @@
-# AESA Guard deterministic security rules
+# authdiff deterministic security rules
 
-Rules live in `tools/aesa/security/rules.py` and are applied by `aesa scan`.
+Rules live in `tools/aesa/security/rules.py` and are applied by `authdiff scan`.
 
-**Version:** rule pack **1.4** (embedded in tooling **0.10.0** / product **3.7.0**). Nineteen rules (001–019).
+**Version:** rule pack **1.4** (embedded in tooling **0.11.0** / product **3.8.0**). Nineteen rules (001–019).
 
-**Discipline:** rules emit findings with confidence `OBSERVED` or `POTENTIAL`. They never claim confirmed runtime exploitation. Every finding references evidence and lists missing controls. Each finding also carries `evidence_strength` (`LITERAL_CONFIG` / `INFERRED_HINT` / `NAME_MARKER`).
+**Discipline:** rules emit findings with confidence `OBSERVED` or `POTENTIAL`. They never claim confirmed runtime exploitation. Every finding references evidence and lists missing controls. Each finding also carries `evidence_strength` (`LITERAL_CONFIG` / `INFERRED_HINT` / `NAME_MARKER`). Severity and confidence stay separate. `NAME_MARKER` must not alone create a critical CI gate. See [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md) and [`atlas/PRECISION.md`](atlas/PRECISION.md).
 
 **Finding classes (required distinction):**
 

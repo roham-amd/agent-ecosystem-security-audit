@@ -6,6 +6,6 @@ Public entry points:
   ``aesa.inventory.collector.collect_inventory``
 """
 
-__version__ = "0.10.0"
-__product_version__ = "3.7.0"
+__version__ = "0.11.0"
+__product_version__ = "3.8.0"
 __product_name__ = "authdiff"

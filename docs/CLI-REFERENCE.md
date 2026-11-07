@@ -3,7 +3,10 @@
 Primary command: **`authdiff`**. Compatibility alias: **`aesa`**.
 Maintainer entry: **`authdiff-dev`** (build / lint / corpus / benchmark / …).
 
-Package `aesa-tools` **0.10.0** · product **3.7.0**.
+Package `aesa-tools` **0.11.0** · product **3.8.0**.
+
+Product contract / command tiers: [`PRODUCT.md`](PRODUCT.md) ·
+lock semantics: [`AUTHORITY-LOCK.md`](AUTHORITY-LOCK.md).
 
 Install: [`INSTALL.md`](INSTALL.md).
 

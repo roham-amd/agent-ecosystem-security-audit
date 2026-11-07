@@ -8,7 +8,7 @@ report validation, corpus, and AgentSecBench harness.
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.10.0** · Product: authdiff **3.7.0**
+Package: `aesa-tools` **0.11.0** · Product: authdiff **3.8.0**
 
 ---
 
@@ -35,8 +35,8 @@ Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
 **User tool (recommended):**
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools
-# or: pip install aesa-tools==0.10.0
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.8.0#subdirectory=tools
+# or: pip install aesa-tools==0.11.0
 authdiff doctor
 authdiff open github.com/org/some-skill
 authdiff lock

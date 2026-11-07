@@ -21,7 +21,6 @@ from aesa.benchmark.intake import (
 from aesa.benchmark.llm_runner import _load_dataset_manifest, run_llm_benchmark
 from aesa.benchmark.report import build_evaluation_report
 from aesa.benchmark.runner import run_benchmark
-from aesa.broker import load_authority_lock
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
@@ -33,8 +32,9 @@ from aesa.export.sarif import report_to_sarif
 from aesa.harden import run_harden
 from aesa.hosts.profiles import get_host_profile, list_host_profiles
 from aesa.inventory.collector import collect_inventory, inventory_to_json
-from aesa.jsonio import print_json, read_json, write_json
+from aesa.jsonio import print_json, read_json, write_json, write_text
 from aesa.lint import run_ruff
+from aesa.lock_io import load_authority_lock
 from aesa.pilots.runner import load_manifest, run_pilots
 from aesa.policy import apply_policy_defaults, discover_policy_file, load_policy
 from aesa.prompt_build import write_monolith
@@ -215,6 +215,11 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         target_policy_ignored=target_policy_ignored,
         full_report=bool(getattr(args, "full", False)),
     )
+    findings_doc = scan.to_findings_doc()
+    findings_doc["suppressions"] = payload.get("suppressions") or []
+    findings_doc["suppression_count"] = len(payload.get("suppressions") or [])
+    findings_doc["target_policy_ignored"] = target_policy_ignored
+
     if getattr(args, "locked", False):
         lock_report, lock_code = check_locked(
             args.path,
@@ -223,10 +228,20 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         payload["authority_lock"] = lock_report
         if lock_code and code == 0:
             code = lock_code
-    findings_doc = scan.to_findings_doc()
-    findings_doc["suppressions"] = payload.get("suppressions") or []
-    findings_doc["suppression_count"] = len(payload.get("suppressions") or [])
-    findings_doc["target_policy_ignored"] = target_policy_ignored
+        lock_delta = lock_report.get("delta") if isinstance(lock_report, dict) else None
+        if isinstance(lock_delta, dict):
+            # Refresh PR comment so lock expansions appear in the five-question format.
+            comment = render_authority_diff_comment(
+                findings_doc,
+                risk_delta={"summary": payload["risk_delta"]}
+                if payload.get("risk_delta")
+                else None,
+                authority_delta=payload.get("authority_delta"),
+                lock_delta=lock_delta,
+            )
+            payload["pr_comment"] = comment
+            write_text(Path(payload["output_dir"]) / "pr-comment.md", comment)
+
     if getattr(args, "agent", False):
         # Never put raw findings in ``extra`` — ``digest.update`` would overwrite
         # the fenced ``gated`` / ``gated_findings`` lists from render_agent_digest.

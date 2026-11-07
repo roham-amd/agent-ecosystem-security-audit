@@ -1,6 +1,6 @@
 # authdiff scan — operator guide
 
-Guard scan path for **3.7.0**: deterministic discovery plus evidence-backed
+Guard scan path for **3.8.0**: deterministic discovery plus evidence-backed
 observations via `authdiff scan` / `check`, with capability / exposure / finding
 separation. Default terminal output is ≤15 lines (`--full` for the long report).
 Artifacts land in cwd `./aesa-out` (not inside the target tree).
@@ -8,7 +8,10 @@ Artifacts land in cwd `./aesa-out` (not inside the target tree).
 Companion commands: `authdiff doctor`, `authdiff open` / `vet`, and
 `authdiff lock` (committed authority lockfile).
 
-Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md), [`POLICY.md`](POLICY.md), [`AESA-GATE.md`](AESA-GATE.md).
+Companion docs: [`PRODUCT.md`](PRODUCT.md), [`AUTHORITY-LOCK.md`](AUTHORITY-LOCK.md),
+[`COVERAGE-MATRIX.md`](COVERAGE-MATRIX.md), [`CLI-REFERENCE.md`](CLI-REFERENCE.md),
+[`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md),
+[`POLICY.md`](POLICY.md), [`AESA-GATE.md`](AESA-GATE.md).
 
 ---
 
@@ -69,9 +72,9 @@ Principle: never ask an LLM to establish a fact the CLI can establish; never let
 
 ```bash
 cd tools && uv sync --locked
-uv run aesa scan /path/to/target-repo
-uv run aesa explain F-001 -o /path/to/target-repo/aesa-out   # if findings exist
-uv run aesa baseline save -o /path/to/target-repo/aesa-out
+uv run authdiff /path/to/target-repo
+uv run authdiff lock /path/to/target-repo
+uv run authdiff explain F-001 -o /path/to/out   # if findings exist
 ```
 
 Docker:

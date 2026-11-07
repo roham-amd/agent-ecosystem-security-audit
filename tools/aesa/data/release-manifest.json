@@ -1,11 +1,11 @@
 {
   "manifest_version": "1.0",
   "product": "authdiff",
-  "product_version": "3.7.0",
+  "product_version": "3.8.0",
   "package_name": "aesa-tools",
-  "package_version": "0.10.0",
+  "package_version": "0.11.0",
   "primary_command": "authdiff lock",
-  "north_star": "A lockfile for what your AI agents can do, reviewed like code",
+  "north_star": "Know what authority your AI agents gain, before install and on every pull request",
   "positioning": "Before you install, merge, or upgrade an AI-agent integration, see what authority it introduces and what changed.",
   "release_status": "released",
   "contracts": {

@@ -25,6 +25,11 @@ def test_pr_comment_is_compact_and_decision_led(tmp_path: Path):
     scan, payload, _code = run_scan(demo, output_dir=tmp_path / "out")
     comment = payload.get("pr_comment") or render_authority_diff_comment(scan.to_findings_doc())
     assert "Decision:" in comment
+    assert "Changed:" in comment
+    assert "New authority:" in comment
+    assert "Evidence:" in comment
+    assert "Unknown:" in comment
+    assert "Required:" in comment
     # Sticky HTML marker is metadata; visible body stays ≤12 lines.
     body_lines = [ln for ln in comment.strip().splitlines() if not ln.startswith("<!--")]
     assert len(body_lines) <= 12
@@ -34,6 +39,31 @@ def test_pr_comment_is_compact_and_decision_led(tmp_path: Path):
         "NO-GATED-FINDINGS",
         "PASS-WITH-COVERAGE-GAPS",
     }
+
+
+def test_pr_comment_includes_lock_delta_expansions():
+    findings_doc = {
+        "findings": [],
+        "coverage": {"component_counts_by_maturity": {"SUPPORTED": 1, "PARTIAL": 0}},
+        "suppression_count": 0,
+    }
+    lock_delta = {
+        "summary": {
+            "expansions": 1,
+            "reductions": 0,
+            "replacements": 0,
+            "representations": 0,
+            "policy_changed": False,
+            "meaningful_authority_change": True,
+        },
+        "lines": ["+ expansion MCP Server Registration `evil`: execute_commands; pin=floating"],
+    }
+    comment = render_authority_diff_comment(findings_doc, lock_delta=lock_delta)
+    assert "expansions" in comment
+    assert "evil" in comment
+    assert "Required:" in comment
+    body_lines = [ln for ln in comment.strip().splitlines() if not ln.startswith("<!--")]
+    assert len(body_lines) <= 12
 
 
 def test_agent_digest_fences_titles(tmp_path: Path):

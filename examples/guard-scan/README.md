@@ -1,7 +1,7 @@
 # Sample authdiff scan artifacts (historical)
 
 Checked-in samples illustrate the findings contract shape. They may lag the
-current product (**3.7.0** / tooling **0.10.0**). Prefer regenerating:
+current product (**3.8.0** / tooling **0.11.0**). Prefer regenerating:
 
 ```bash
 authdiff scan <fixture> -o /tmp/out --full

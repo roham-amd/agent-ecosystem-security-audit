@@ -2,10 +2,10 @@
 
 **Authority Diff for AI agents**
 
+> Know what authority your AI agents gain, before install and on every pull request.
+
 `git diff` for what your AI agents can access, execute, communicate with, and
 delegate — on your machine, before you install a package, and on every PR.
-
-> Trust Nothing. Verify Everything. Secure Every Agent.
 
 `authdiff` (product line formerly branded AESA Guard) is a local-first scanner
 and CI gate. It inventories authority surfaces (skills, MCP, hooks, plugins,
@@ -15,7 +15,7 @@ source of truth.
 
 It is **not** a certification, marketplace badge, runtime sandbox, or substitute
 for organizational risk acceptance. The `aesa` CLI name remains a compatibility
-alias.
+alias. AESA and authdiff are the **same product** — see [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
 ---
 
@@ -25,17 +25,23 @@ alias.
 > what authority it introduces, who receives that authority, what data can flow
 > through it, and what materially changed.
 
-The valuable artifact is the **PR Authority Diff comment** (≤12 lines), not a
-long report.
+Three questions:
+
+1. What authority do I already have?
+2. What authority does this change introduce?
+3. Is that change approved?
+
+The valuable artifact is the **PR Authority Diff comment** (≤12 lines) plus
+committed [`AUTHORITY.lock`](docs/AUTHORITY-LOCK.md) — not a long report.
 
 ---
 
 ## First useful minute
 
 ```bash
-# Requires Python ≥3.12. Prefer PyPI when published; git tag works today:
-uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools" authdiff
-# pip install aesa-tools==0.10.0
+# Requires Python ≥3.12. One canonical install (git tag today; PyPI when published):
+uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.8.0#subdirectory=tools" authdiff
+# pip install aesa-tools==0.11.0
 
 authdiff                  # ≤15-line authority map (alias: check / scan)
 authdiff lock             # write AUTHORITY.lock
@@ -49,20 +55,22 @@ Artifacts default to **`./aesa-out`**. Target `.aesa.yml` suppressions are **ign
 unless you pass `--policy` or `--trust-target-policy`. Use `--agent` for a compact
 fenced JSON digest. Use `--full` for the long report.
 
+### Core commands
+
 | Command | Purpose |
 | --- | --- |
-| `authdiff lock` | Write / update `AUTHORITY.lock` |
 | `authdiff` / `check` / `scan` | Repo authority scan (add `--locked`) |
-| `authdiff doctor` | Host authority map (Cursor / Claude / Codex / …) |
-| `authdiff open` / `vet` | Pre-install verdict (safe shallow clone; hooks/LFS off) |
-| `authdiff diff lock A B` | Record-level authority lock diff |
-| `authdiff fix` / `harden` | Dry-run least-privilege patch templates |
-| `authdiff ci init` / `init` | `.aesa.yml` + workflow + CODEOWNERS |
-| `authdiff explain F-001` | Explain one finding from a prior scan |
-| `authdiff-dev` | Maintainer tools (`build`, `lint`, `corpus`, …) |
+| `authdiff doctor` | Host authority map |
+| `authdiff open` / `vet` | Pre-install verdict (safe shallow clone) |
+| `authdiff lock` | Write / update `AUTHORITY.lock` |
+| `authdiff ci init` | `.aesa.yml` + workflow + CODEOWNERS |
+
+Review / advanced / maintainer tiers: [`docs/PRODUCT.md`](docs/PRODUCT.md) ·
+[`docs/CLI-REFERENCE.md`](docs/CLI-REFERENCE.md).
 
 Docs: [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md) ·
-[`docs/AESA-GATE.md`](docs/AESA-GATE.md) ·
+[`docs/AUTHORITY-LOCK.md`](docs/AUTHORITY-LOCK.md) ·
+[`docs/COVERAGE-MATRIX.md`](docs/COVERAGE-MATRIX.md) ·
 demo [`examples/demo-vulnerable/`](examples/demo-vulnerable/)
 
 Archived methodology kit: [`archive/methodology/`](archive/methodology/)
@@ -79,8 +87,8 @@ Single recipe (PyPI + Action). Full example:
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- run: pip install "aesa-tools==0.10.0"
-- uses: roham-amd/agent-ecosystem-security-audit/.github/actions/aesa-gate@v3.7.0
+- run: pip install "aesa-tools==0.11.0"
+- uses: roham-amd/agent-ecosystem-security-audit/.github/actions/aesa-gate@v3.8.0
   with:
     path: .
     trusted-policy: "true"
@@ -89,20 +97,23 @@ Single recipe (PyPI + Action). Full example:
     install-tools-from: path
 ```
 
+Prefer pinning the Action by **immutable commit SHA** in high-assurance repos
+(see [`docs/AESA-GATE.md`](docs/AESA-GATE.md)).
+
 With `authority-diff=true`, the Action scans the PR **base** ref and diffs it
 against **head**. With `trusted-policy=true`, policy loads from the base ref.
-With `locked=true`, AUTHORITY.lock drift fails the check (Action v2).
+With `locked=true`, AUTHORITY.lock drift fails the check.
 
 ---
 
 ## What authdiff evaluates
 
 Skills, MCP servers, hooks, plugins, subagents, rules, automations, CI
-workflows, and host agent configuration (including Claude Code settings).
-Finding classes: only `SECURITY_FINDING` and `EXPOSURE` can fail CI.
-`CAPABILITY` is inventory. Decisions are `BLOCK` / `REVIEW` /
-`NO-GATED-FINDINGS` — never a numeric trust score. Unparsed or oversize agent
-configs fail closed as `REVIEW`.
+workflows, and host agent configuration. Finding classes: only
+`SECURITY_FINDING` and `EXPOSURE` can fail CI. `CAPABILITY` is inventory.
+Decisions are `BLOCK` / `REVIEW` / `NO-GATED-FINDINGS` — never a numeric trust
+score. Unparsed configs and `MANUAL_ONLY` surfaces are reported as coverage
+gaps ([`docs/COVERAGE-MATRIX.md`](docs/COVERAGE-MATRIX.md)).
 
 ---
 

@@ -12,50 +12,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from aesa.lock_io import load_authority_lock
 from aesa.process_env import scrub_env
 
-
-def _loads_object(text: str) -> dict[str, Any]:
-    data = json.loads(text)
-    if not isinstance(data, dict):
-        raise ValueError("AUTHORITY lock root must be a JSON object")
-    return data
-
-
-def load_authority_lock(path: Path) -> dict[str, Any]:
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    text = path.read_text(encoding="utf-8")
-    suffix = path.suffix.lower()
-    name = path.name.lower()
-    if suffix == ".json" or name.endswith(".lock.json"):
-        return _loads_object(text)
-    if suffix in {".yml", ".yaml"} or "lock" in name:
-        # Prefer JSON content even in .yml for the MVP (no PyYAML dependency).
-        try:
-            return _loads_object(text)
-        except (json.JSONDecodeError, ValueError):
-            return _parse_simple_lock_yaml(text)
-    return _loads_object(text)
-
-
-def _parse_simple_lock_yaml(text: str) -> dict[str, Any]:
-    """Parse a tiny AUTHORITY.lock subset without a YAML dependency."""
-    tools: dict[str, str] = {}
-    in_tools = False
-    for line in text.splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if stripped in {"mcp_tools:", "mcp_tools: {}"}:
-            in_tools = True
-            continue
-        if in_tools and line.startswith("  ") and ":" in line:
-            key, _, val = stripped.partition(":")
-            tools[key.strip()] = val.strip().strip("\"'")
-        elif in_tools and not line.startswith((" ", "\t")):
-            in_tools = False
-    return {"mcp_tools": tools, "version": 1}
+# Backward-compatible re-export (tests / older imports).
+__all__ = ["load_authority_lock", "run_brokered"]
 
 
 def run_brokered(

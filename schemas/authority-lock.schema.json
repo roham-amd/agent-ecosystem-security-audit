@@ -15,13 +15,20 @@
     "lock_hash": { "type": "string" },
     "records": {
       "type": "array",
-      "description": "Sorted authority records (host/kind/name@path)",
+      "description": "Sorted authority records. Match by identity_key; id retains path for display.",
       "items": {
         "type": "object",
         "required": ["id", "kind", "fingerprint"],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
+          "id": {
+            "type": "string",
+            "description": "Display id: host/kind/name@path (may change on file moves)"
+          },
+          "identity_key": {
+            "type": "string",
+            "description": "Stable join key: host|kind|name (path-independent)"
+          },
           "host": { "type": "string" },
           "kind": { "type": "string" },
           "name": { "type": "string" },

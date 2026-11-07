@@ -71,6 +71,35 @@ def check_requires_python() -> None:
         )
 
 
+def sync_packaged_version_metadata() -> list[str]:
+    """Keep wheel-bundled VERSION / versions / release-manifest aligned with canonical."""
+    root = repo_root()
+    data_dir = root / "tools" / "aesa" / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    actions: list[str] = []
+
+    product = (root / "VERSION").read_text(encoding="utf-8").strip() + "\n"
+    packaged_version = data_dir / "VERSION"
+    if packaged_version.read_text(encoding="utf-8") != product:
+        packaged_version.write_text(product, encoding="utf-8")
+        actions.append("updated tools/aesa/data/VERSION")
+    else:
+        actions.append("unchanged tools/aesa/data/VERSION")
+
+    for name in ("versions.json", "release-manifest.json"):
+        src = root / "canonical" / name
+        dest = data_dir / name
+        if not src.is_file():
+            raise SystemExit(f"Missing canonical/{name}")
+        src_text = src.read_text(encoding="utf-8")
+        if not dest.is_file() or dest.read_text(encoding="utf-8") != src_text:
+            dest.write_text(src_text, encoding="utf-8")
+            actions.append(f"updated tools/aesa/data/{name}")
+        else:
+            actions.append(f"unchanged tools/aesa/data/{name}")
+    return actions
+
+
 def check_version_metadata() -> None:
     versions = load_versions()
     product = version_file_path().read_text(encoding="utf-8").strip()
@@ -101,6 +130,22 @@ def check_version_metadata() -> None:
         raise SystemExit(
             f"tools/aesa/__init__.py __version__ ({init_match.group(1)}) != "
             f"canonical build_tool package version ({expected_pkg})"
+        )
+    product_match = re.search(r'__product_version__\s*=\s*"([^"]+)"', init_text)
+    if not product_match:
+        raise SystemExit("tools/aesa/__init__.py missing __product_version__")
+    if product_match.group(1) != product:
+        raise SystemExit(
+            f"tools/aesa/__init__.py __product_version__ ({product_match.group(1)}) != "
+            f"VERSION ({product})"
+        )
+
+    packaged_version = (
+        (repo_root() / "tools" / "aesa" / "data" / "VERSION").read_text(encoding="utf-8").strip()
+    )
+    if packaged_version != product:
+        raise SystemExit(
+            f"tools/aesa/data/VERSION ({packaged_version}) != root VERSION ({product})"
         )
 
     # Release-blocking: release-manifest must agree with VERSION + package version.
@@ -251,6 +296,7 @@ def check_dependency_pins() -> list[str]:
 
 def build_all() -> dict[str, object]:
     sync = sync_schemas()
+    packaged = sync_packaged_version_metadata()
     check_schema_parity()
     check_version_metadata()
     check_requires_python()
@@ -262,6 +308,7 @@ def build_all() -> dict[str, object]:
     links = check_internal_markdown_links()
     return {
         "schemas": sync,
+        "packaged_metadata": packaged,
         "examples": examples,
         "dependency_pins": dep_pins,
         "monolith": mono,

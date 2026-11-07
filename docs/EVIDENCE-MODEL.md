@@ -1,8 +1,8 @@
 # Evidence, capabilities, findings, and claims
 
-AESA Guard’s intellectual core is an **evidence-first** model. This document is normative for how deterministic tooling and AI auditors must treat facts.
+authdiff’s intellectual core is an **evidence-first** model. This document is normative for how deterministic tooling and AI auditors must treat facts.
 
-Related: [`SECURITY-RULES.md`](SECURITY-RULES.md), [`../archive/methodology/prompts/03-report-contract.md`](../archive/methodology/prompts/03-report-contract.md), [`../schemas/structured-claim.schema.json`](../schemas/structured-claim.schema.json).
+Related: [`PRODUCT.md`](PRODUCT.md), [`AUTHORITY-LOCK.md`](AUTHORITY-LOCK.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`../archive/methodology/prompts/03-report-contract.md`](../archive/methodology/prompts/03-report-contract.md), [`../schemas/structured-claim.schema.json`](../schemas/structured-claim.schema.json).
 
 ---
 
@@ -107,24 +107,42 @@ Capability-first assessment is preferred over merely counting component types. S
 
 ---
 
-## Evidence record fields (Guard)
+## Evidence record fields (chain of custody)
 
 | Field | Purpose |
 | --- | --- |
 | `evidence_id` | Stable reference (`E-001`, `E-INV-C-001`, …) |
-| `component_id` | Related component |
+| `component_id` | Related component identity |
+| `component_version` / source identity | Exact component version or source identity when known |
 | `source_commit` | Exact audited revision when known |
+| `artifact_digest` | Artifact digest when scanning a built package |
 | `file_path` | Exact source location |
 | `line_start` / `line_end` | Reproducible location when available |
-| `content_digest` | Integrity when computed |
+| `content_digest` | Integrity of the observed bytes |
+| `parser` / `adapter_version` | Which parser produced the observation |
+| `rule_version` | Rule pack / rule id version when rule-derived |
 | `evidence_class` | Class enum above |
 | `collection_method` | `deterministic_rule`, `inventory_adapter`, human, … |
 | `observed_at` | Collection timestamp |
 | `verification_status` | Status enum |
+| `derivation` | `directly_observed` \| `inferred` \| `user_supplied` |
 | `limitations` | What this evidence cannot establish |
 | `summary` | Short description |
 
-Guard producers (3.1.1+) must populate `content_digest` and `source_commit` whenever the source file and git commit are available, and `line_start`/`line_end` when a configuration needle can be located. Findings reference evidence objects; AI claims must not invent evidence by restating observations.
+Producers must populate `content_digest` and `source_commit` whenever the source
+file and git commit are available, and `line_start`/`line_end` when a
+configuration needle can be located. Findings reference evidence objects; AI
+claims must not invent evidence by restating observations.
+
+### Reproducibility question
+
+A reviewer should be able to answer:
+
+> Can I reproduce the same observation from the same component version, using
+> the same parser and rule set?
+
+`AUTHORITY.lock` must retain enough identity to distinguish a changed component
+from a representation-only change ([`AUTHORITY-LOCK.md`](AUTHORITY-LOCK.md)).
 
 ### Freshness vs strength
 
@@ -132,6 +150,15 @@ Guard producers (3.1.1+) must populate `content_digest` and `source_commit` when
 - **Strength:** How strongly does it support the claim?
 
 A hash proves digest match — not safety. Model agreement is not independent verification.
+
+### False-confidence controls
+
+- Keep **severity** and **confidence** separate.
+- Do not gate critical CI fails on `NAME_MARKER` alone.
+- Abstain: unparseable / oversized / unsupported → explicit gap, never silent clean.
+- Suppressions remain visible in findings (`suppressed: true`) with justification.
+- Untrusted PR policy is never auto-trusted (`trusted-policy` loads base ref).
+- Clean result ≠ safe component; reports must state what was not tested.
 
 ---
 

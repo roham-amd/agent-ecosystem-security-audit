@@ -1,10 +1,44 @@
 # Changelog
 
-All notable changes to the AESA framework are documented in this file.
+All notable changes to authdiff (AESA product line) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `archive/methodology/`).
+
+## [3.8.0] — 2026-11-07
+
+### Added
+
+- **Product contract docs:** `docs/PRODUCT.md`, `docs/AUTHORITY-LOCK.md`, and
+  product-path `docs/COVERAGE-MATRIX.md` (north-star, naming, identity, maturity).
+- **Lock identity + diff classes:** path-independent `identity_key`; classify
+  changes as `expansion` / `reduction` / `replacement` / `representation` /
+  `mixed`; summary exposes `meaningful_authority_change`.
+- **Authority Diff PR comment:** five-question format (changed / new authority /
+  evidence / unknown / required action); `--locked` refreshes `pr-comment.md`
+  with lock delta lines.
+- Schema documents `identity_key` on `AUTHORITY.lock` records; schemas README
+  elevates the lock as the product-critical contract.
+- **`aesa.lock_io`:** thin AUTHORITY.lock loader shared by lock engine and broker
+  (broker no longer owns lock parsing).
+
+### Changed
+
+- Product **3.8.0** / tooling **0.11.0**.
+- README / INSTALL / gate primer / skill / consumer example / CONTRIBUTING
+  aligned to one canonical install, `authdiff-dev` maintainer path, and
+  AESA-compat naming story.
+- Evidence model: chain-of-custody fields + false-confidence controls.
+- Atlas docs: precision is per-rule with sample size; corpus ≠ LLM audit proof.
+
+### Fixed
+
+- CONTRIBUTING validation commands now use `authdiff-dev lint` / `build`
+  (maintainer entry), matching CI.
+- Packaged wheel `aesa/data/VERSION` stayed at 3.6.1 after product bumps;
+  `authdiff-dev build` now syncs packaged VERSION / versions /
+  release-manifest and fails if `__product_version__` drifts.
 
 ## [3.7.0] — 2026-11-07
 
