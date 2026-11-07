@@ -11,23 +11,22 @@
 
 The bundled audit procedure version (`archive/methodology/prompts/` kit = **1.0**) is cited separately in audit reports and is not the same number as the AESA project release.
 
-Tooling package version (`aesa-tools`, currently **0.8.1**) is tracked in
+Tooling package version (`aesa-tools`, currently **0.10.0**) is tracked in
 `canonical/versions.json` as `build_tool` and must stay aligned with
-`tools/pyproject.toml` and `tools/aesa/__init__.py`. Product release **3.6.1**.
+`tools/pyproject.toml` and `tools/aesa/__init__.py`. Product release **3.7.0**.
 
 ## What this project is
 
-`authdiff` (AESA Guard product line) is an **Authority Diff** for AI-agent ecosystems: host doctor,
-pre-install vet, deterministic repo scan (`aesa scan`), procedures, prompts,
-specialized modules, report schemas, validation helpers, baselines/CI gate with
-trusted policy, and an optional AI auditor skill.
+`authdiff` is a **lockfile + Authority Diff** for AI-agent ecosystems: host doctor,
+pre-install vet, deterministic repo scan (`authdiff scan` / `lock` / `check --locked`),
+CI gate with trusted policy, and an optional AI auditor skill.
 
 It is **not** an automated vulnerability scanner that proves systems are safe,
 a penetration-testing tool, runtime sandbox, marketplace certification authority,
 or substitute for organizational risk acceptance.
 
 Operator and contributor documentation map: [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md).  
-Threats against the toolchain itself: [`docs/toolchain-threat-model.md`](docs/toolchain-threat-model.md).  
+Threats against the toolchain itself: [`docs/archive/toolchain-threat-model.md`](docs/archive/toolchain-threat-model.md).  
 Deterministic rule catalog: [`docs/SECURITY-RULES.md`](docs/SECURITY-RULES.md).
 
 ## Reporting a vulnerability in AESA itself

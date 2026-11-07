@@ -5,13 +5,12 @@ security observations, and a CI-oriented change gate.
 
 | Item | Value |
 | --- | --- |
-| Product release | **3.6.1** |
+| Product release | **3.7.0** |
 | Procedure | **1.0** |
-| Tooling package | **0.8.1** (`aesa-tools`) |
-| Rule pack | **1.3** |
-| Rule pack | **1.2** |
-| Primary path | `aesa doctor` → `aesa vet` → `aesa init-gate` → `aesa scan` |
-| Policy file | `.aesa.yml` (optional; trusted from PR base ref in CI) |
+| Tooling package | **0.10.0** (`aesa-tools`) |
+| Rule pack | **1.4** |
+| Primary path | `authdiff lock` → `ci init` → `check --locked` |
+| Policy file | `.aesa.yml` + `AUTHORITY.lock` (CODEOWNERS) |
 
 Normative depth: [`GUARD-SCAN.md`](GUARD-SCAN.md), [`POLICY.md`](POLICY.md),
 [`DOCUMENTATION-INDEX.md`](DOCUMENTATION-INDEX.md).
@@ -46,18 +45,19 @@ Never let an unsupported LLM interpretation become an enforced finding.
 ## First user journey
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools
 
-aesa doctor                          # host authority map
-aesa vet github.com/org/some-skill   # pre-install verdict
-aesa init-gate                       # .aesa.yml + workflow stub
-aesa scan .
-aesa explain F-001 -o aesa-out
+authdiff doctor                          # host authority map
+authdiff open github.com/org/some-skill  # pre-install verdict
+authdiff lock                            # write AUTHORITY.lock
+authdiff ci init                         # .aesa.yml + workflow + CODEOWNERS
+authdiff check --locked .
+authdiff explain F-001 -o aesa-out
 ```
 
 CI: [`.github/actions/aesa-gate`](../.github/actions/aesa-gate) with
-`trusted-policy: true`, pinned kit, `fail-on: high`.  
-Example: [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml).
+`trusted-policy: true`, optional `locked: true` (Action v2).  
+Single recipe: [`aesa-consumer-gate.example.yml`](aesa-consumer-gate.example.yml).
 
 `aesa audit --profile …` remains for agent handoff packages only.
 

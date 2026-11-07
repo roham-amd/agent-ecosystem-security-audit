@@ -80,6 +80,16 @@ inputs:
       Requires fetch-depth: 0 (or enough history to resolve the base ref).
     required: false
     default: "true"
+  locked:
+    description: >-
+      If true, also run AUTHORITY.lock drift check (`authdiff check --locked`).
+      Commit AUTHORITY.lock and protect it with CODEOWNERS (Action v2 path).
+    required: false
+    default: "false"
+  lock-file:
+    description: Path to AUTHORITY.lock relative to the scan target (default: AUTHORITY.lock)
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -275,6 +285,10 @@ runs:
         AESA_POLICY: ${{ inputs.policy }}
         AESA_NO_POLICY: ${{ inputs.no-policy }}
         AESA_TRUSTED_POLICY: ${{ steps.trusted_policy.outputs.path }}
+        AESA_TRUSTED: ${{ inputs.trusted-policy }}
+        AESA_EVENT: ${{ github.event_name }}
+        AESA_LOCKED: ${{ inputs.locked }}
+        AESA_LOCK_FILE: ${{ inputs.lock-file }}
       run: |
         set -euo pipefail
         args=(scan "$AESA_PATH" -o "$AESA_OUTPUT_DIR")
@@ -285,6 +299,12 @@ runs:
         elif [[ -n "${AESA_TRUSTED_POLICY:-}" ]]; then
           args+=(--policy "$AESA_TRUSTED_POLICY")
           echo "Using trusted base-ref policy: $AESA_TRUSTED_POLICY"
+        elif [[ "${AESA_TRUSTED}" == "true" && "${AESA_EVENT}" == "pull_request" ]]; then
+          # Blindfold: never honor a PR-authored .aesa.yml via explicit --policy.
+          # First-adoption PRs that add policy are allowed by the edit check, but
+          # suppressions from that new file must not silence the gate on the same PR.
+          args+=(--no-policy)
+          echo "trusted-policy=true and no base-ref policy; scanning with --no-policy"
         elif [[ -f "${AESA_PATH}/.aesa.yml" ]]; then
           args+=(--policy "${AESA_PATH}/.aesa.yml")
           echo "Auto-loaded policy: ${AESA_PATH}/.aesa.yml"
@@ -299,6 +319,13 @@ runs:
         fi
         if [[ -n "$baseline" ]]; then
           args+=(--baseline "$baseline")
+        fi
+        if [[ "${AESA_LOCKED}" == "true" ]]; then
+          args+=(--locked)
+          if [[ -n "${AESA_LOCK_FILE}" ]]; then
+            args+=(--lock-file "$AESA_LOCK_FILE")
+          fi
+          echo "AUTHORITY.lock drift check enabled (Action v2)"
         fi
         aesa "${args[@]}"
 
@@ -338,13 +365,30 @@ runs:
             aesa annotate "$FINDINGS" --format pr-comment >"$COMMENT"
           fi
         fi
-        echo "## AESA Authority Diff" >> "$GITHUB_STEP_SUMMARY"
+        echo "## authdiff Authority Diff" >> "$GITHUB_STEP_SUMMARY"
         cat "$COMMENT" >> "$GITHUB_STEP_SUMMARY"
-        # Sticky Authority Diff comment (marker in pr-comment.md). Never fail the gate on UX.
+        if [[ -f "$AESA_OUTPUT_DIR/scan-summary.txt" ]]; then
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Scan summary" >> "$GITHUB_STEP_SUMMARY"
+          head -n 20 "$AESA_OUTPUT_DIR/scan-summary.txt" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        # Sticky comment: update the comment that carries our marker, never --edit-last
+        # (which can overwrite another workflow's bot comment).
         if command -v gh >/dev/null 2>&1 && [[ -n "${GITHUB_TOKEN:-}" ]]; then
           PR_NUM="${{ github.event.pull_request.number }}"
-          if gh pr comment "$PR_NUM" --body-file "$COMMENT" --edit-last 2>/dev/null; then
-            echo "Updated sticky authdiff PR comment."
+          MARKER="<!-- authdiff-authority-diff -->"
+          existing_id="$(
+            gh api "repos/${{ github.repository }}/issues/${PR_NUM}/comments" --paginate \
+              --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id" 2>/dev/null \
+              | head -n 1 || true
+          )"
+          if [[ -n "${existing_id}" ]]; then
+            if gh api "repos/${{ github.repository }}/issues/comments/${existing_id}" \
+              -X PATCH -F body=@"$COMMENT" >/dev/null 2>&1; then
+              echo "Updated sticky authdiff PR comment id=${existing_id}."
+            else
+              echo "::warning::Failed to update sticky authdiff PR comment."
+            fi
           else
             gh pr comment "$PR_NUM" --body-file "$COMMENT" \
               || echo "::warning::Failed to post authdiff PR comment (check pull-requests: write)."

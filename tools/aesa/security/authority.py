@@ -26,6 +26,7 @@ class AuthorityComponent:
     host: str
     path: str
     fingerprint: str
+    name: str = ""
     capabilities: list[str] = field(default_factory=list)
     destinations: list[str] = field(default_factory=list)
     identity: list[str] = field(default_factory=list)
@@ -35,6 +36,15 @@ class AuthorityComponent:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def logical_authority_id(component: dict[str, Any]) -> str:
+    """Stable record id: host/kind/name@file (independent of content digest)."""
+    host = str(component.get("host") or component.get("host_id") or component.get("adapter") or "")
+    kind = str(component.get("kind") or component.get("type") or "unknown")
+    name = str(component.get("name") or component.get("id") or "")
+    path = str(component.get("path") or component.get("repository_path") or "").replace("\\", "/")
+    return f"{host}/{kind}/{name}@{path}"
 
 
 def _pin_state(component: dict[str, Any]) -> str:
@@ -70,7 +80,8 @@ def _approval_posture(component: dict[str, Any]) -> str:
         return "auto"
     if isinstance(detail, dict) and detail.get("enableAllProjectMcpServers") is True:
         return "auto"
-    if component.get("type") in {"Hook", "Host Settings"}:
+    if component.get("type") in {"Hook", "Host Settings", "MCP Server Registration"}:
+        # MCP tools still require host approval unless a bypass/auto hint fires above.
         return "auto" if "auto_running_hook" in hints else "prompt"
     return "unknown"
 
@@ -151,12 +162,14 @@ def build_authority_snapshot(scan: ScanResult) -> dict[str, Any]:
             continue
         fp = str(raw.get("fingerprint") or component_fingerprint(raw))
         cid = str(raw.get("component_id") or fp)
+        name = str(raw.get("name") or "")
         comp = AuthorityComponent(
             id=cid,
             kind=kind,
             host=str(raw.get("host_id") or raw.get("adapter") or ""),
             path=str(raw.get("repository_path") or raw.get("name") or ""),
             fingerprint=fp,
+            name=name,
             capabilities=_capabilities(raw, scan.findings),
             destinations=_destinations(raw),
             identity=_identity(raw),
@@ -166,7 +179,7 @@ def build_authority_snapshot(scan: ScanResult) -> dict[str, Any]:
         )
         components_out.append(comp.to_dict())
 
-    components_out.sort(key=lambda c: (c["kind"], c["path"], c["fingerprint"]))
+    components_out.sort(key=lambda c: (c["kind"], c["path"], c.get("name") or "", c["fingerprint"]))
     body = {
         "snapshot_version": SNAPSHOT_VERSION,
         "product": "authdiff",
@@ -192,15 +205,13 @@ def diff_authority_snapshots(
     head_by_fp = {
         str(c.get("fingerprint")): c for c in (head.get("components") or []) if isinstance(c, dict)
     }
-    base_by_path = {
-        str(c.get("path")): c
-        for c in (base.get("components") or [])
-        if isinstance(c, dict) and c.get("path")
+    # Logical identity (host/kind/name@path) — not bare path — so multi-server
+    # files do not collapse to a single last-write-wins entry.
+    base_by_logical = {
+        logical_authority_id(c): c for c in (base.get("components") or []) if isinstance(c, dict)
     }
-    head_by_path = {
-        str(c.get("path")): c
-        for c in (head.get("components") or [])
-        if isinstance(c, dict) and c.get("path")
+    head_by_logical = {
+        logical_authority_id(c): c for c in (head.get("components") or []) if isinstance(c, dict)
     }
 
     added = [head_by_fp[fp] for fp in sorted(set(head_by_fp) - set(base_by_fp))]
@@ -211,11 +222,12 @@ def diff_authority_snapshots(
     pin_loosened: list[dict[str, Any]] = []
     modified: list[dict[str, Any]] = []
 
-    for path in sorted(set(base_by_path) & set(head_by_path)):
-        before, after = base_by_path[path], head_by_path[path]
+    for key in sorted(set(base_by_logical) & set(head_by_logical)):
+        before, after = base_by_logical[key], head_by_logical[key]
         if before.get("fingerprint") == after.get("fingerprint"):
             continue
-        modified.append({"path": path, "before": before, "after": after})
+        path = str(after.get("path") or before.get("path") or key)
+        modified.append({"path": path, "logical_id": key, "before": before, "after": after})
         before_caps = set(before.get("capabilities") or [])
         after_caps = set(after.get("capabilities") or [])
         if after_caps - before_caps:
@@ -278,8 +290,9 @@ def render_component_delta_lines(delta: dict[str, Any], *, limit: int = 5) -> li
         dest_bit = f", reaches {dest}" if dest else ""
         ident = ", ".join((comp.get("identity") or [])[:3])
         ident_bit = f", passes {ident}" if ident else ""
+        label = comp.get("name") or comp.get("path")
         lines.append(
-            f"+ {comp.get('kind')} `{comp.get('path')}`: {caps}; "
+            f"+ {comp.get('kind')} `{label}`: {caps}; "
             f"pin={pin}; approvals={posture}{ident_bit}{dest_bit}"
         )
     for item in (changes.get("escalated") or [])[: max(0, limit - len(lines))]:

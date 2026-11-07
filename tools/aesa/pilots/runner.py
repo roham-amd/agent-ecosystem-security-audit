@@ -14,7 +14,7 @@ from aesa.versioning import package_version, product_version
 
 
 def default_manifest_path() -> Path:
-    return repo_root() / "docs" / "pilots" / "manifest.json"
+    return repo_root() / "docs" / "archive" / "pilots" / "manifest.json"
 
 
 def load_manifest(path: Path | None = None) -> dict[str, Any]:
@@ -34,7 +34,7 @@ def run_pilots(
     """Scan each enabled pilot target; write per-pilot artifacts + summary."""
     manifest = load_manifest(manifest_path)
     root = repo_root()
-    out_root = (output_dir or (root / "docs" / "pilots" / "results")).resolve()
+    out_root = (output_dir or (root / "docs" / "archive" / "pilots" / "results")).resolve()
     out_root.mkdir(parents=True, exist_ok=True)
     wanted = set(only) if only else None
     results: list[dict[str, Any]] = []

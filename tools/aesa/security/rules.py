@@ -23,6 +23,14 @@ from aesa.security.models import (
 RuleFn = Callable[[dict[str, Any], list[Evidence], list[Finding], EvidenceContext], None]
 
 
+def _label(component: dict[str, Any]) -> str:
+    """Sanitize attacker-controlled names before embedding in finding prose."""
+    from aesa.export.pr_comment import escape_markdown
+
+    raw = str(component.get("name") or component.get("component_id") or "unnamed")
+    return escape_markdown(raw, max_len=80).replace("`", "'")
+
+
 @dataclass(frozen=True, slots=True)
 class RuleSpec:
     rule_id: str
@@ -130,7 +138,7 @@ def rule_skill_bundled_scripts(
         severity=severity,
         confidence="POTENTIAL",
         description=(
-            f"Skill `{component.get('name')}` references scripts or a bundled scripts "
+            f"Skill `{_label(component)}` references scripts or a bundled scripts "
             "directory. This establishes an execution *capability*; host inheritance and "
             "approval enforcement remain unverified."
         ),
@@ -226,7 +234,7 @@ def rule_mcp_local_command(
         severity=severity,
         confidence=confidence,
         description=(
-            f"MCP server `{component.get('name')}` is registered with a local command "
+            f"MCP server `{_label(component)}` is registered with a local command "
             "transport. "
             + (
                 "Credential-shaped environment inheritance or broad path arguments "
@@ -290,7 +298,7 @@ def rule_mcp_remote_endpoint(
         severity="MEDIUM",
         confidence="OBSERVED",
         description=(
-            f"MCP server `{component.get('name')}` is configured with a remote URL. "
+            f"MCP server `{_label(component)}` is configured with a remote URL. "
             "This is an external exposure surface; TLS identity and credential forwarding "
             "are not verified by this rule."
         ),
@@ -341,7 +349,7 @@ def rule_hook_execution_boundary(
         severity=severity,
         confidence="POTENTIAL",
         description=(
-            f"Hook `{component.get('name')}` appears to participate in execution or "
+            f"Hook `{_label(component)}` appears to participate in execution or "
             "pre-tool lifecycle events. Presence alone is not privilege abuse; "
             "post-approval argument mutation requires verification."
         ),
@@ -389,7 +397,7 @@ def rule_skill_external_url(
         severity="LOW",
         confidence="OBSERVED",
         description=(
-            f"Skill `{component.get('name')}` references external URLs. A URL is an "
+            f"Skill `{_label(component)}` references external URLs. A URL is an "
             "exposure indicator, not proof of malicious content."
         ),
         component=component,
@@ -442,7 +450,7 @@ def rule_skill_secrets_handling(
         severity=severity,
         confidence="POTENTIAL",
         description=(
-            f"Skill `{component.get('name')}` discusses secrets or authentication workflows. "
+            f"Skill `{_label(component)}` discusses secrets or authentication workflows. "
             + (
                 "Executable evidence nearby elevates this beyond wording-only inventory."
                 if has_exec
@@ -505,7 +513,7 @@ def rule_unattended_automation(
         severity=severity,
         confidence="OBSERVED",
         description=(
-            f"`{component.get('name')}` is an unattended automation/CI surface. "
+            f"`{_label(component)}` is an unattended automation/CI surface. "
             "Legitimate automation can be secure; review triggers, secrets, and cancellation."
         ),
         component=component,
@@ -546,7 +554,7 @@ def rule_subagent_delegation(
         severity="INFORMATIONAL",
         confidence="POTENTIAL",
         description=(
-            f"Subagent `{component.get('name')}` can receive delegated tasks. "
+            f"Subagent `{_label(component)}` can receive delegated tasks. "
             "Delegation alone is not a security defect; verify privilege reduction and isolation."
         ),
         component=component,
@@ -587,7 +595,7 @@ def rule_example_mcp_config(
         severity="LOW",
         confidence="OBSERVED",
         description=(
-            f"MCP registration `{component.get('name')}` looks like an example/template. "
+            f"MCP registration `{_label(component)}` looks like an example/template. "
             "Confirm it is not loaded by the host agent in production."
         ),
         component=component,
@@ -634,7 +642,7 @@ def rule_instruction_injection_markers(
         summary = "Instruction text contains hide/bypass/fetch-execute style directives."
         title = "Instruction text directs hide, bypass, or fetch-execute behavior"
         description = (
-            f"`{component.get('name')}` contains instruction patterns that hide actions, "
+            f"`{_label(component)}` contains instruction patterns that hide actions, "
             "bypass confirmation, or fetch-and-execute remote content. Review before trusting."
         )
         recommended = "Rewrite instructions; forbid hide/bypass/remote-exec directives in skills."
@@ -647,7 +655,7 @@ def rule_instruction_injection_markers(
         summary = "Component path/name suggests prompt-injection oriented content."
         title = "Potential prompt-injection oriented instruction surface"
         description = (
-            f"`{component.get('name')}` appears related to prompt-injection patterns by "
+            f"`{_label(component)}` appears related to prompt-injection patterns by "
             "name/path. Naming alone is a weak signal — treat as triage, not confirmed abuse."
         )
         recommended = "Review full instruction text; do not auto-activate in privileged hosts."
@@ -718,7 +726,7 @@ def rule_permission_bypass_flag(
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"`{component.get('name')}` references a flag that disables human approval "
+            f"`{_label(component)}` references a flag that disables human approval "
             "(e.g. `--dangerously-skip-permissions`, `--yolo`, auto-approve). That expands "
             "effective authority without a corresponding control."
         ),
@@ -766,7 +774,7 @@ def rule_unpinned_package_launcher(
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"MCP server `{component.get('name')}` uses an unpinned launcher "
+            f"MCP server `{_label(component)}` uses an unpinned launcher "
             f"(`{command}` {' '.join(str(a) for a in args)}). A later package publish can "
             "change behavior without a config edit (rug-pull risk)."
         ),
@@ -803,7 +811,7 @@ def rule_literal_secret_in_mcp_env(
         title = "Literal secret-like value in MCP env"
         strength = "LITERAL_CONFIG"
         description = (
-            f"MCP server `{component.get('name')}` appears to embed a literal credential in "
+            f"MCP server `{_label(component)}` appears to embed a literal credential in "
             "`env` rather than a placeholder reference. Committed secrets are an immediate "
             "exposure."
         )
@@ -812,7 +820,7 @@ def rule_literal_secret_in_mcp_env(
         title = "Possible template/placeholder secret-like MCP env value"
         strength = "INFERRED_HINT"
         description = (
-            f"MCP server `{component.get('name')}` has a secret-named env value that looks like "
+            f"MCP server `{_label(component)}` has a secret-named env value that looks like "
             "a template placeholder (for example `your-api-key-here`), not a known token format. "
             "Confirm it is not a real credential before dismissing."
         )
@@ -876,7 +884,7 @@ def rule_insecure_http_remote_mcp(
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"MCP server `{component.get('name')}` points at `{url}` over HTTP. Tool traffic "
+            f"MCP server `{_label(component)}` points at `{url}` over HTTP. Tool traffic "
             "and any forwarded credentials lack transport confidentiality/integrity."
         ),
         component=component,
@@ -924,7 +932,7 @@ def rule_hidden_unicode_instructions(
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"`{component.get('name')}` contains zero-width or bidirectional Unicode "
+            f"`{_label(component)}` contains zero-width or bidirectional Unicode "
             "characters that can hide or reorder instructions to humans while remaining "
             "visible to the model."
         ),
@@ -971,7 +979,7 @@ def rule_download_and_execute(
         severity="CRITICAL",
         confidence="OBSERVED",
         description=(
-            f"`{component.get('name')}` references piping a remote download into a shell. "
+            f"`{_label(component)}` references piping a remote download into a shell. "
             "That is remote code execution under the agent/host identity if followed."
         ),
         component=component,
@@ -1016,7 +1024,7 @@ def rule_project_mcp_auto_approve(
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"`{component.get('name')}` sets `enableAllProjectMcpServers`, so every MCP "
+            f"`{_label(component)}` sets `enableAllProjectMcpServers`, so every MCP "
             "server declared in the project's `.mcp.json` runs without a trust prompt."
         ),
         component=component,
@@ -1063,7 +1071,7 @@ def rule_base_url_or_proxy_override(
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"`{component.get('name')}` sets `{key}` in project env. That can redirect "
+            f"`{_label(component)}` sets `{key}` in project env. That can redirect "
             "model traffic (and prompts/secrets in-flight) to an attacker-controlled endpoint."
         ),
         component=component,
@@ -1108,7 +1116,7 @@ def rule_pull_request_target_with_agent(
         severity="HIGH",
         confidence="POTENTIAL",
         description=(
-            f"CI workflow `{component.get('name')}` uses `pull_request_target` together with "
+            f"CI workflow `{_label(component)}` uses `pull_request_target` together with "
             "agent/MCP-related steps. Fork PRs can often influence checkout/content while "
             "retaining privileged secrets — a classic CI + agent abuse path."
         ),

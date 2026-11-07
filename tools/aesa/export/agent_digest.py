@@ -84,7 +84,9 @@ def render_agent_digest(
             {
                 "id": f.get("finding_id"),
                 "rule": f.get("rule_id"),
-                "justification": (f.get("suppression") or {}).get("justification"),
+                "justification": fence_untrusted(
+                    str((f.get("suppression") or {}).get("justification") or "")
+                ),
             }
             for f in suppressed[:20]
         ],

@@ -1,43 +1,36 @@
 # authdiff CLI reference
 
 Primary command: **`authdiff`**. Compatibility alias: **`aesa`**.
+Maintainer entry: **`authdiff-dev`** (build / lint / corpus / benchmark / …).
 
-Complete reference for the `aesa` console script (package `aesa-tools` **0.8.1**,
-product **3.6.1**).
+Package `aesa-tools` **0.10.0** · product **3.7.0**.
 
-Install: [`INSTALL.md`](INSTALL.md). Entry points: `aesa` and `python -m aesa`.
+Install: [`INSTALL.md`](INSTALL.md).
 
 ---
 
-## Command overview
+## Product command overview
 
 | Command | Purpose |
 | --- | --- |
-| `doctor` | **First aha.** Host authority map (Cursor / Claude / VS Code) |
-| `vet` | Pre-install verdict for a local path or GitHub URL |
-| `init-gate` | Write starter `.aesa.yml` + consumer workflow stub |
-| `scan` | Repo inventory + deterministic Guard findings + SARIF |
-| `harden` | Dry-run least-privilege patch proposals from findings |
-| `init-manifest` | Draft `AUTHORITY.yml` from observed inventory |
-| `verify-manifest` | Diff observed inventory against `AUTHORITY.yml` |
-| `explain` | Print detailed explanation of a finding id |
-| `baseline` | Save / show recurring assessment baselines |
-| `annotate` | Emit GitHub Actions annotations or Authority Diff PR comment |
-| `audit` | Legacy profile-based inventory + AI agent handoff package |
-| `preflight` | Alias of `audit --profile quick` |
-| `inventory` | Inventory JSON only |
-| `validate` | Validate report, graph, or structured claim |
-| `graph paths` | List auto-discovered graph attack-path candidates |
-| `diff` | Diff reports, graphs, or Guard risk vs baseline |
-| `export sarif` | Export findings / report to SARIF 2.1.0 |
-| `verify` | Digest verify / digest manifest |
-| `build` | Schema sync, monolith, version consistency |
-| `corpus` | Tooling regression corpus |
-| `benchmark` | AgentSecBench detection fixtures |
-| `pilots` | Curated pilot-repository Guard scans |
-| `hosts` | List / show built-in host assessment profiles |
-| `deps` | Lock outdated / upgrade helpers |
-| `lint` | Ruff lint / format |
+| `lock` | Write / update / `--check` `AUTHORITY.lock` (north-star artifact) |
+| `doctor` | Host authority map (Cursor / Claude / VS Code / …) |
+| `vet` / `open` | Pre-install verdict for a local path or GitHub URL |
+| `ci init` / `init-gate` | Write `.aesa.yml` + workflow + CODEOWNERS stub |
+| `scan` / `check` | Repo Guard findings + SARIF (add `--locked`, `--full`) |
+| `delta` | New-only authority gate vs `--baseline` |
+| `harden` / `fix` | Dry-run least-privilege patch proposals |
+| `explain` | Detailed explanation of a finding id |
+| `baseline` | Save / show finding baselines (complements lock; different contract) |
+| `annotate` | GitHub annotations or Authority Diff PR comment |
+| `diff lock` | Record-level diff of two `AUTHORITY.lock` files |
+| `diff risk` | Finding risk delta vs baseline |
+| `init-manifest` / `verify-manifest` | Experimental declared-vs-observed `AUTHORITY.yml` |
+| `run` / `snapshot` / `artifact-vet` / `atlas` / `lsp-validate` | Opt-in advanced |
+
+Maintainer-only (`authdiff-dev`): `build`, `lint`, `deps`, `corpus`, `benchmark`,
+`pilots`, `hosts`, `validate`, `graph`, `inventory`, `audit`, `preflight`, `verify`,
+`export`.
 
 ---
 
@@ -49,9 +42,9 @@ aesa doctor [--home PATH] [-o OUTPUT_DIR] [--fail-on never|high|any] [--agent]
 
 Reads local host configs under the user home (`~/.cursor`, `~/.claude`,
 `~/.mcp.json`, `~/.vscode`, `~/.codex`). Local-only; nothing is uploaded.
-Lone config files are copied into a synthetic root — `$HOME` is never scanned
-wholesale. Ephemeral output dirs are cleaned when `-o` is omitted.
-`--agent` needs `-o` so surface `findings.json` files remain available.
+Lone config files are staged redacted under a throwaway dir (never copied raw
+into `-o`). `$HOME` is never scanned wholesale. `--agent` needs `-o` so surface
+`findings.json` files remain available.
 
 ---
 
@@ -63,20 +56,30 @@ aesa vet SOURCE [-o OUTPUT_DIR] [--keep-clone] [--agent]
 
 `SOURCE` is a local path, Git URL, or `owner/repo` GitHub shorthand. Remote
 sources are shallow-cloned with hooks disabled, no submodules, and no LFS
-smudge. Exit `0` = accept-with-coverage-gaps; `1` = review/reject gated findings;
-`2` = tooling failure (e.g. missing `git`). `--agent` prints a fenced JSON digest.
+smudge. Exit `0` = `NO_FINDINGS_IN_SCOPE`; `1` = review/reject (incl. unparsed
+configs); `2` = tooling failure (e.g. missing `git`). `--agent` prints a fenced
+JSON digest.
 
 ---
 
-## `aesa init-gate`
+## `authdiff lock`
 
 ```bash
-aesa init-gate [PATH] [--force]
+authdiff lock [PATH] [--check] [--update] [--lock-file PATH]
 ```
 
-Writes `.aesa.yml` (enforce / fail_on high) and
-`.github/workflows/aesa-gate.yml` with `trusted-policy: true` and a pinned kit
-ref. Does not overwrite existing files unless `--force`.
+Writes a sorted `AUTHORITY.lock` (v2) of authority records. `--check` regenerates
+and exits `1` on drift (same as `authdiff check --locked`). Protect the file with
+CODEOWNERS; prefer this over long-term reliance on suppressions alone.
+
+## `authdiff ci init` / `init-gate`
+
+```bash
+authdiff ci init [PATH] [--force]
+```
+
+Writes `.aesa.yml`, `.github/workflows/aesa-gate.yml`, and `.github/CODEOWNERS`
+(placeholder `@YOUR_TEAM` for `AUTHORITY.lock`). Does not overwrite unless `--force`.
 
 ---
 
@@ -303,8 +306,9 @@ aesa pilots list [--manifest PATH]
 aesa pilots run [--manifest PATH] [-o OUT_DIR] [--only ID ...]
 ```
 
-Runs curated adoption scans from [`pilots/manifest.json`](pilots/manifest.json).
-Pilot results are **not** AgentSecBench external evidence. See [`pilots/README.md`](pilots/README.md).
+Runs curated adoption scans from [`archive/pilots/manifest.json`](archive/pilots/manifest.json)
+(`authdiff-dev pilots`). Pilot results are **not** AgentSecBench external evidence.
+See [`archive/pilots/README.md`](archive/pilots/README.md).
 
 ---
 

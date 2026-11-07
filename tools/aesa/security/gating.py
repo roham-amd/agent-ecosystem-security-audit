@@ -58,15 +58,25 @@ def compute_exit_code(
     *,
     findings: list[Any],
     risk_delta_summary: dict[str, Any] | None = None,
+    coverage: dict[str, Any] | None = None,
+    parser_events: list[dict[str, Any]] | None = None,
 ) -> int:
     """Compute process exit code for ``fail_on`` policy.
 
     When a baseline risk delta is present, gate on **new** gated findings only
     (no fall-through to legacy absolute head findings). Without a baseline,
     absolute head gated findings apply.
+
+    Unparsed / oversize agent configs fail closed whenever ``fail_on`` is set —
+    matching ``compute_decision`` REVIEW semantics (never exit 0 on gaps).
     """
     if fail_on not in {"high", "any"}:
         return 0
+    # Local import avoids a circular dependency (decision → gating).
+    from aesa.security.decision import unparsed_agent_config_count
+
+    if unparsed_agent_config_count(coverage, parser_events) > 0:
+        return 1
     if risk_delta_summary is not None:
         if fail_on == "high":
             return 1 if risk_delta_summary.get("high_or_critical_findings_added") else 0

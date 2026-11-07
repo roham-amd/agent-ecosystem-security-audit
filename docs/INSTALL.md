@@ -10,13 +10,18 @@
 
 ```bash
 uv tool install --python 3.12 \
-  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools"
+  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools"
+
+# Prefer PyPI when published:
+#   pip install aesa-tools==0.10.0
 
 authdiff --help
 authdiff doctor
+authdiff lock
 ```
 
 The `aesa` console script remains a compatibility alias.
+Maintainer commands (`build`, `lint`, `corpus`, …): `authdiff-dev`.
 
 ## From a checkout
 

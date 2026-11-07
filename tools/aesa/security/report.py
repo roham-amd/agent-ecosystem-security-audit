@@ -102,6 +102,52 @@ def render_terminal_report(
     scan: ScanResult,
     *,
     risk_delta: dict[str, Any] | None = None,
+    full: bool = False,
+) -> str:
+    """Default is ≤15 lines; pass ``full=True`` for the legacy long report."""
+    if not full:
+        return render_short_terminal_report(scan, risk_delta=risk_delta)
+    return render_full_terminal_report(scan, risk_delta=risk_delta)
+
+
+def render_short_terminal_report(
+    scan: ScanResult,
+    *,
+    risk_delta: dict[str, Any] | None = None,
+) -> str:
+    """Compact first-run output (JTBD: what can agents do / what changed)."""
+    ordered = _ordered_findings(scan.findings)
+    decision = compute_decision(scan.findings, coverage=scan.coverage, risk_delta=risk_delta)
+    lead = decision_sentences(decision, scan.findings, risk_delta=risk_delta)
+    comps = scan.inventory.get("components") or []
+    mcp_n = sum(
+        1 for c in comps if isinstance(c, dict) and c.get("type") == "MCP Server Registration"
+    )
+    hook_n = sum(1 for c in comps if isinstance(c, dict) and c.get("type") == "Hook")
+    skill_n = sum(1 for c in comps if isinstance(c, dict) and c.get("type") == "Skill")
+    gated = [f for f in ordered if is_gate_finding(f)]
+    lines = [
+        f"authdiff {scan.product_version} — {mcp_n} MCP, {hook_n} hooks, {skill_n} skills",
+        f"DECISION: {decision}",
+        lead[0],
+        coverage_score_line(scan.coverage),
+    ]
+    for finding in gated[:3]:
+        path = _evidence_path(scan, finding) or finding.entry_point or ""
+        lines.append(
+            f"  [{finding.severity}] {finding.rule_id}: {finding.title}"
+            + (f" ({path})" if path else "")
+        )
+    if len(gated) > 3:
+        lines.append(f"  … +{len(gated) - 3} more gated (authdiff scan --full)")
+    lines.append("Next: authdiff lock | authdiff explain F-00N | authdiff scan --full")
+    return "\n".join(lines)
+
+
+def render_full_terminal_report(
+    scan: ScanResult,
+    *,
+    risk_delta: dict[str, Any] | None = None,
 ) -> str:
     counts = scan.inventory.get("coverage", {}).get("component_counts_by_type") or {}
     sev = scan.findings_by_severity()
@@ -204,8 +250,8 @@ def render_terminal_report(
             "",
             "RESIDUAL RISK / NEXT ACTIONS",
             "  1. Review AUTHORITY SURFACES above before install/merge/deploy.",
-            "  2. `aesa explain F-00N` for evidence, attack path, and remediation.",
-            "  3. `aesa baseline save` then gate PRs with the GitHub Action + .aesa.yml.",
+            "  2. `authdiff lock` then protect AUTHORITY.lock with CODEOWNERS.",
+            "  3. `authdiff explain F-00N` for evidence, attack path, and remediation.",
             "  4. Optional AI deep review: skills/aesa-auditor (consumes this evidence).",
             "",
             "IMPORTANT",

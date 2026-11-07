@@ -47,7 +47,7 @@ aesa validate claim path/to/claim.json
 
 ## Semantic validation
 
-JSON Schema compliance is necessary but not sufficient. `aesa validate report|graph` also runs semantic checks (orphan evidence, duplicate ids, dangling graph refs). See [`../docs/architecture/ADR-002-semantic-validation.md`](../docs/architecture/ADR-002-semantic-validation.md).
+JSON Schema compliance is necessary but not sufficient. `aesa validate report|graph` also runs semantic checks (orphan evidence, duplicate ids, dangling graph refs). See [`../docs/archive/architecture/ADR-002-semantic-validation.md`](../docs/archive/architecture/ADR-002-semantic-validation.md).
 
 ---
 

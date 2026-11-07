@@ -103,7 +103,7 @@ Extracted by `tools/aesa/security/capabilities.py` and refined during deep revie
 | `access_persistent_memory` | Can it access persistent memory? |
 | `unattended_operation` | Can it run without a human present? |
 
-Capability-first assessment is preferred over merely counting component types. See [`threat-scenarios.md`](threat-scenarios.md).
+Capability-first assessment is preferred over merely counting component types. See [`archive/threat-scenarios.md`](archive/threat-scenarios.md).
 
 ---
 

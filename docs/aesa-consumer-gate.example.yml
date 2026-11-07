@@ -1,13 +1,6 @@
-# Example consumer workflow — copy into a product repo as
-# .github/workflows/aesa-gate.yml
-#
-# This file is documentation only (not executed by this repository's CI).
-#
-# IMPORTANT: Pin an immutable AESA / authdiff release tag or commit SHA.
-# Floating `ref: main` lets scanner changes silently alter your CI gate.
-
-name: authdiff consumer gate (example)
-
+# Single install recipe for consumers (PyPI + Action).
+# Prefer this over a second kit checkout once aesa-tools is on PyPI.
+name: authdiff
 on:
   pull_request:
 
@@ -25,18 +18,17 @@ jobs:
           fetch-depth: 0
 
       - name: Install authdiff
-        run: pip install "aesa-tools==0.9.1"
+        run: pip install "aesa-tools==0.10.0"
 
       - name: authdiff Authority Diff
-        uses: roham-amd/agent-ecosystem-security-audit/.github/actions/aesa-gate@v3.6.1
+        uses: roham-amd/agent-ecosystem-security-audit/.github/actions/aesa-gate@v3.7.0
         with:
           path: .
           mode: scan
-          # Leave fail-on empty on day one (advisory). Promote to high after baseline.
           trusted-policy: "true"
           authority-diff: "true"
+          # After `authdiff lock` + CODEOWNERS: locked: "true"
+          locked: "false"
           install-tools-from: path
           annotate: true
-          # Do not set baseline: here unless the file exists on the base ref —
-          # an empty/missing baseline disables the base-ref worktree diff step.
           output-dir: aesa-out

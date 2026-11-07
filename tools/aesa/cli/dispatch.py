@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from aesa.audit import ProfileName, run_audit
 from aesa.audit_diff import diff_graphs, diff_reports
+from aesa.authority_lock import check_locked, diff_authority_locks, run_lock_command
 from aesa.authority_manifest import init_manifest, verify_manifest, write_verify_report
 from aesa.benchmark.governance import verify_dataset_integrity
 from aesa.benchmark.intake import (
@@ -20,6 +21,7 @@ from aesa.benchmark.intake import (
 from aesa.benchmark.llm_runner import _load_dataset_manifest, run_llm_benchmark
 from aesa.benchmark.report import build_evaluation_report
 from aesa.benchmark.runner import run_benchmark
+from aesa.broker import load_authority_lock
 from aesa.build import build_all, sync_schemas
 from aesa.corpus.runner import run_corpus
 from aesa.deps import outdated_report, upgrade_pins
@@ -102,6 +104,8 @@ def dispatch(args: argparse.Namespace) -> int:
             return _cmd_verify_manifest(args)
         case "init-gate":
             return _cmd_init_gate(args)
+        case "lock":
+            return _cmd_lock(args)
         case "explain":
             return _cmd_explain(args)
         case "baseline":
@@ -209,25 +213,29 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         fail_on=fail_on,
         policy=policy,
         target_policy_ignored=target_policy_ignored,
+        full_report=bool(getattr(args, "full", False)),
     )
+    if getattr(args, "locked", False):
+        lock_report, lock_code = check_locked(
+            args.path,
+            lock_path=getattr(args, "lock_file", None),
+        )
+        payload["authority_lock"] = lock_report
+        if lock_code and code == 0:
+            code = lock_code
     findings_doc = scan.to_findings_doc()
     findings_doc["suppressions"] = payload.get("suppressions") or []
     findings_doc["suppression_count"] = len(payload.get("suppressions") or [])
     findings_doc["target_policy_ignored"] = target_policy_ignored
     if getattr(args, "agent", False):
+        # Never put raw findings in ``extra`` — ``digest.update`` would overwrite
+        # the fenced ``gated`` / ``gated_findings`` lists from render_agent_digest.
         _emit_agent_digest(
             findings_doc,
             risk_delta={"summary": payload["risk_delta"]} if payload.get("risk_delta") else None,
             write_to=Path(payload["output_dir"]) / "agent-digest.json",
             extra={
-                "suppressions": payload.get("suppressions") or [],
                 "target_policy_ignored": target_policy_ignored,
-                "coverage_gaps": (findings_doc.get("coverage") or {}).get("not_verified") or [],
-                "gated": [
-                    f.to_dict() if hasattr(f, "to_dict") else f
-                    for f in scan.findings
-                    if f.finding_class in {"SECURITY_FINDING", "EXPOSURE"} and not f.suppressed
-                ],
             },
         )
         return code
@@ -242,7 +250,23 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         print("Target .aesa.yml ignored (pass --trust-target-policy or --policy to apply)")
     # Always surface suppression counts — including agent-adjacent operators.
     print(f"Suppressions applied: {len(payload.get('suppressions') or [])}")
+    if payload.get("authority_lock"):
+        lock_rep = payload["authority_lock"]
+        print(f"AUTHORITY.lock: {lock_rep.get('verdict')}")
+        for line in lock_rep.get("lines") or []:
+            print(f"  {line}")
     print(f"Artifacts: {payload['output_dir']}")
+    return code
+
+
+def _cmd_lock(args: argparse.Namespace) -> int:
+    text, code = run_lock_command(
+        args.path,
+        check=bool(getattr(args, "check", False)),
+        update=bool(getattr(args, "update", False)),
+        lock_path=getattr(args, "lock_file", None),
+    )
+    print(text)
     return code
 
 
@@ -299,7 +323,19 @@ def _emit_agent_digest(
 ) -> int:
     digest = render_agent_digest(findings_doc, risk_delta=risk_delta)
     if extra:
-        digest.update(extra)
+        # Protect fenced / decision fields from accidental overwrite.
+        protected = {
+            "gated",
+            "gated_findings",
+            "decision",
+            "lead",
+            "safety",
+            "format",
+        }
+        for key, value in extra.items():
+            if key in protected:
+                continue
+            digest[key] = value
     if write_to is not None:
         write_json(write_to, digest)
     print_json(digest)
@@ -330,12 +366,13 @@ def _cmd_verify_manifest(args: argparse.Namespace) -> int:
     return code
 
 
-def _init_gate_templates() -> tuple[str, str]:
-    """Load starter policy + workflow templates shipped with the package."""
+def _init_gate_templates() -> tuple[str, str, str]:
+    """Load starter policy + workflow + CODEOWNERS templates."""
     template_dir = Path(__file__).resolve().parents[1] / "templates"
     policy = (template_dir / "aesa.yml").read_text(encoding="utf-8")
     workflow = (template_dir / "aesa-gate.yml").read_text(encoding="utf-8")
-    return policy, workflow
+    codeowners = (template_dir / "CODEOWNERS.snippet").read_text(encoding="utf-8")
+    return policy, workflow, codeowners
 
 
 def _cmd_init_gate(args: argparse.Namespace) -> int:
@@ -344,7 +381,8 @@ def _cmd_init_gate(args: argparse.Namespace) -> int:
     policy_path = root / ".aesa.yml"
     workflow_dir = root / ".github" / "workflows"
     workflow_path = workflow_dir / "aesa-gate.yml"
-    policy_body, workflow_body = _init_gate_templates()
+    codeowners_path = root / ".github" / "CODEOWNERS"
+    policy_body, workflow_body, codeowners_body = _init_gate_templates()
     wrote: list[str] = []
     if policy_path.exists() and not args.force:
         print(f"Exists (use --force): {policy_path}")
@@ -357,10 +395,18 @@ def _cmd_init_gate(args: argparse.Namespace) -> int:
         workflow_dir.mkdir(parents=True, exist_ok=True)
         workflow_path.write_text(workflow_body, encoding="utf-8")
         wrote.append(str(workflow_path))
+    if codeowners_path.exists() and not args.force:
+        print(f"Exists (use --force): {codeowners_path}")
+    else:
+        codeowners_path.parent.mkdir(parents=True, exist_ok=True)
+        codeowners_path.write_text(codeowners_body, encoding="utf-8")
+        wrote.append(str(codeowners_path))
     if wrote:
         print("Wrote:")
         for path in wrote:
             print(f"  {path}")
+    print("Next: authdiff lock && git add AUTHORITY.lock")
+    print('Replace @YOUR_TEAM in .github/CODEOWNERS, then set locked: "true" in the workflow.')
     print(
         "Pin authdiff / aesa-tools to an immutable tag or PyPI version before relying on the gate."
     )
@@ -548,6 +594,21 @@ def _cmd_diff(args: argparse.Namespace) -> int:
                 scan = ScanResult.from_findings_doc(findings)
             print_json(diff_against_baseline(scan, load_baseline(args.baseline)))
             return 0
+        case "lock":
+            delta = diff_authority_locks(
+                load_authority_lock(args.base),
+                load_authority_lock(args.head),
+            )
+            if getattr(args, "agent", False):
+                print_json(delta)
+            else:
+                if not delta["lines"]:
+                    print("No authority lock changes.")
+                else:
+                    print("\n".join(delta["lines"]))
+                if delta["summary"].get("policy_changed"):
+                    print("~ policy_hash changed")
+            return 1 if delta["summary"]["authority_changed"] else 0
         case _:
             return 2
 

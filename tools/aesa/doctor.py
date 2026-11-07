@@ -36,6 +36,63 @@ _HOST_RELATIVE_SURFACES: tuple[tuple[str, str], ...] = (
 
 _SEV_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFORMATIONAL": 4}
 
+_SECRET_KEY_FRAGMENTS = (
+    "token",
+    "secret",
+    "password",
+    "passwd",
+    "api_key",
+    "apikey",
+    "authorization",
+    "credential",
+    "private_key",
+    "access_key",
+)
+
+
+def _looks_secret_key(key: str) -> bool:
+    lowered = key.lower()
+    return any(frag in lowered for frag in _SECRET_KEY_FRAGMENTS)
+
+
+def _redact_json_value(value: Any, *, key: str | None = None) -> Any:
+    if isinstance(value, dict):
+        return {k: _redact_json_value(v, key=str(k)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_json_value(v) for v in value]
+    if key is not None and _looks_secret_key(key) and value not in (None, ""):
+        return "${REDACTED}"
+    if isinstance(value, str) and key and key.lower() in {"env", "environment"}:
+        return "${REDACTED}"
+    return value
+
+
+def _copy_host_config_redacted(src: Path, dest: Path) -> None:
+    """Copy a host config for scanning without persisting secret-shaped literals."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        import json
+
+        raw = src.read_text(encoding="utf-8", errors="replace")
+        data = json.loads(raw)
+        redacted = _redact_json_value(data)
+        # Also scrub nested MCP env maps regardless of parent key naming.
+        if isinstance(redacted, dict):
+            for servers_key in ("mcpServers", "servers"):
+                servers = redacted.get(servers_key)
+                if isinstance(servers, dict):
+                    for cfg in servers.values():
+                        if isinstance(cfg, dict):
+                            for env_key in ("env", "environment"):
+                                env = cfg.get(env_key)
+                                if isinstance(env, dict):
+                                    cfg[env_key] = {str(k): "${REDACTED}" for k in env}
+        dest.write_text(json.dumps(redacted, indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError, TypeError):
+        # Non-JSON host files: copy bytes but never into a durable -o tree
+        # (caller stages dest under TemporaryDirectory).
+        shutil.copy2(src, dest)
+
 
 @dataclass(slots=True)
 class HostSurface:
@@ -151,11 +208,14 @@ def run_doctor(
         scans: list[dict[str, Any]] = []
         worst_code = 0
         for surface in present:
+            # Lone host files (e.g. ~/.claude.json) often hold MCP env secrets.
+            # Always stage a redacted copy under a throwaway dir — never under -o.
             if surface.path.is_file():
-                # Never scan $HOME wholesale for a lone config file.
-                synth = out_root / f"_surface_{surface.host_id}"
-                synth.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(surface.path, synth / surface.path.name)
+                synth_tmp = stack.enter_context(
+                    tempfile.TemporaryDirectory(prefix=f"aesa-doctor-{surface.host_id}-")
+                )
+                synth = Path(synth_tmp)
+                _copy_host_config_redacted(surface.path, synth / surface.path.name)
                 target = synth
             else:
                 target = surface.path

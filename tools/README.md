@@ -8,7 +8,7 @@ report validation, corpus, and AgentSecBench harness.
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.8.1** · Product: AESA Guard **3.6.1**
+Package: `aesa-tools` **0.10.0** · Product: authdiff **3.7.0**
 
 ---
 
@@ -35,10 +35,12 @@ Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
 **User tool (recommended):**
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools
-aesa doctor
-aesa vet github.com/org/some-skill
-aesa scan /path/to/target-repo
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools
+# or: pip install aesa-tools==0.10.0
+authdiff doctor
+authdiff open github.com/org/some-skill
+authdiff lock
+authdiff scan /path/to/target-repo
 ```
 
 Details / PyPI: [`../docs/INSTALL.md`](../docs/INSTALL.md).
@@ -90,7 +92,7 @@ TARGET=/path/to/repo docker compose run --rm aesa \
   scan /work -o /work/aesa-out
 ```
 
-Operator guide: [`../docs/docker-agent-audit.md`](../docs/docker-agent-audit.md).
+Operator guide: [`../docs/archive/docker-agent-audit.md`](../docs/archive/docker-agent-audit.md).
 
 ### Pre-commit (optional)
 
@@ -108,7 +110,7 @@ uv run --locked aesa lint --check-format
 uv run --locked mypy aesa
 uv run --locked pip-audit
 uv run --locked pytest -q ../tests
-uv run --locked aesa build all
+uv run --locked authdiff-dev build all
 uv run --locked aesa corpus run
 uv run --locked aesa benchmark run
 ```
@@ -145,7 +147,7 @@ uv run aesa export sarif REPORT.json
 uv run aesa verify digest|manifest …
 
 # Engineering
-uv run aesa build all|schemas|prompts [--write]
+uv run authdiff-dev build all|schemas|prompts [--write]
 uv run aesa corpus run
 uv run aesa benchmark run
 uv run aesa deps outdated|upgrade
@@ -160,7 +162,8 @@ uv run aesa lint [--fix] [--format] [--check-format]
 | --- | --- |
 | `cli/` | argparse construction + command dispatch |
 | `security/` | Guard engine: capabilities, rules, scan, baseline, report |
-| `security/rules.py` | Deterministic rules AESA-RULE-001…017 (pack 1.3) |
+| `security/rules.py` | Deterministic rules AESA-RULE-001…019 (pack 1.4) |
+| `authority_lock.py` | AUTHORITY.lock v2 write / check / diff |
 | `security/scan.py` | Artifact writer + policy fail-on + PR comment |
 | `security/decision.py` | BLOCK / REVIEW / PASS-WITH-COVERAGE-GAPS |
 | `harden.py` / `authority_manifest.py` | Dry-run patches + AUTHORITY.yml |
@@ -206,6 +209,6 @@ Incomplete coverage must never be treated as a clean security result.
 ## Related product docs
 
 - [`../docs/AESA-GATE.md`](../docs/AESA-GATE.md)
-- [`../docs/AESA-3.0-PRODUCT-SPEC.md`](../docs/AESA-3.0-PRODUCT-SPEC.md)
+- [`../docs/archive/AESA-3.0-PRODUCT-SPEC.md`](../docs/archive/AESA-3.0-PRODUCT-SPEC.md)
 - [`../docs/EVIDENCE-MODEL.md`](../docs/EVIDENCE-MODEL.md)
-- [`../docs/toolchain-threat-model.md`](../docs/toolchain-threat-model.md)
+- [`../docs/archive/toolchain-threat-model.md`](../docs/archive/toolchain-threat-model.md)

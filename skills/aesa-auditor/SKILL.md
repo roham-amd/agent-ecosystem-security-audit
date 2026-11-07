@@ -23,11 +23,13 @@ The `aesa` CLI name is a compatibility alias.
 ## Run
 
 ```bash
-uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools" authdiff
+uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools" authdiff
+# Prefer: pip install aesa-tools==0.10.0  (or pin a commit SHA / wheel hash)
 authdiff doctor
+authdiff lock <TARGET>
 authdiff open <url-or-path> --agent -o <OUT>/aesa-out
 authdiff scan <TARGET> -o <OUT>/aesa-out --agent
-authdiff delta --baseline <OUT>/baseline.json -o <OUT>/aesa-out --agent
+authdiff check --locked <TARGET> -o <OUT>/aesa-out --agent
 authdiff explain F-001 -o <OUT>/aesa-out --agent
 authdiff fix --findings <OUT>/aesa-out/findings.json
 ```

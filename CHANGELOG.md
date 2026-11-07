@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `archive/methodology/`).
 
+## [3.7.0] — 2026-11-07
+
+### Added
+
+- **AUTHORITY.lock (v2):** `authdiff lock` / `lock --check` / `check --locked` /
+  `diff lock` — record-level authority identity for CODEOWNERS review.
+- **Action v2:** `locked` / `lock-file` inputs; sticky PR comment updates by marker
+  (no `--edit-last`); trusted-policy blindfold when base has no `.aesa.yml`.
+- **`authdiff ci init`:** writes `.github/CODEOWNERS` snippet protecting `AUTHORITY.lock`.
+- **`authdiff-dev`:** maintainer commands (`build`, `lint`, `corpus`, …) moved off the
+  default product CLI.
+- **Short default report** (≤15 lines); `--full` and `scan-summary-full.txt` for the long form.
+- **Atlas `precision.json`** + CI-ready gate (enforces demotions once labeled N≥100).
+
+### Fixed
+
+- Per-server MCP digests (sibling edits no longer re-flag legacy findings).
+- Fail-closed exit codes / `vet` share `compute_decision` (unparsed configs).
+- `--agent` digest no longer overwrites fenced `gated`; suppression text fenced.
+- `doctor -o` no longer persists raw `~/.claude.json` secrets.
+
+### Changed
+
+- Product **3.7.0** / tooling **0.10.0**. Single CI install recipe (PyPI + Action).
+- Docs trimmed to eight product pages; remainder under `docs/archive/`.
+- Publish / Dependabot / skill pins use `authdiff-dev` and `v3.7.0`.
+- CLI reference and Guard scan docs aligned to lock-first product path.
+
 ## [3.6.1] — 2026-11-07
 
 ### Security
@@ -309,7 +337,7 @@ The included audit procedure version remains independently numbered (procedure *
 ### Added
 
 - Docker image + Compose (`Dockerfile`, `docker-compose.yml`) on digest-pinned `python:3.15.2-slim-trixie` and `ghcr.io/astral-sh/uv`.
-- Operator guide [`docs/docker-agent-audit.md`](docs/docker-agent-audit.md) — Docker preflight + AI agent deep review (Cursor, Claude Code, Codex, Antigravity, …).
+- Operator guide [`docs/archive/docker-agent-audit.md`](docs/archive/docker-agent-audit.md) — Docker preflight + AI agent deep review (Cursor, Claude Code, Codex, Antigravity, …).
 - Dev quality toolchain: mypy, pytest-cov, pip-audit; optional Ruff hooks via `.pre-commit-config.yaml` (`uvx pre-commit`).
 - Dependabot `docker` ecosystem for `tag@digest` base updates; Actions remain SHA-pinned.
 - `tools/.python-version` (`3.15`) and committed `tools/uv.lock`.
@@ -332,7 +360,7 @@ The included audit procedure version remains independently numbered (procedure *
 - `aesa deps outdated` / `aesa deps upgrade` — ncu-style PyPI pin check and bump for constraints / lock / `pyproject.toml`.
 - `aesa lint` — Ruff lint/format gate for `tools/aesa` + `tests`.
 - Dependabot (`.github/dependabot.yml`): weekly grouped Python + `github-actions` updates.
-- **AESA 3.0 product specification** ([`docs/AESA-3.0-PRODUCT-SPEC.md`](docs/AESA-3.0-PRODUCT-SPEC.md)): CLI contract, adapter architecture, evidence rules, 30-day backlog status.
+- **AESA 3.0 product specification** ([`docs/archive/AESA-3.0-PRODUCT-SPEC.md`](docs/archive/AESA-3.0-PRODUCT-SPEC.md)): CLI contract, adapter architecture, evidence rules, 30-day backlog status.
 - `aesa audit PATH --profile quick|standard|deployment` — unified local assessment entry (inventory + handoff package + profile metadata).
 - Inventory adapter `github_workflows` for `.github/workflows` authority surfaces.
 - Consumer composite Action [`.github/actions/aesa-gate`](.github/actions/aesa-gate) + example workflow ([`docs/aesa-consumer-gate.example.yml`](docs/aesa-consumer-gate.example.yml)).

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from aesa.security.decision import compute_decision
 from aesa.security.gating import is_gate_finding
 from aesa.security.scan import run_scan
 
@@ -121,16 +122,17 @@ def _safe_clone(url: str, dest: Path) -> None:
 
 
 def _verdict(scan: Any) -> str:
-    gated = [f for f in scan.findings if is_gate_finding(f) and not getattr(f, "suppressed", False)]
-    critical = [f for f in gated if f.severity == "CRITICAL"]
-    high = [f for f in gated if f.severity == "HIGH"]
-    if critical:
+    """Map shared gate decision onto vet labels (never quiet-accept unparsed configs)."""
+    decision = compute_decision(
+        scan.findings,
+        coverage=getattr(scan, "coverage", None),
+    )
+    if decision == "BLOCK":
         return "REJECT"
-    if high:
+    if decision == "REVIEW":
         return "REVIEW"
-    if gated:
-        return "REVIEW"
-    return "ACCEPT_WITH_COVERAGE_GAPS"
+    # Prefer an honest label: no gated findings in scope is not "ACCEPT".
+    return "NO_FINDINGS_IN_SCOPE"
 
 
 def render_vet_report(
@@ -220,9 +222,10 @@ def run_vet(
             scan=scan,
             coverage_note=coverage_note,
         )
-        # Exit: 0 accept-ish, 1 review/reject gated, 2 tooling failure
+        # Exit: 0 no gated findings in scope, 1 review/reject, 2 tooling failure.
+        # ``code`` from run_scan already fails closed on unparsed configs.
         verdict = _verdict(scan)
-        exit_code = 0 if verdict == "ACCEPT_WITH_COVERAGE_GAPS" else 1
+        exit_code = 0 if verdict == "NO_FINDINGS_IN_SCOPE" else 1
         if code and exit_code == 0:
             exit_code = code
         return text, exit_code

@@ -305,6 +305,27 @@ def discover_mcp_configs(
                 )
             ):
                 hints.append("permission_bypass_flag")
+            env_keys: list[str] = []
+            if isinstance(env, dict):
+                env_keys = sorted(str(k) for k in env)
+            elif isinstance(env, list):
+                env_keys = sorted(str(item) for item in env if isinstance(item, str))
+            # Derive a coarse host id from path so copying the same server under
+            # another host tree is a distinct authority record.
+            host_id = ""
+            lowered_rel = rel.lower()
+            for marker, hid in (
+                (".cursor/", "cursor"),
+                (".claude/", "claude-code"),
+                (".vscode/", "vscode"),
+                (".codex/", "codex"),
+                (".gemini/", "gemini"),
+                (".windsurf/", "windsurf"),
+                ("/.zed/", "zed"),
+            ):
+                if marker in f"/{lowered_rel}":
+                    host_id = hid
+                    break
             results.append(
                 {
                     "name": name,
@@ -318,6 +339,8 @@ def discover_mcp_configs(
                     "command": cfg.get("command"),
                     "args": list(args) if isinstance(args, list) else [],
                     "url": cfg.get("url"),
+                    "env_keys": env_keys,
+                    "host_id": host_id,
                     "priority_hints": hints,
                 }
             )

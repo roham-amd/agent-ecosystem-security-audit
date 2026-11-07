@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from aesa.security.models import Evidence, EvidenceClass, VerificationStatus
 from aesa.supply_chain.digest import sha256_file
+
+# Multi-entry config types whose authority unit is a named record inside a file,
+# not the whole file. Whole-file hashing makes every sibling reappear as "new"
+# when one record changes.
+_RECORD_DIGEST_TYPES = frozenset({"MCP Server Registration"})
 
 
 @dataclass(slots=True)
@@ -47,7 +54,33 @@ def locate_needle_lines(text: str, needle: str | None) -> tuple[int | None, int 
     return start_line, end_line
 
 
+def _canonical_sha256(material: Any) -> str:
+    blob = json.dumps(material, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def record_content_digest(component: dict[str, Any]) -> str | None:
+    """Per-record digest for multi-entry authority surfaces (e.g. one MCP server)."""
+    ctype = str(component.get("type") or "")
+    if ctype not in _RECORD_DIGEST_TYPES:
+        return None
+    material = {
+        "name": str(component.get("name") or ""),
+        "command": component.get("command"),
+        "args": list(component.get("args") or []),
+        "url": component.get("url"),
+        "declared_transport": component.get("declared_transport"),
+        # Keys only — never hash secret values into identity material.
+        "env_keys": list(component.get("env_keys") or []),
+    }
+    return f"sha256:{_canonical_sha256(material)}"
+
+
 def component_content_digest(root: Path | None, component: dict[str, Any]) -> str | None:
+    """Prefer per-record digest; fall back to whole-file hash for single-entry types."""
+    record = record_content_digest(component)
+    if record:
+        return record
     path = resolve_source_file(root, component.get("repository_path"))
     if path is None:
         return None

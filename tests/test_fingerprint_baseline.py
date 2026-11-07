@@ -56,14 +56,38 @@ def test_fingerprint_stable_across_mcp_move(tmp_path: Path):
     assert mcp
     fp1 = mcp[0]["fingerprint"]
 
+    # Move within the same host tree — host_id stays `cursor`, record digest unchanged.
     src = root / ".cursor" / "mcp.json"
-    dst = root / "config" / "mcp.json"
+    dst = root / ".cursor" / "nested" / "mcp.json"
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(src), str(dst))
     scan2 = run_security_scan(root)
     mcp2 = [c for c in scan2.inventory["components"] if c["type"] == "MCP Server Registration"]
     assert mcp2
     assert mcp2[0]["fingerprint"] == fp1
+
+
+def test_mcp_copy_to_other_host_is_new_fingerprint(tmp_path: Path):
+    root = tmp_path / "repo"
+    _write_mcp(root, ".cursor/mcp.json")
+    scan1 = run_security_scan(root)
+    fp_cursor = next(
+        c["fingerprint"]
+        for c in scan1.inventory["components"]
+        if c["type"] == "MCP Server Registration"
+    )
+    body = (root / ".cursor" / "mcp.json").read_text(encoding="utf-8")
+    claude = root / ".claude"
+    claude.mkdir(parents=True, exist_ok=True)
+    (claude / "mcp.json").write_text(body, encoding="utf-8")
+    scan2 = run_security_scan(root)
+    fps = {
+        (c.get("host_id"), c["fingerprint"])
+        for c in scan2.inventory["components"]
+        if c["type"] == "MCP Server Registration"
+    }
+    assert ("cursor", fp_cursor) in fps
+    assert any(host == "claude-code" and fp != fp_cursor for host, fp in fps)
 
 
 def test_content_change_changes_fingerprint(tmp_path: Path):

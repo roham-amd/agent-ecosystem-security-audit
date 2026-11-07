@@ -34,34 +34,35 @@ long report.
 
 ```bash
 # Requires Python ≥3.12. Prefer PyPI when published; git tag works today:
-uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools" authdiff
+uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.7.0#subdirectory=tools" authdiff
+# pip install aesa-tools==0.10.0
 
-authdiff                  # alias: check / scan cwd
+authdiff                  # ≤15-line authority map (alias: check / scan)
+authdiff lock             # write AUTHORITY.lock
 authdiff open github.com/org/some-skill
-authdiff ci init          # advisory .aesa.yml + workflow
-authdiff delta --baseline .aesa/baseline.json
+authdiff ci init          # .aesa.yml + workflow + CODEOWNERS
+authdiff check --locked   # fail on lock drift
 authdiff fix --findings aesa-out/findings.json   # dry-run patches
 ```
 
 Artifacts default to **`./aesa-out`**. Target `.aesa.yml` suppressions are **ignored**
 unless you pass `--policy` or `--trust-target-policy`. Use `--agent` for a compact
-fenced JSON digest (`decision`, `gated`, `suppressions`, `coverage_gaps`).
+fenced JSON digest. Use `--full` for the long report.
 
 | Command | Purpose |
 | --- | --- |
-| `authdiff` / `check` / `scan` | Repo authority scan → findings, SARIF, snapshot, `pr-comment.md` |
+| `authdiff lock` | Write / update `AUTHORITY.lock` |
+| `authdiff` / `check` / `scan` | Repo authority scan (add `--locked`) |
 | `authdiff doctor` | Host authority map (Cursor / Claude / Codex / …) |
 | `authdiff open` / `vet` | Pre-install verdict (safe shallow clone; hooks/LFS off) |
-| `authdiff delta --baseline` | New-only authority gate vs a prior baseline |
+| `authdiff diff lock A B` | Record-level authority lock diff |
 | `authdiff fix` / `harden` | Dry-run least-privilege patch templates |
-| `authdiff ci init` / `init` | Write advisory `.aesa.yml` + starter workflow |
+| `authdiff ci init` / `init` | `.aesa.yml` + workflow + CODEOWNERS |
 | `authdiff explain F-001` | Explain one finding from a prior scan |
-| `authdiff run -- …` | Env-scrub launcher MVP (**not a sandbox**) |
-| `authdiff snapshot` | MCP `tools/list` snapshot (opt-in; **not sandboxed**) |
+| `authdiff-dev` | Maintainer tools (`build`, `lint`, `corpus`, …) |
 
 Docs: [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md) ·
-[`docs/GUARD-SCAN.md`](docs/GUARD-SCAN.md) ·
-[`docs/GUARD-3.6-BACKLOG.md`](docs/GUARD-3.6-BACKLOG.md) ·
+[`docs/AESA-GATE.md`](docs/AESA-GATE.md) ·
 demo [`examples/demo-vulnerable/`](examples/demo-vulnerable/)
 
 Archived methodology kit: [`archive/methodology/`](archive/methodology/)
@@ -71,25 +72,26 @@ Archived methodology kit: [`archive/methodology/`](archive/methodology/)
 
 ## CI gate (tamper-resistant)
 
+Single recipe (PyPI + Action). Full example:
+[`docs/aesa-consumer-gate.example.yml`](docs/aesa-consumer-gate.example.yml).
+
 ```yaml
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
-- uses: actions/checkout@v4
-  with:
-    repository: roham-amd/agent-ecosystem-security-audit
-    path: .aesa-kit
-    ref: v3.6.1   # pin tag or SHA — never float on main
-- uses: ./.aesa-kit/.github/actions/aesa-gate
+- run: pip install "aesa-tools==0.10.0"
+- uses: roham-amd/agent-ecosystem-security-audit/.github/actions/aesa-gate@v3.7.0
   with:
     path: .
     trusted-policy: "true"
     authority-diff: "true"
-    install-tools-from: .aesa-kit/tools
+    locked: "false"   # set true after committing AUTHORITY.lock
+    install-tools-from: path
 ```
 
 With `authority-diff=true`, the Action scans the PR **base** ref and diffs it
 against **head**. With `trusted-policy=true`, policy loads from the base ref.
+With `locked=true`, AUTHORITY.lock drift fails the check (Action v2).
 
 ---
 

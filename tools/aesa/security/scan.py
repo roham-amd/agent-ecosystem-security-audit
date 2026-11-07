@@ -31,6 +31,7 @@ def write_scan_artifacts(
     authority_delta: dict[str, Any] | None = None,
     suppressions: list[dict[str, str]] | None = None,
     target_policy_ignored: bool = False,
+    full_report: bool = False,
 ) -> dict[str, Any]:
     """Persist inventory, findings, reports, SARIF, and Authority Diff PR comment."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -39,7 +40,8 @@ def write_scan_artifacts(
         findings_doc["suppressions"] = suppressions
         findings_doc["suppression_count"] = len(suppressions)
     findings_doc["target_policy_ignored"] = target_policy_ignored
-    summary = render_terminal_report(scan, risk_delta=risk_delta)
+    summary = render_terminal_report(scan, risk_delta=risk_delta, full=full_report)
+    full_summary = render_terminal_report(scan, risk_delta=risk_delta, full=True)
     write_json(output_dir / "inventory.json", scan.inventory)
     write_json(output_dir / "ecosystem-graph.json", scan.graph)
     write_json(output_dir / "findings.json", findings_doc)
@@ -48,8 +50,9 @@ def write_scan_artifacts(
         write_json(output_dir / "authority-snapshot.json", authority_snapshot)
     if authority_delta is not None:
         write_json(output_dir / "authority-delta.json", authority_delta)
-    write_text(output_dir / "scan-report.md", render_markdown_summary(scan, terminal=summary))
+    write_text(output_dir / "scan-report.md", render_markdown_summary(scan, terminal=full_summary))
     write_text(output_dir / "scan-summary.txt", summary)
+    write_text(output_dir / "scan-summary-full.txt", full_summary)
     write_json(output_dir / "findings.sarif.json", findings_doc_to_sarif(findings_doc))
     comment = render_authority_diff_comment(
         findings_doc,
@@ -125,6 +128,7 @@ def run_scan(
     fail_on: str | None = None,
     policy: AesaPolicy | None = None,
     target_policy_ignored: bool = False,
+    full_report: bool = False,
 ) -> tuple[ScanResult, dict[str, Any], int]:
     """Run scan; return (scan, payload, exit_code).
 
@@ -163,6 +167,7 @@ def run_scan(
         authority_delta=authority_delta,
         suppressions=suppressed,
         target_policy_ignored=target_policy_ignored,
+        full_report=full_report,
     )
     if risk_delta_summary is not None:
         payload["risk_delta"] = risk_delta_summary
@@ -188,5 +193,6 @@ def run_scan(
         fail_on,
         findings=scan.findings,
         risk_delta_summary=risk_delta_summary,
+        coverage=scan.coverage if isinstance(getattr(scan, "coverage", None), dict) else None,
     )
     return scan, payload, exit_code

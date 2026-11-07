@@ -6,8 +6,36 @@
   "additionalProperties": false,
   "required": ["version"],
   "properties": {
-    "version": { "type": "integer", "const": 1 },
+    "version": { "type": "integer", "minimum": 1, "maximum": 2 },
     "product": { "type": "string", "default": "authdiff" },
+    "product_version": { "type": "string" },
+    "repository": { "type": "string" },
+    "audited_commit": { "type": ["string", "null"] },
+    "policy_hash": { "type": ["string", "null"] },
+    "lock_hash": { "type": "string" },
+    "records": {
+      "type": "array",
+      "description": "Sorted authority records (host/kind/name@path)",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "fingerprint"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "host": { "type": "string" },
+          "kind": { "type": "string" },
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "digest": { "type": "string" },
+          "fingerprint": { "type": "string" },
+          "pin_state": { "type": "string" },
+          "approval_posture": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "destinations": { "type": "array", "items": { "type": "string" } },
+          "env_keys": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
     "mcp_tools": {
       "type": "object",
       "description": "tool name → description sha256 digest (sha256:…)",
@@ -20,6 +48,9 @@
         "properties": {
           "command": { "type": "string" },
           "args_digest": { "type": "string" },
+          "path": { "type": "string" },
+          "digest": { "type": "string" },
+          "pin_state": { "type": "string" },
           "allowed": { "type": "boolean" }
         }
       }

@@ -20,8 +20,11 @@ def test_scan_emits_findings_and_sarif(tmp_path: Path):
     assert (out / "findings.sarif.json").is_file()
     assert (out / "scan-summary.txt").is_file()
     assert "authdiff" in payload["summary"]
-    assert "DECISION SUMMARY" in payload["summary"]
-    assert "AUTHORITY SURFACES" in payload["summary"]
+    assert "DECISION:" in payload["summary"]
+    # Long form always written beside the short default summary.
+    full = (out / "scan-summary-full.txt").read_text(encoding="utf-8")
+    assert "DECISION SUMMARY" in full
+    assert "AUTHORITY SURFACES" in full
 
 
 def test_scan_mcp_broad_args_is_security_finding(tmp_path: Path):

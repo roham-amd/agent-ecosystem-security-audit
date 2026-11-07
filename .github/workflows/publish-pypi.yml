@@ -35,7 +35,7 @@ jobs:
           python-version: "3.12.16"
 
       - name: Verify version metadata
-        run: uv run --directory tools --locked aesa build all
+        run: uv run --directory tools --locked authdiff-dev build all
 
       - name: Build package
         working-directory: tools

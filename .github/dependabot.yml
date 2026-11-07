@@ -11,7 +11,7 @@
 # After merging Dependabot PRs, prefer:
 #   uv add <pkg> / uv lock --upgrade
 #   uv sync --locked
-#   aesa build all
+#   authdiff-dev build all
 #   docker compose build   # after Docker base bumps
 # Security updates ignore cooldown and open independently of the version schedule.
 

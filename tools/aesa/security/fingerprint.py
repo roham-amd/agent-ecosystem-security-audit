@@ -10,19 +10,25 @@ def component_fingerprint(component: dict[str, Any]) -> str:
     """Return a short fingerprint preferring content digest over path.
 
     Identity priority:
-    1. type + adapter + content_digest (stable across renames/moves of identical bytes)
-    2. type + adapter + name + repository_path (fallback when digest unavailable)
+    1. type + adapter + host + content_digest (stable across renames/moves of identical
+       record bytes; host distinguishes the same config dropped under another host tree)
+    2. type + adapter + host + name + repository_path (fallback when digest unavailable)
 
-    Identical content at two paths shares a fingerprint (content clones). Path is an
-    attribute tracked separately in baselines, not part of digest-backed identity.
+    For multi-entry files (MCP), ``content_digest`` is a per-record hash so sibling
+    servers do not share identity. Identical records at two paths still share a
+    fingerprint when host is equal (content clones); path is tracked separately.
     """
     ctype = str(component.get("type") or "").strip()
     adapter = str(component.get("adapter") or "").strip()
     digest = str(component.get("content_digest") or "").strip()
     name = str(component.get("name") or "").strip().lower()
     path = str(component.get("repository_path") or "").strip().replace("\\", "/")
+    host = str(component.get("host_id") or "").strip().lower()
 
-    material = f"{ctype}|{adapter}|{digest}" if digest else f"{ctype}|{adapter}|{name}|{path}"
+    if digest:
+        material = f"{ctype}|{adapter}|{host}|{digest}"
+    else:
+        material = f"{ctype}|{adapter}|{host}|{name}|{path}"
 
     return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
 

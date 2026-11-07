@@ -28,7 +28,7 @@ jobs:
         run: uv sync --locked
 
       - name: Lint (Ruff)
-        run: uv run --locked aesa lint --check-format
+        run: uv run --locked authdiff-dev lint --check-format
 
       - name: Type check (mypy)
         run: uv run --locked mypy aesa
@@ -38,11 +38,11 @@ jobs:
 
       - name: Build and consistency checks
         working-directory: .
-        run: uv run --directory tools --locked aesa build all
+        run: uv run --directory tools --locked authdiff-dev build all
 
       - name: Corpus harness
         working-directory: .
-        run: uv run --directory tools --locked aesa corpus run
+        run: uv run --directory tools --locked authdiff-dev corpus run
 
       - name: Pytest
         run: uv run --locked pytest -q ../tests

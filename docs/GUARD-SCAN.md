@@ -1,24 +1,34 @@
 # authdiff scan — operator guide
 
-This document describes the Guard scan path current through **3.6.1**: deterministic
-discovery plus evidence-backed security observations via `aesa scan`, with explicit
-capability / exposure / finding separation. Default artifacts land in cwd
-`./aesa-out` (not inside the target tree). Companion commands: `aesa doctor`
-(host map) and `aesa vet` (pre-install verdict).
+Guard scan path for **3.7.0**: deterministic discovery plus evidence-backed
+observations via `authdiff scan` / `check`, with capability / exposure / finding
+separation. Default terminal output is ≤15 lines (`--full` for the long report).
+Artifacts land in cwd `./aesa-out` (not inside the target tree).
 
-Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md), [`POLICY.md`](POLICY.md).
+Companion commands: `authdiff doctor`, `authdiff open` / `vet`, and
+`authdiff lock` (committed authority lockfile).
+
+Companion docs: [`CLI-REFERENCE.md`](CLI-REFERENCE.md), [`SECURITY-RULES.md`](SECURITY-RULES.md), [`EVIDENCE-MODEL.md`](EVIDENCE-MODEL.md), [`POLICY.md`](POLICY.md), [`AESA-GATE.md`](AESA-GATE.md).
 
 ---
 
 ## What Guard scan is
 
-`aesa scan` answers, for a local repository tree:
+`authdiff scan` answers, for a local repository tree:
 
 1. What agent-ecosystem components exist?
 2. What security-relevant **capabilities** do they appear to have?
 3. Which **deterministic rules** fire, with file evidence?
 4. What remains **NOT VERIFIED** (coverage gaps)?
-5. What changed since a saved **baseline** (optional)?
+5. What changed vs **`AUTHORITY.lock`** (`--locked`) or a finding **baseline** (optional)?
+
+### Lock vs baseline vs AUTHORITY.yml
+
+| Artifact | Role |
+| --- | --- |
+| `AUTHORITY.lock` | **Product source of truth** for “what authority is approved”. CODEOWNERS-reviewed. |
+| `baseline.json` | Finding/fingerprint risk delta for PR Authority Diff comments. |
+| `AUTHORITY.yml` | Experimental declared-vs-observed manifest (`init-manifest`). |
 
 It does **not**:
 
@@ -78,7 +88,7 @@ TARGET=/path/to/target-repo docker compose run --rm aesa \
 
 1. **Bounded inventory** — adapters walk the tree with file/depth/byte limits; refuse symlink escape; emit `inventory.json` + coverage matrix; attach content digests and fingerprints.
 2. **Capability extraction** — map hints/types to capability kinds with explicit `origin` (`DECLARED` / `POTENTIAL` / `TYPE_DEFAULT`; never claim effective host permissions from type defaults alone).
-3. **Rule engine** — apply versioned rules `AESA-RULE-001`…`010` classifying each hit as `CAPABILITY`, `EXPOSURE`, or `SECURITY_FINDING` (see [`SECURITY-RULES.md`](SECURITY-RULES.md)).
+3. **Rule engine** — apply versioned rules `AESA-RULE-001`…`019` classifying each hit as `CAPABILITY`, `EXPOSURE`, or `SECURITY_FINDING` (see [`SECURITY-RULES.md`](SECURITY-RULES.md)).
 4. **Evidence registry** — each finding references evidence with path, optional line span, content digest, and audited commit when known.
 5. **Reporting** — authority snapshot + Markdown + JSON + SARIF; `aesa explain` for one finding.
 6. **Optional baseline delta** — fingerprint-aware comparison; CI `--fail-on` ignores pure capability observations.

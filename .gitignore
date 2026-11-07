@@ -25,10 +25,12 @@ service-account*.json
 
 # Local audit outputs (keep outside target repos; also ignore if created locally)
 aesa-out/
+aesa-out-*/
 aesa-out-smoke/
 aesa-out-test/
 aesa-out-demo/
 aesa-out-sbom/
+aesa-out-probe/
 signatures/
 docs/atlas/ledger/runs/
 docs/atlas/ledger/index.json
