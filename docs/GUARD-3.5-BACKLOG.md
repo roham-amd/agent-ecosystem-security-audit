@@ -1,11 +1,11 @@
-# AESA Guard 3.5 / 3.5.1 implementation backlog
+# AESA Guard 3.5 / 3.6.1 implementation backlog
 
 Derived from the November 2026 strategic review (Authority Diff north-star).
 Surfaces: **`doctor` + `vet` + `diff` (scan/PR gate)** on one engine.
 
 Status key: `done` · `in_progress` · `next` · `deferred` · `frozen`
 
-## Milestone M — Authority Diff (3.5.0 → 3.5.1)
+## Milestone M — Authority Diff (3.5.0 → 3.6.1)
 
 ### M1 Trust and identity
 
@@ -16,7 +16,7 @@ Status key: `done` · `in_progress` · `next` · `deferred` · `frozen`
 | M1.3 | Action `trusted-policy` + fail on `.aesa.yml` PR edits | done |
 | M1.4 | Action tools path prefers Action-bundled / pinned kit | done |
 | M1.5 | Update GitHub About text + topics away from “prompt kit” | done |
-| M1.6 | Publish PyPI + immutable Action tag `v3.5.1` | next |
+| M1.6 | Publish PyPI + immutable Action tag `v3.6.1` | next |
 | M1.7 | Revisit Python ≥3.15 floor | next |
 | M1.8 | `kit/` pointer; methodology de-emphasized | done |
 

@@ -25,7 +25,9 @@ def test_pr_comment_is_compact_and_decision_led(tmp_path: Path):
     scan, payload, _code = run_scan(demo, output_dir=tmp_path / "out")
     comment = payload.get("pr_comment") or render_authority_diff_comment(scan.to_findings_doc())
     assert "Decision:" in comment
-    assert len(comment.strip().splitlines()) <= 12
+    # Sticky HTML marker is metadata; visible body stays ≤12 lines.
+    body_lines = [ln for ln in comment.strip().splitlines() if not ln.startswith("<!--")]
+    assert len(body_lines) <= 12
     assert compute_decision(scan.findings, coverage=scan.coverage) in {
         "BLOCK",
         "REVIEW",

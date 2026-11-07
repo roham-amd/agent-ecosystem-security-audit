@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses semantic versioning for packaged releases (`2.0.0`, …).
 The included audit procedure version remains independently numbered (procedure **1.0** under `archive/methodology/`).
 
+## [3.6.1] — 2026-11-07
+
+### Security
+
+- **Target policy blindfold closed:** `scan` no longer auto-loads `<target>/.aesa.yml`.
+  Pass `--policy` or `--trust-target-policy` explicitly. Suppressions are retained in
+  findings as `suppressed: true` (never deleted). Agent digests always include
+  `suppressions` / `target_policy_ignored`.
+- **`vet`/`open` harden:** `--` before URL, HTTPS + github.com allowlist,
+  `GIT_TERMINAL_PROMPT=0`, clone timeout; scheme-less `github.com/org/repo` parses correctly.
+
+### Fixed
+
+- **New-only gating:** with a baseline, `compute_decision` / `compute_exit_code` no longer
+  fall through to legacy absolute head findings. PR comments no longer list all head
+  findings when the delta is empty; `gated_new_findings` is emitted on the risk delta.
+- **Sticky PR comment:** Action uses `gh pr comment --edit-last` (create on miss).
+- **Adoption PR trap:** first-time `.aesa.yml` *add* no longer fails the policy-edit check.
+- **Pin semantics:** `@latest` / `@next` / `git@…` are not pins; exact semver or digest required.
+- **RULE-012:** template placeholders demoted to MEDIUM; known token formats stay CRITICAL.
+- **Hooks:** bare `curl` is network egress, not `download_and_execute` (pipe-to-shell still is).
+- **Docs/examples:** version pins → 3.6.1; scrubbed maintainer local path from samples;
+  consumer example permissions `pull-requests: write`; restored attack-replay 07/08.
+
+### Added
+
+- Authority Snapshot / AuthorityDelta artifacts (`authority-snapshot.json`).
+- Instruction-rule Unicode/injection hints on `AGENTS.md`, `CLAUDE.md`, `.cursor/rules`,
+  `.cursorrules`, Copilot/Gemini/Windsurf markers.
+- Codex TOML MCP adapter (bounded subset); `doctor` includes `~/.claude.json` and more hosts.
+- CLI: `check`, `delta --baseline`, `ci init`; `--trust-target-policy`.
+- Production cleanup: mypy-clean adapters, versioning fallbacks synced, authdiff-first
+  operator strings, expanded regression tests for policy trust defaults and TOML MCP.
+
+### Changed
+
+- Product **3.6.1**; tooling **0.9.1**.
+- Operator-facing doctor/vet banners and Action display name use **authdiff**.
+
 ## [3.6.0] — 2026-11-07
 
 ### Fixed
@@ -47,7 +86,7 @@ The included audit procedure version remains independently numbered (procedure *
 - Shared `process_env.scrub_env` for broker/snapshot; clearer execute-path limitations;
   docs aligned to authdiff + archive paths; expanded regression tests.
 
-## [3.5.1] — 2026-11-07
+## [3.5.1] — 2026-11-06
 
 ### Added
 

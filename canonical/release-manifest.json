@@ -1,10 +1,10 @@
 {
   "manifest_version": "1.0",
   "product": "authdiff",
-  "product_version": "3.6.0",
+  "product_version": "3.6.1",
   "package_name": "aesa-tools",
-  "package_version": "0.9.0",
-  "primary_command": "authdiff doctor",
+  "package_version": "0.9.1",
+  "primary_command": "authdiff scan",
   "north_star": "Authority Diff — git diff for what your AI agents can do",
   "positioning": "Before you install, merge, or upgrade an AI-agent integration, see what authority it introduces and what changed.",
   "release_status": "released",
@@ -18,7 +18,8 @@
     "agent_benchmark": "0.3.0",
     "agent_benchmark_llm": "0.3.0",
     "host_profiles": "1.0.0",
-    "policy_contract": "1.1"
+    "policy_contract": "1.1",
+    "authority_snapshot": "1.0"
   },
   "interfaces": {
     "cli": true,
@@ -32,6 +33,7 @@
     "prompt_kit": "optional_deep_assessment",
     "host_profiles": true,
     "claude_settings_adapter": true,
+    "authority_snapshot": true,
     "ide": "deferred",
     "mcp_server": "deferred",
     "runtime_validation": "design_only",
@@ -44,7 +46,7 @@
     "security_finding": "Evidenced violation of a defined security property",
     "declared_vs_effective": "Host profiles declare configuration; effective permissions stay NOT VERIFIED without host/runtime evidence",
     "evidence_strength": "LITERAL_CONFIG | INFERRED_HINT | NAME_MARKER",
-    "decision": "BLOCK | REVIEW | NO-GATED-FINDINGS (unparsed agent configs fail closed as REVIEW)"
+    "decision": "BLOCK | REVIEW | NO-GATED-FINDINGS (unparsed agent configs fail closed as REVIEW; baseline mode is new-only)"
   },
   "compatibility": {
     "supported_product_line": "3.x",

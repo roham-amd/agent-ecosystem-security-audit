@@ -3,7 +3,7 @@
 Primary command: **`authdiff`**. Compatibility alias: **`aesa`**.
 
 Complete reference for the `aesa` console script (package `aesa-tools` **0.8.1**,
-product **3.5.1**).
+product **3.6.1**).
 
 Install: [`INSTALL.md`](INSTALL.md). Entry points: `aesa` and `python -m aesa`.
 

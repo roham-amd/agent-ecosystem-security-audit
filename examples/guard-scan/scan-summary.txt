@@ -1,6 +1,6 @@
 AESA Guard — Authority Diff for AI agents
-Product: AESA Guard 3.5.0  (tooling 0.8.0)
-Repository: C:\Users\rohaa\Projects\agent-ecosystem-security-audit\examples\_gen_src
+Product: authdiff 3.6.1  (tooling 0.9.1)
+Repository: examples/_gen_src
 Commit: f47826a24fff379fd7f7e98d095153a962cf573e
 
 DECISION SUMMARY

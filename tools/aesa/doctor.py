@@ -18,12 +18,20 @@ from aesa.security.gating import is_gate_finding
 from aesa.security.scan import run_scan
 
 # Relative to the user home directory. Keep this local-only and read-only.
+# `~/.claude.json` is Claude Code's primary user/local MCP registry (docs).
 _HOST_RELATIVE_SURFACES: tuple[tuple[str, str], ...] = (
     ("cursor", ".cursor"),
     ("claude-code", ".claude"),
+    ("claude-code", ".claude.json"),
     ("claude-code", ".mcp.json"),
+    ("claude-desktop", "AppData/Roaming/Claude"),
+    ("claude-desktop", "Library/Application Support/Claude"),
     ("vscode", ".vscode"),
     ("codex", ".codex"),
+    ("codex", ".codex/config.toml"),
+    ("windsurf", ".codeium/windsurf"),
+    ("gemini", ".gemini"),
+    ("zed", ".config/zed"),
 )
 
 _SEV_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFORMATIONAL": 4}
@@ -55,7 +63,7 @@ def _render_doctor_summary(
     scans: list[dict[str, Any]],
 ) -> str:
     lines = [
-        "AESA doctor — host authority map",
+        "authdiff doctor — host authority map",
         "Local-only read of your agent host configs. Nothing is uploaded.",
         "",
         "Surfaces:",
@@ -124,7 +132,7 @@ def run_doctor(
     present = [s for s in surfaces if s.exists]
     if not present:
         text = (
-            "AESA doctor — no host config surfaces found under "
+            "authdiff doctor — no host config surfaces found under "
             f"{(home or Path.home()).expanduser()}.\n"
             "Looked for: "
             + ", ".join(f"~/{rel}" for _, rel in _HOST_RELATIVE_SURFACES)

@@ -6,12 +6,13 @@ import argparse
 from pathlib import Path
 
 _EPILOG = """
-product path:  doctor | open/vet | scan | fix/harden | init | explain | annotate
+product path:  check/scan | doctor | open/vet | delta | fix/harden | ci init | explain
 opt-in:        run | snapshot | artifact-vet | atlas | lsp-validate
 maintainer:    build | lint | deps | corpus | benchmark | pilots | validate | …
 
 `aesa` is a compatibility alias for `authdiff`. Passive scans never execute target code;
-`run` / `snapshot --execute` are explicit opt-in and scrub env only (not a sandbox).
+`run` / `snapshot --execute` are env-scrub only (NOT a sandbox — rename pending).
+Target `.aesa.yml` is ignored unless `--policy` or `--trust-target-policy` is set.
 """
 
 
@@ -29,8 +30,34 @@ def build_parser() -> argparse.ArgumentParser:
 
     scan = sub.add_parser(
         "scan",
+        aliases=["check"],
         help="One-command Guard scan: inventory + deterministic security findings",
     )
+    delta = sub.add_parser(
+        "delta",
+        help="Authority Diff scan vs --baseline (new-only gating)",
+    )
+    delta.add_argument("path", type=Path, nargs="?", default=Path("."))
+    delta.add_argument(
+        "--baseline",
+        type=Path,
+        required=True,
+        help="Prior baseline.json for authority / finding delta",
+    )
+    delta.add_argument("-o", "--output-dir", type=Path)
+    delta.add_argument("--fail-on", choices=["never", "high", "any"], default="high")
+    delta.add_argument("--policy", type=Path)
+    delta.add_argument("--trust-target-policy", action="store_true")
+    delta.add_argument("--no-policy", action="store_true")
+    delta.add_argument("--agent", action="store_true")
+    delta.set_defaults(save_baseline=None)
+
+    ci = sub.add_parser("ci", help="CI helpers (init workflow + advisory policy)")
+    ci_sub = ci.add_subparsers(dest="ci_command", required=True)
+    ci_init = ci_sub.add_parser("init", help="Write advisory .aesa.yml + consumer workflow")
+    ci_init.add_argument("path", type=Path, nargs="?", default=Path("."))
+    ci_init.add_argument("--force", action="store_true")
+    ci_init.set_defaults(command="ci")
     scan.add_argument("path", type=Path, nargs="?", default=Path("."))
     scan.add_argument(
         "-o",
@@ -63,6 +90,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-policy",
         action="store_true",
         help="Ignore .aesa.yml even if present",
+    )
+    scan.add_argument(
+        "--trust-target-policy",
+        action="store_true",
+        help=(
+            "Load <target>/.aesa.yml (including suppressions). "
+            "Default is to ignore target policy so audited repos cannot blind the scanner."
+        ),
     )
     scan.add_argument(
         "--agent",

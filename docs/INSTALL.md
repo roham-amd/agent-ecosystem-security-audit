@@ -10,7 +10,7 @@
 
 ```bash
 uv tool install --python 3.12 \
-  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.0#subdirectory=tools"
+  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools"
 
 authdiff --help
 authdiff doctor

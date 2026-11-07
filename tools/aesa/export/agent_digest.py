@@ -71,13 +71,25 @@ def render_agent_digest(
     if decision == "BLOCK":
         next_actions.insert(0, "Do not merge/install until high/critical gated findings are fixed.")
 
+    suppressed = [f for f in findings if isinstance(f, dict) and f.get("suppressed")]
     digest = {
         "format": "aesa.agent_digest.v1",
         "product": findings_doc.get("product") or "authdiff",
         "decision": decision,
         "lead": sentences,
         "coverage": coverage_score_line(coverage),
+        "gated": compact,
         "gated_findings": compact,
+        "suppressions": [
+            {
+                "id": f.get("finding_id"),
+                "rule": f.get("rule_id"),
+                "justification": (f.get("suppression") or {}).get("justification"),
+            }
+            for f in suppressed[:20]
+        ],
+        "coverage_gaps": list(coverage.get("not_verified") or [])[:20],
+        "target_policy_ignored": bool(findings_doc.get("target_policy_ignored")),
         "capability_count": sum(
             1
             for f in findings

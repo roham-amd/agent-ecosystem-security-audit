@@ -76,12 +76,16 @@ def _write_or_print(data: object, output: Path | None) -> int:
 
 
 def dispatch(args: argparse.Namespace) -> int:
-    # Normalize product-path aliases (open/fix/init) to canonical commands.
+    # Normalize product-path aliases (open/fix/init/check) to canonical commands.
     command = {
         "open": "vet",
         "fix": "harden",
         "init": "init-gate",
+        "check": "scan",
+        "delta": "scan",
     }.get(args.command, args.command)
+    if args.command == "ci":
+        return _cmd_init_gate(args) if getattr(args, "ci_command", None) == "init" else 2
 
     match command:
         case "scan":
@@ -149,13 +153,28 @@ def dispatch(args: argparse.Namespace) -> int:
 
 
 def _cmd_scan(args: argparse.Namespace) -> int:
+    """Scan a target. Target ``.aesa.yml`` is ignored unless explicitly trusted.
+
+    Safe defaults for agent / third-party review:
+    - ``--policy PATH`` loads that file
+    - ``--trust-target-policy`` opts into discovering ``<target>/.aesa.yml``
+    - otherwise suppressions from the scanned repo cannot blind the auditor
+    """
     policy = None
+    target_policy_ignored = False
+    explicit_policy = getattr(args, "policy", None)
+    trust_target = bool(getattr(args, "trust_target_policy", False))
     if not getattr(args, "no_policy", False):
-        policy_path = getattr(args, "policy", None) or discover_policy_file(
-            args.path, stop_at=args.path
-        )
-        if policy_path is not None:
-            policy = load_policy(policy_path)
+        if explicit_policy is not None:
+            policy = load_policy(Path(explicit_policy))
+        elif trust_target:
+            policy_path = discover_policy_file(args.path, stop_at=args.path)
+            if policy_path is not None:
+                policy = load_policy(policy_path)
+        else:
+            discovered = discover_policy_file(args.path, stop_at=args.path)
+            if discovered is not None:
+                target_policy_ignored = True
 
     fail_on = apply_policy_defaults(
         policy=policy,
@@ -165,9 +184,22 @@ def _cmd_scan(args: argparse.Namespace) -> int:
     output_dir = args.output_dir
     if output_dir is None and policy is not None and policy.output_dir is not None:
         output_dir = policy.output_dir
+    if getattr(args, "agent", False) and output_dir is None:
+        # Agent mode must not default into the target tree / agent cwd surprise.
+        output_dir = Path("aesa-out").resolve()
     baseline = args.baseline
     if baseline is None and policy is not None and policy.baseline is not None:
         baseline = policy.baseline
+    # Target-supplied baselines can zero the delta; only honor when policy is trusted.
+    # CLI --baseline remains allowed (operator-supplied).
+    if (
+        baseline is not None
+        and policy is None
+        and not explicit_policy
+        and not trust_target
+        and not getattr(args, "baseline", None)
+    ):
+        baseline = None
 
     scan, payload, code = run_scan(
         args.path,
@@ -176,12 +208,27 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         save_baseline_path=args.save_baseline,
         fail_on=fail_on,
         policy=policy,
+        target_policy_ignored=target_policy_ignored,
     )
+    findings_doc = scan.to_findings_doc()
+    findings_doc["suppressions"] = payload.get("suppressions") or []
+    findings_doc["suppression_count"] = len(payload.get("suppressions") or [])
+    findings_doc["target_policy_ignored"] = target_policy_ignored
     if getattr(args, "agent", False):
         _emit_agent_digest(
-            scan.to_findings_doc(),
+            findings_doc,
             risk_delta={"summary": payload["risk_delta"]} if payload.get("risk_delta") else None,
             write_to=Path(payload["output_dir"]) / "agent-digest.json",
+            extra={
+                "suppressions": payload.get("suppressions") or [],
+                "target_policy_ignored": target_policy_ignored,
+                "coverage_gaps": (findings_doc.get("coverage") or {}).get("not_verified") or [],
+                "gated": [
+                    f.to_dict() if hasattr(f, "to_dict") else f
+                    for f in scan.findings
+                    if f.finding_class in {"SECURITY_FINDING", "EXPOSURE"} and not f.suppressed
+                ],
+            },
         )
         return code
     print(payload["summary"])
@@ -191,8 +238,10 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         print(f"Baseline saved: {payload['baseline_saved']}")
     if payload.get("policy_path"):
         print(f"Policy: {payload['policy_path']}")
-    if payload.get("suppressions"):
-        print(f"Suppressions applied: {len(payload['suppressions'])}")
+    elif target_policy_ignored:
+        print("Target .aesa.yml ignored (pass --trust-target-policy or --policy to apply)")
+    # Always surface suppression counts — including agent-adjacent operators.
+    print(f"Suppressions applied: {len(payload.get('suppressions') or [])}")
     print(f"Artifacts: {payload['output_dir']}")
     return code
 
@@ -246,8 +295,11 @@ def _emit_agent_digest(
     *,
     risk_delta: dict[str, Any] | None = None,
     write_to: Path | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> int:
     digest = render_agent_digest(findings_doc, risk_delta=risk_delta)
+    if extra:
+        digest.update(extra)
     if write_to is not None:
         write_json(write_to, digest)
     print_json(digest)
@@ -309,7 +361,9 @@ def _cmd_init_gate(args: argparse.Namespace) -> int:
         print("Wrote:")
         for path in wrote:
             print(f"  {path}")
-    print("Pin the AESA kit ref to an immutable tag/SHA before relying on the gate.")
+    print(
+        "Pin authdiff / aesa-tools to an immutable tag or PyPI version before relying on the gate."
+    )
     return 0
 
 

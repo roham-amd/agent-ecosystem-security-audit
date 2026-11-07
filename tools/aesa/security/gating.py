@@ -20,8 +20,16 @@ class _GateFinding(Protocol):
     def severity(self) -> str: ...
 
 
+def _is_suppressed(finding: _GateFinding | dict[str, Any]) -> bool:
+    if isinstance(finding, dict):
+        return bool(finding.get("suppressed"))
+    return bool(getattr(finding, "suppressed", False))
+
+
 def is_gate_finding(finding: _GateFinding | dict[str, Any]) -> bool:
     """True when the finding may participate in fail-on / annotations."""
+    if _is_suppressed(finding):
+        return False
     if isinstance(finding, dict):
         fclass = str(finding.get("finding_class") or "")
         return fclass in GATE_FINDING_CLASSES
@@ -53,20 +61,19 @@ def compute_exit_code(
 ) -> int:
     """Compute process exit code for ``fail_on`` policy.
 
-    Baseline deltas and absolute scan checks use the **same** gate classes:
-    CAPABILITY never blocks. ``fail_on=any`` with a baseline uses gated
-    findings added (not every fingerprint key).
+    When a baseline risk delta is present, gate on **new** gated findings only
+    (no fall-through to legacy absolute head findings). Without a baseline,
+    absolute head gated findings apply.
     """
     if fail_on not in {"high", "any"}:
         return 0
-    exit_code = 0
     if risk_delta_summary is not None:
-        if fail_on == "high" and risk_delta_summary.get("high_or_critical_findings_added"):
-            exit_code = 1
-        if fail_on == "any" and risk_delta_summary.get("gated_findings_added"):
-            exit_code = 1
-    if (fail_on == "high" and high_gate_findings(findings)) or (
-        fail_on == "any" and gated_findings(findings)
-    ):
-        exit_code = 1
-    return exit_code
+        if fail_on == "high":
+            return 1 if risk_delta_summary.get("high_or_critical_findings_added") else 0
+        # fail_on == "any"
+        return 1 if risk_delta_summary.get("gated_findings_added") else 0
+    if fail_on == "high" and high_gate_findings(findings):
+        return 1
+    if fail_on == "any" and gated_findings(findings):
+        return 1
+    return 0

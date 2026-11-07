@@ -795,7 +795,28 @@ def rule_literal_secret_in_mcp_env(
 ) -> None:
     if component.get("type") != "MCP Server Registration":
         return
-    if "literal_secret_in_env" not in set(component.get("priority_hints") or []):
+    hints = set(component.get("priority_hints") or [])
+    severity: Severity
+    strength: EvidenceStrength
+    if "literal_secret_in_env" in hints:
+        severity = "CRITICAL"
+        title = "Literal secret-like value in MCP env"
+        strength = "LITERAL_CONFIG"
+        description = (
+            f"MCP server `{component.get('name')}` appears to embed a literal credential in "
+            "`env` rather than a placeholder reference. Committed secrets are an immediate "
+            "exposure."
+        )
+    elif "literal_secret_like_placeholder" in hints:
+        severity = "MEDIUM"
+        title = "Possible template/placeholder secret-like MCP env value"
+        strength = "INFERRED_HINT"
+        description = (
+            f"MCP server `{component.get('name')}` has a secret-named env value that looks like "
+            "a template placeholder (for example `your-api-key-here`), not a known token format. "
+            "Confirm it is not a real credential before dismissing."
+        )
+    else:
         return
     ev = build_rule_evidence(
         evidences,
@@ -808,14 +829,10 @@ def rule_literal_secret_in_mcp_env(
     _add_finding(
         findings,
         rule_id="AESA-RULE-012",
-        title="Literal secret-like value in MCP env",
-        severity="CRITICAL",
+        title=title,
+        severity=severity,
         confidence="OBSERVED",
-        description=(
-            f"MCP server `{component.get('name')}` appears to embed a literal credential in "
-            "`env` rather than a placeholder reference. Committed secrets are an immediate "
-            "exposure."
-        ),
+        description=description,
         component=component,
         evidence=ev,
         capabilities=["access_secrets"],
@@ -827,7 +844,7 @@ def rule_literal_secret_in_mcp_env(
         recommended_action="Replace literal values with `${ENV}` references; rotate the secret.",
         finding_class="SECURITY_FINDING",
         exposure="LITERAL_SECRET",
-        evidence_strength="LITERAL_CONFIG",
+        evidence_strength=strength,
         verify_in_60s="Open the MCP JSON env block; confirm values are placeholders, not literals.",
         fix_snippet='Use "API_KEY": "${API_KEY}" and inject from the host secret store.',
     )
@@ -885,7 +902,11 @@ def rule_hidden_unicode_instructions(
     findings: list[Finding],
     ctx: EvidenceContext,
 ) -> None:
-    if component.get("type") != "Skill":
+    if component.get("type") not in {
+        "Skill",
+        "Rule / instruction file",
+        "Rule pack",
+    }:
         return
     if "hidden_unicode_in_instructions" not in set(component.get("priority_hints") or []):
         return
@@ -899,18 +920,18 @@ def rule_hidden_unicode_instructions(
     _add_finding(
         findings,
         rule_id="AESA-RULE-014",
-        title="Hidden or bidi Unicode in skill instructions",
+        title="Hidden or bidi Unicode in agent instructions",
         severity="HIGH",
         confidence="OBSERVED",
         description=(
-            f"Skill `{component.get('name')}` contains zero-width or bidirectional Unicode "
+            f"`{component.get('name')}` contains zero-width or bidirectional Unicode "
             "characters that can hide or reorder instructions to humans while remaining "
             "visible to the model."
         ),
         component=component,
         evidence=ev,
         capabilities=["modify_agent_instructions"],
-        attacker_control="Author of the skill instruction file",
+        attacker_control="Author of the instruction / rules file",
         entry_point=str(component.get("repository_path") or ""),
         trust_boundary="Human review → Unicode-obscured model instructions",
         impact="Covert instruction injection past visual review",

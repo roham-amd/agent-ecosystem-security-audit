@@ -21,34 +21,92 @@ _DOWNLOAD_EXEC_RE = re.compile(
 )
 
 
+_FLOATING_TAGS = frozenset(
+    {"latest", "next", "canary", "beta", "alpha", "rc", "dev", "main", "master", "trunk"}
+)
+_EXACT_SEMVER_RE = re.compile(
+    r"^v?(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
+    r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$"
+)
+_PLACEHOLDER_SECRET_RE = re.compile(
+    r"(?i)^(your[-_]?|my[-_]?|example[-_]?|changeme|todo|fixme|xxx+|placeholder|"
+    r"<[^>]+>|\[+[^\]]+\]+)$"
+)
+_KNOWN_TOKEN_FORMAT_RE = re.compile(
+    r"^(ghp_|gho_|github_pat_|sk-|sk-ant-|xox[baprs]-|AKIA[0-9A-Z]{16}|"
+    r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})"
+)
+
+
+def _version_looks_exact(version: str) -> bool:
+    ver = version.strip()
+    if not ver or ver.lower() in _FLOATING_TAGS:
+        return False
+    if ver.startswith(("^", "~", "*", ">", "<")):
+        return False
+    if ver.endswith("*") or "x" in ver.lower().split(".")[-1:]:
+        return False
+    return bool(_EXACT_SEMVER_RE.match(ver))
+
+
 def _package_looks_pinned(token: str) -> bool:
-    """Distinguish scoped names (`@scope/pkg`) from version pins (`pkg@1.2.3`)."""
-    if "@sha256:" in token or "==" in token:
+    """True only for exact semver or digest pins — not `@latest` / `@next` / git@.
+
+    Scoped npm names (`@scope/pkg`) are not pins. `git@github.com:...` is not a pin.
+    """
+    if "@sha256:" in token or token.startswith("sha256:"):
         return True
+    if "==" in token:
+        # pip-style name==1.2.3
+        _, _, ver = token.partition("==")
+        return _version_looks_exact(ver)
+    # Reject SSH git URLs that merely contain @.
+    if token.startswith("git@") or "git@" in token:
+        return False
     if token.startswith("@"):
-        # @scope/name → unpinned; @scope/name@1.2.3 → pinned
-        return token.count("@") >= 2
-    return "@" in token
+        # @scope/name → unpinned; @scope/name@1.2.3 → maybe pinned
+        if token.count("@") < 2:
+            return False
+        version = token.rsplit("@", 1)[-1]
+        return _version_looks_exact(version)
+    if "@" not in token:
+        return False
+    version = token.rsplit("@", 1)[-1]
+    return _version_looks_exact(version)
 
 
 def _looks_unpinned_launcher(command: str, args: list[Any]) -> bool:
-    """True for npx -y / uvx / bunx style launchers without an obvious pin."""
+    """True for npx/uvx/bunx/pipx/docker launchers without an exact pin."""
     cmd = command.strip().lower()
     arg_strs = [str(a) for a in args]
     joined = " ".join(arg_strs)
     if cmd in {"npx", "bunx"} and ("-y" in arg_strs or "--yes" in arg_strs):
         pkgs = [a for a in arg_strs if a not in {"-y", "--yes", "--"} and not a.startswith("-")]
         return bool(pkgs) and not any(_package_looks_pinned(p) for p in pkgs)
-    if cmd == "uvx":
+    if cmd in {"uvx", "pipx"}:
         return bool(arg_strs) and not any(_package_looks_pinned(a) for a in arg_strs)
+    if cmd in {"docker", "podman"}:
+        # docker run image:tag — :latest or bare name is floating
+        images = [a for a in arg_strs if not a.startswith("-") and a not in {"run", "exec"}]
+        for image in images:
+            if ":" not in image:
+                return True
+            tag = image.rsplit(":", 1)[-1]
+            if tag.lower() in _FLOATING_TAGS or tag.lower() == "latest":
+                return True
+            if "@sha256:" in image:
+                return False
+        return False
     if "npx -y" in f"{cmd} {joined}" or "npx --yes" in f"{cmd} {joined}":
         return not any(_package_looks_pinned(a) for a in arg_strs)
     return False
 
 
-def _env_has_literal_secret(env: Any) -> bool:
+def _env_secret_severity_hint(env: Any) -> str | None:
+    """Return hint name for literal secrets: critical format vs medium placeholder-ish."""
     if not isinstance(env, dict):
-        return False
+        return None
+    saw_medium = False
     for key, value in env.items():
         key_s = str(key)
         val_s = str(value) if value is not None else ""
@@ -57,9 +115,36 @@ def _env_has_literal_secret(env: Any) -> bool:
         # Placeholder / env expansion is inheritance (RULE-002), not a literal secret.
         if val_s.startswith("${") or val_s.startswith("$(") or val_s.startswith("{{"):
             continue
-        if len(val_s) >= 8 and not val_s.startswith("$"):
-            return True
-    return False
+        if val_s.startswith("$"):
+            continue
+        if len(val_s) < 8:
+            continue
+        if _PLACEHOLDER_SECRET_RE.match(val_s.strip()) or val_s.strip().lower() in {
+            "your-api-key-here",
+            "replace-me",
+            "insert-token",
+            "redacted",
+        }:
+            saw_medium = True
+            continue
+        if _KNOWN_TOKEN_FORMAT_RE.match(val_s.strip()) or _entropy_high(val_s):
+            return "literal_secret_in_env"
+        saw_medium = True
+    if saw_medium:
+        return "literal_secret_like_placeholder"
+    return None
+
+
+def _entropy_high(value: str) -> bool:
+    """Rough printable entropy gate — avoids flagging `password1` as CRITICAL."""
+    if len(value) < 16:
+        return False
+    unique = len(set(value))
+    return unique >= max(10, len(value) // 4)
+
+
+def _env_has_literal_secret(env: Any) -> bool:
+    return _env_secret_severity_hint(env) == "literal_secret_in_env"
 
 
 def _env_passes_host_secrets(env: Any) -> bool:
@@ -194,8 +279,9 @@ def discover_mcp_configs(
             env = cfg.get("env") or cfg.get("environment")
             if env:
                 hints.append("sets_environment")
-                if _env_has_literal_secret(env):
-                    hints.append("literal_secret_in_env")
+                secret_hint = _env_secret_severity_hint(env)
+                if secret_hint:
+                    hints.append(secret_hint)
                 elif _env_passes_host_secrets(env):
                     # Only credential-shaped keys with host expansion escalate RULE-002.
                     hints.append("inherits_or_sets_environment")

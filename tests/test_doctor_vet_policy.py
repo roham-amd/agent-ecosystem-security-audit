@@ -34,7 +34,7 @@ def test_doctor_scans_synthetic_home(tmp_path: Path):
     surfaces = discover_host_surfaces(home=home)
     assert any(s.host_id == "cursor" and s.exists for s in surfaces)
     text, code = run_doctor(home=home, output_dir=tmp_path / "out")
-    assert "AESA doctor" in text
+    assert "authdiff doctor" in text or "AESA doctor" in text
     assert "cursor" in text
     assert code in {0, 1}
 
@@ -50,7 +50,7 @@ def test_vet_local_path_verdict(tmp_path: Path):
     kind, resolved = resolve_vet_source(str(root))
     assert kind == "path"
     text, code = run_vet(str(root), output_dir=tmp_path / "vet-out")
-    assert "AESA vet" in text
+    assert "authdiff vet" in text or "AESA vet" in text
     assert "verdict:" in text
     assert code in {0, 1}
     assert resolved == str(root.resolve())
@@ -60,3 +60,15 @@ def test_vet_github_shorthand_normalizes():
     kind, url = resolve_vet_source("roham-amd/agent-ecosystem-security-audit")
     assert kind == "git"
     assert url.endswith("agent-ecosystem-security-audit.git")
+
+
+def test_vet_github_com_prefix_parses_owner_repo():
+    kind, url = resolve_vet_source("github.com/org/some-skill")
+    assert kind == "git"
+    assert url == "https://github.com/org/some-skill.git"
+
+
+def test_vet_https_tree_url_normalizes_to_clone():
+    kind, url = resolve_vet_source("https://github.com/org/some-skill/tree/main")
+    assert kind == "git"
+    assert url == "https://github.com/org/some-skill.git"

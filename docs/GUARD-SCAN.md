@@ -1,6 +1,6 @@
 # authdiff scan — operator guide
 
-This document describes the Guard scan path current through **3.5.1**: deterministic
+This document describes the Guard scan path current through **3.6.1**: deterministic
 discovery plus evidence-backed security observations via `aesa scan`, with explicit
 capability / exposure / finding separation. Default artifacts land in cwd
 `./aesa-out` (not inside the target tree). Companion commands: `aesa doctor`

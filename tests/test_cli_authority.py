@@ -13,7 +13,7 @@ def test_cli_doctor_help_and_empty_home(tmp_path: Path, capsys):
     code = main(["doctor", "--home", str(home)])
     out = capsys.readouterr().out
     assert code == 0
-    assert "AESA doctor" in out
+    assert "authdiff doctor" in out or "AESA doctor" in out
     assert "no host config" in out.lower() or "absent" in out.lower()
 
 
@@ -41,7 +41,7 @@ def test_cli_vet_local(tmp_path: Path, capsys):
     (skill / "SKILL.md").write_text("---\nname: ok\n---\nRead-only helper.\n", encoding="utf-8")
     code = main(["vet", str(root), "-o", str(tmp_path / "out")])
     out = capsys.readouterr().out
-    assert "AESA vet" in out
+    assert "authdiff vet" in out or "AESA vet" in out
     assert "verdict:" in out
     assert code in {0, 1}
 

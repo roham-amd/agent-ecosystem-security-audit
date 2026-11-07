@@ -1,14 +1,16 @@
-# AESA Guard policy file (`.aesa.yml`)
+# authdiff policy file (`.aesa.yml`)
 
-Repository-level defaults for the Guard scan and CI gate.
+Repository-level defaults for the authdiff scan and CI gate.
 
 | Item | Value |
 | --- | --- |
 | Contract | **1.1** |
-| Discovery | Look for `.aesa.yml` **inside the scan target tree only** (never parent dirs outside the target) |
-| CI trust | Action `trusted-policy=true` loads `.aesa.yml` from the **PR base ref** and fails if the PR edits policy |
+| Local CLI default | Target `.aesa.yml` is **ignored** unless `--policy PATH` or `--trust-target-policy` (prevents audited repos from suppressing findings) |
+| Discovery (when trusted) | Look for `.aesa.yml` **inside the scan target tree only** (never parent dirs outside the target) |
+| CI trust | Action `trusted-policy=true` loads `.aesa.yml` from the **PR base ref** and fails if an *existing* policy file is edited (first-time add is allowed) |
 | Override | Explicit CLI flags always win |
-| Disable | `aesa scan --no-policy` |
+| Disable | `authdiff scan --no-policy` |
+| Suppressions | Matching findings are marked `suppressed: true` and retained in artifacts (never deleted) |
 
 ## Example
 

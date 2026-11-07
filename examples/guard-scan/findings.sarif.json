@@ -6,7 +6,7 @@
       "tool": {
         "driver": {
           "name": "AESA Guard",
-          "version": "3.5.0",
+          "version": "3.6.1",
           "informationUri": "https://github.com/roham-amd/agent-ecosystem-security-audit",
           "rules": [
             {

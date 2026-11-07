@@ -10,6 +10,11 @@ from aesa.export.sarif import findings_doc_to_sarif
 from aesa.jsonio import write_json, write_text
 from aesa.paths import resolve_default_output_dir
 from aesa.policy import AesaPolicy
+from aesa.security.authority import (
+    build_authority_snapshot,
+    diff_authority_snapshots,
+    render_component_delta_lines,
+)
 from aesa.security.baseline import diff_against_baseline, load_baseline, save_baseline
 from aesa.security.engine import ScanResult, run_security_scan
 from aesa.security.gating import compute_exit_code
@@ -22,19 +27,36 @@ def write_scan_artifacts(
     *,
     risk_delta: dict[str, Any] | None = None,
     risk_delta_doc: dict[str, Any] | None = None,
+    authority_snapshot: dict[str, Any] | None = None,
+    authority_delta: dict[str, Any] | None = None,
+    suppressions: list[dict[str, str]] | None = None,
+    target_policy_ignored: bool = False,
 ) -> dict[str, Any]:
     """Persist inventory, findings, reports, SARIF, and Authority Diff PR comment."""
     output_dir.mkdir(parents=True, exist_ok=True)
     findings_doc = scan.to_findings_doc()
+    if suppressions:
+        findings_doc["suppressions"] = suppressions
+        findings_doc["suppression_count"] = len(suppressions)
+    findings_doc["target_policy_ignored"] = target_policy_ignored
     summary = render_terminal_report(scan, risk_delta=risk_delta)
     write_json(output_dir / "inventory.json", scan.inventory)
     write_json(output_dir / "ecosystem-graph.json", scan.graph)
     write_json(output_dir / "findings.json", findings_doc)
     write_json(output_dir / "capabilities.json", {"capabilities": findings_doc["capabilities"]})
+    if authority_snapshot is not None:
+        write_json(output_dir / "authority-snapshot.json", authority_snapshot)
+    if authority_delta is not None:
+        write_json(output_dir / "authority-delta.json", authority_delta)
     write_text(output_dir / "scan-report.md", render_markdown_summary(scan, terminal=summary))
     write_text(output_dir / "scan-summary.txt", summary)
     write_json(output_dir / "findings.sarif.json", findings_doc_to_sarif(findings_doc))
-    comment = render_authority_diff_comment(findings_doc, risk_delta=risk_delta_doc)
+    comment = render_authority_diff_comment(
+        findings_doc,
+        risk_delta=risk_delta_doc,
+        authority_delta=authority_delta,
+        authority_snapshot=authority_snapshot,
+    )
     write_text(output_dir / "pr-comment.md", comment)
     write_json(
         output_dir / "profile.json",
@@ -55,6 +77,8 @@ def write_scan_artifacts(
         "component_count": len(scan.inventory.get("components") or []),
         "summary": summary,
         "pr_comment": comment,
+        "suppressions": suppressions or [],
+        "target_policy_ignored": target_policy_ignored,
     }
 
 
@@ -64,10 +88,13 @@ def _evidence_paths(scan: ScanResult, finding_evidence_ids: list[str]) -> list[s
 
 
 def apply_suppressions(scan: ScanResult, policy: AesaPolicy | None) -> list[dict[str, str]]:
-    """Remove suppressed findings in-place; return suppression audit records."""
+    """Mark matching findings ``suppressed: true`` (keep in artifacts); return audit records.
+
+    Findings are never deleted: JSON / digests / SARIF retain them with an explicit
+    suppression record so a target policy cannot silently blind an auditor.
+    """
     if policy is None or not policy.suppressions:
         return []
-    kept = []
     records: list[dict[str, str]] = []
     for finding in scan.findings:
         match = policy.applies_to_finding(
@@ -75,18 +102,17 @@ def apply_suppressions(scan: ScanResult, policy: AesaPolicy | None) -> list[dict
             evidence_paths=_evidence_paths(scan, finding.evidence_ids),
         )
         if match is None:
-            kept.append(finding)
             continue
-        records.append(
-            {
-                "finding_id": finding.finding_id,
-                "rule_id": finding.rule_id,
-                "path": match.path,
-                "justification": match.justification,
-                "owner": match.owner,
-            }
-        )
-    scan.findings[:] = kept
+        record = {
+            "finding_id": finding.finding_id,
+            "rule_id": finding.rule_id,
+            "path": match.path,
+            "justification": match.justification,
+            "owner": match.owner,
+        }
+        finding.suppressed = True
+        finding.suppression = dict(record)
+        records.append(record)
     return records
 
 
@@ -98,6 +124,7 @@ def run_scan(
     save_baseline_path: Path | None = None,
     fail_on: str | None = None,
     policy: AesaPolicy | None = None,
+    target_policy_ignored: bool = False,
 ) -> tuple[ScanResult, dict[str, Any], int]:
     """Run scan; return (scan, payload, exit_code).
 
@@ -110,21 +137,37 @@ def run_scan(
     out = (output_dir or resolve_default_output_dir()).resolve()
     out.mkdir(parents=True, exist_ok=True)
 
+    authority_snapshot = build_authority_snapshot(scan)
+    authority_delta: dict[str, Any] | None = None
+
     risk_delta_summary: dict[str, Any] | None = None
     risk_delta_doc: dict[str, Any] | None = None
     if baseline and baseline.is_file():
-        risk_delta_doc = diff_against_baseline(scan, load_baseline(baseline))
+        baseline_doc = load_baseline(baseline)
+        risk_delta_doc = diff_against_baseline(scan, baseline_doc)
         write_json(out / "risk-delta.json", risk_delta_doc)
         risk_delta_summary = risk_delta_doc["summary"]
+        if baseline_doc.get("authority_snapshot"):
+            authority_delta = diff_authority_snapshots(
+                baseline_doc["authority_snapshot"], authority_snapshot
+            )
+            risk_delta_doc["authority_delta"] = authority_delta
+            risk_delta_doc["component_delta_lines"] = render_component_delta_lines(authority_delta)
 
     payload = write_scan_artifacts(
         scan,
         out,
         risk_delta=risk_delta_summary,
         risk_delta_doc=risk_delta_doc,
+        authority_snapshot=authority_snapshot,
+        authority_delta=authority_delta,
+        suppressions=suppressed,
+        target_policy_ignored=target_policy_ignored,
     )
     if risk_delta_summary is not None:
         payload["risk_delta"] = risk_delta_summary
+    if authority_delta is not None:
+        payload["authority_delta"] = authority_delta
 
     if suppressed:
         write_json(out / "suppressions.json", {"suppressions": suppressed})
@@ -136,7 +179,9 @@ def run_scan(
         payload["require_review"] = list(policy.require_review)
 
     if save_baseline_path is not None:
-        save_baseline(scan, save_baseline_path)
+        doc = save_baseline(scan, save_baseline_path)
+        doc["authority_snapshot"] = authority_snapshot
+        write_json(save_baseline_path, doc)
         payload["baseline_saved"] = str(save_baseline_path)
 
     exit_code = compute_exit_code(

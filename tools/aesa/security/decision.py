@@ -69,12 +69,20 @@ def compute_decision(
     risk_delta: dict[str, Any] | None = None,
     parser_events: list[dict[str, Any]] | None = None,
 ) -> Decision:
-    """Return the operator-facing decision for a scan or risk delta."""
-    if risk_delta:
+    """Return the operator-facing decision for a scan or risk delta.
+
+    When ``risk_delta`` is provided (baseline mode), gate on **new** authority
+    only — never fall through to legacy absolute head findings.
+    """
+    if risk_delta is not None:
         if risk_delta.get("high_or_critical_findings_added"):
             return "BLOCK"
         if risk_delta.get("gated_findings_added"):
             return "REVIEW"
+        # Unparsed configs still fail closed even when the finding delta is empty.
+        if unparsed_agent_config_count(coverage, parser_events) > 0:
+            return "REVIEW"
+        return "NO-GATED-FINDINGS"
 
     gated = [f for f in findings if is_gate_finding(f)]
     if any(is_high_gate_finding(f) for f in gated):
@@ -140,7 +148,14 @@ def decision_sentences(
             f"{sum(1 for f in findings if _class(f) == 'CAPABILITY')} capability observation(s)."
         )
 
-    action = "Next: `aesa explain F-00N` for evidence, or `aesa fix` for dry-run fix patches."
+    if risk_delta is not None and label == "NO-GATED-FINDINGS":
+        lead = (
+            "NO-GATED-FINDINGS: no *new* gated authority vs baseline "
+            "(legacy findings do not block in diff mode)."
+        )
+    action = (
+        "Next: `authdiff explain F-00N` for evidence, or `authdiff fix` for dry-run fix patches."
+    )
     return [lead, delta, action]
 
 

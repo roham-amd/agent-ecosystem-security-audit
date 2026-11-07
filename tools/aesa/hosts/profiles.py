@@ -158,6 +158,42 @@ HOST_PROFILES: dict[str, HostProfile] = {
             "Do not treat instruction files as proof of tool execution rights.",
         ),
     ),
+    "codex": HostProfile(
+        host_id="codex",
+        display_name="OpenAI Codex",
+        support="PARTIAL",
+        config_surfaces=(
+            HostConfigSurface(".codex/**", "Codex host configuration", "declared"),
+            HostConfigSurface("config.toml", "Codex / TOML MCP registrations", "declared"),
+            HostConfigSurface("CODEX.md", "Codex instruction file", "declared"),
+        ),
+        declared_permission_fields=("mcp_servers.*.command", "mcp.servers.*"),
+        effective_permission_requires=(
+            "Codex runtime approval mode (NOT VERIFIED from files alone)",
+        ),
+        limitations=("TOML parsing is a bounded subset; complex TOML fails closed.",),
+    ),
+    "gemini": HostProfile(
+        host_id="gemini",
+        display_name="Google Gemini CLI",
+        support="MANUAL_ONLY",
+        config_surfaces=(
+            HostConfigSurface("GEMINI.md", "Gemini instruction file", "declared"),
+            HostConfigSurface(".gemini/**", "Gemini project config", "declared"),
+        ),
+        declared_permission_fields=("instruction markdown only",),
+        effective_permission_requires=("Gemini CLI tool permissions (host settings)",),
+        limitations=("Presence markers only; effective permissions NOT VERIFIED.",),
+    ),
+    "windsurf": HostProfile(
+        host_id="windsurf",
+        display_name="Windsurf",
+        support="MANUAL_ONLY",
+        config_surfaces=(HostConfigSurface(".windsurfrules", "Windsurf rules file", "declared"),),
+        declared_permission_fields=("instruction markdown only",),
+        effective_permission_requires=("Windsurf runtime permissions",),
+        limitations=("Presence markers only; effective permissions NOT VERIFIED.",),
+    ),
 }
 
 

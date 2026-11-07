@@ -1,7 +1,7 @@
 {
   "aesa_audit_profile": "scan",
   "product": "AESA Guard",
-  "product_version": "3.5.0",
+  "product_version": "3.6.1",
   "package_version": "0.8.0",
   "purpose": "One-command discovery + deterministic security observations",
   "deliverable": "Terminal report, findings.json, SARIF, inventory, graph seed",

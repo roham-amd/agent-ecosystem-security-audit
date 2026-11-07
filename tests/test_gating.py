@@ -49,6 +49,33 @@ def test_fail_on_any_uses_gated_delta_not_all_keys():
     )
 
 
+def test_baseline_mode_no_fallthrough_to_legacy_findings():
+    """With a risk delta, exit code ignores absolute head findings."""
+    legacy_high = _finding(fclass="SECURITY_FINDING", severity="HIGH")
+    assert (
+        compute_exit_code(
+            "high",
+            findings=[legacy_high],
+            risk_delta_summary={
+                "gated_findings_added": 0,
+                "high_or_critical_findings_added": 0,
+            },
+        )
+        == 0
+    )
+    assert (
+        compute_exit_code(
+            "high",
+            findings=[legacy_high],
+            risk_delta_summary={
+                "gated_findings_added": 1,
+                "high_or_critical_findings_added": 1,
+            },
+        )
+        == 1
+    )
+
+
 def test_suppression_expires(tmp_path: Path):
     path = tmp_path / ".aesa.yml"
     path.write_text(

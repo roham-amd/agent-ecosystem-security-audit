@@ -8,7 +8,7 @@ report validation, corpus, and AgentSecBench harness.
 **Rule catalog:** [`../docs/SECURITY-RULES.md`](../docs/SECURITY-RULES.md)  
 **Docs index:** [`../docs/DOCUMENTATION-INDEX.md`](../docs/DOCUMENTATION-INDEX.md)
 
-Package: `aesa-tools` **0.8.1** · Product: AESA Guard **3.5.1**
+Package: `aesa-tools` **0.8.1** · Product: AESA Guard **3.6.1**
 
 ---
 
@@ -35,7 +35,7 @@ Do **not** add Poetry, pip-tools, Pipenv, or a separate venv manager.
 **User tool (recommended):**
 
 ```bash
-uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.5.1#subdirectory=tools
+uv tool install git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools
 aesa doctor
 aesa vet github.com/org/some-skill
 aesa scan /path/to/target-repo

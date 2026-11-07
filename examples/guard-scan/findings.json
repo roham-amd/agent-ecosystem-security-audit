@@ -1,7 +1,7 @@
 {
   "findings_version": "1.2",
   "product": "AESA Guard",
-  "product_version": "3.5.0",
+  "product_version": "3.6.1",
   "package_version": "0.8.0",
   "repository": "C:\\Users\\rohaa\\Projects\\agent-ecosystem-security-audit\\examples\\_gen_src",
   "audited_commit": "f47826a24fff379fd7f7e98d095153a962cf573e",

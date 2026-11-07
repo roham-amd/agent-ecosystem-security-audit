@@ -1,51 +1,42 @@
 # Example consumer workflow — copy into a product repo as
-# .github/workflows/aesa-gate.yml after checking out the AESA kit.
+# .github/workflows/aesa-gate.yml
 #
 # This file is documentation only (not executed by this repository's CI).
 #
-# IMPORTANT: Pin an immutable AESA release tag or commit SHA.
+# IMPORTANT: Pin an immutable AESA / authdiff release tag or commit SHA.
 # Floating `ref: main` lets scanner changes silently alter your CI gate.
 
-name: AESA Guard consumer gate (example)
+name: authdiff consumer gate (example)
 
 on:
   pull_request:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   security-events: write
 
 jobs:
-  aesa:
+  authdiff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
-      - name: Checkout AESA kit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: roham-amd/agent-ecosystem-security-audit
-          path: .aesa-kit
-          # Pin an immutable AESA release tag (or full commit SHA).
-          ref: v3.5.1
+      - name: Install authdiff
+        run: pip install "aesa-tools==0.9.1"
 
-      - name: AESA Guard
-        uses: ./.aesa-kit/.github/actions/aesa-gate
+      - name: authdiff Authority Diff
+        uses: roham-amd/agent-ecosystem-security-audit/.github/actions/aesa-gate@v3.6.1
         with:
           path: .
           mode: scan
-          fail-on: high
-          # Load .aesa.yml from the PR base ref; fail if the PR edits policy.
+          # Leave fail-on empty on day one (advisory). Promote to high after baseline.
           trusted-policy: "true"
+          authority-diff: "true"
+          install-tools-from: path
           annotate: true
-          install-tools-from: .aesa-kit/tools
-          baseline: .aesa/baseline.json
+          # Do not set baseline: here unless the file exists on the base ref —
+          # an empty/missing baseline disables the base-ref worktree diff step.
           output-dir: aesa-out
-
-      # Optional: upload SARIF to code scanning
-      # - uses: github/codeql-action/upload-sarif@...
-      #   with:
-      #     sarif_file: aesa-out/findings.sarif.json

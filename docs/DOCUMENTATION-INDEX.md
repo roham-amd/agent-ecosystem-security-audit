@@ -1,7 +1,7 @@
 # authdiff documentation index
 
 Complete map of project documentation for **authdiff 3.6.0** (Authority Diff;
-procedure **1.0**, tooling **0.9.0**, rule pack **1.4**). The `aesa` CLI name
+procedure **1.0**, tooling **0.9.1**, rule pack **1.4**). The `aesa` CLI name
 remains a compatibility alias.
 
 Use this file as the table of contents. Prefer the **primary** doc for each topic; secondary docs add depth or history.

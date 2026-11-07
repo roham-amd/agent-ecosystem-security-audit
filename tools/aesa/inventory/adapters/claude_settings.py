@@ -166,8 +166,13 @@ def discover_claude_settings(
             }:
                 hints.append("pre_execution_lifecycle")
                 hints.append("auto_running_hook")
-            if _DOWNLOAD_EXEC_RE.search(cmd) or "curl" in cmd.lower():
+            # Only curl|sh / wget|sh style pipes are download-and-execute; bare
+            # `curl` (e.g. Slack notification) is network egress, not RCE.
+            if _DOWNLOAD_EXEC_RE.search(cmd):
                 hints.append("download_and_execute")
+                hints.append("possible_execution_boundary")
+            elif re.search(r"\bcurl\b|\bwget\b|\biwr\b", cmd, re.IGNORECASE):
+                hints.append("network_egress_in_hook")
                 hints.append("possible_execution_boundary")
             if "$(env)" in cmd or "${env}" in cmd.lower() or "printenv" in cmd.lower():
                 hints.append("env_capture_in_hook")

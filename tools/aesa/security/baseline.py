@@ -233,6 +233,7 @@ def diff_against_baseline(scan: ScanResult, baseline: dict[str, Any]) -> dict[st
             "findings_added": added_findings,
             "findings_removed": removed_findings,
             "high_or_critical_new_findings": high_new,
+            "gated_new_findings": gated_new,
         },
         "policy_hints": {
             "block_if_high_or_critical_added": len(high_new) > 0,

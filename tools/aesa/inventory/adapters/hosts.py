@@ -25,16 +25,35 @@ def _cursor_markers(path: Path, root: Path) -> bool:
 def _claude_markers(path: Path, root: Path) -> bool:
     rel = path.relative_to(root).as_posix().lower()
     name = path.name.lower()
-    if name in {"claude.md", ".mcp.json"}:
+    if name in {"claude.md", ".mcp.json", ".claude.json"}:
         return True
     return bool(rel.startswith(".claude/"))
 
 
 def _copilot_markers(path: Path, root: Path) -> bool:
     rel = path.relative_to(root).as_posix().lower()
+    name = path.name.lower()
+    if name == "copilot-instructions.md":
+        return True
     return rel in {
         ".github/copilot-instructions.md",
     } or rel.startswith(".github/instructions/")
+
+
+def _codex_markers(path: Path, root: Path) -> bool:
+    rel = path.relative_to(root).as_posix().lower()
+    name = path.name.lower()
+    return name in {"codex.md", "config.toml"} or rel.startswith(".codex/")
+
+
+def _gemini_markers(path: Path, root: Path) -> bool:
+    name = path.name.lower()
+    return name in {"gemini.md", ".gemini.md"} or ".gemini" in path.parts
+
+
+def _windsurf_markers(path: Path, root: Path) -> bool:
+    name = path.name.lower()
+    return name in {".windsurfrules", "windsurfrules"} or "windsurf" in path.parts
 
 
 def discover_host_profiles(
@@ -45,7 +64,14 @@ def discover_host_profiles(
     events: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Return at most one component per detected host family."""
-    found: dict[str, list[str]] = {"cursor": [], "claude-code": [], "github-copilot": []}
+    found: dict[str, list[str]] = {
+        "cursor": [],
+        "claude-code": [],
+        "github-copilot": [],
+        "codex": [],
+        "gemini": [],
+        "windsurf": [],
+    }
 
     for path in select_files(files, lambda p: True):
         rel = path.relative_to(root).as_posix()
@@ -55,6 +81,12 @@ def discover_host_profiles(
             found["claude-code"].append(rel)
         if _copilot_markers(path, root):
             found["github-copilot"].append(rel)
+        if _codex_markers(path, root):
+            found["codex"].append(rel)
+        if _gemini_markers(path, root):
+            found["gemini"].append(rel)
+        if _windsurf_markers(path, root):
+            found["windsurf"].append(rel)
         # Bound memory: do not keep unbounded path lists.
         for key in found:
             if len(found[key]) > 20:

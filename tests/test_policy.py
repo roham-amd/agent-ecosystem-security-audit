@@ -54,7 +54,10 @@ def test_suppression_filters_findings(tmp_path: Path):
     out = tmp_path / "out"
     scan, payload, code = run_scan(root, output_dir=out, policy=policy, fail_on=None)
     assert code == 0
-    assert not any(f.rule_id == "AESA-RULE-002" for f in scan.findings)
+    # Suppressed findings stay in the artifact stream, marked suppressed=True.
+    suppressed = [f for f in scan.findings if f.rule_id == "AESA-RULE-002" and f.suppressed]
+    assert suppressed
+    assert not any(f.rule_id == "AESA-RULE-002" and not f.suppressed for f in scan.findings)
     assert payload.get("suppressions")
     assert (out / "suppressions.json").is_file()
 

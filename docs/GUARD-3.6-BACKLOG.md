@@ -1,6 +1,7 @@
 # authdiff / AESA Guard 3.6 implementation backlog
 
-North-star remains **Authority Diff** on one facts engine.
+North-star remains **Authority Diff** on one facts engine
+(`collector → Authority Snapshot → delta → new-only gate → sticky PR comment`).
 
 Status key: `done` · `in_progress` · `next` · `deferred` · `frozen`
 
@@ -9,8 +10,9 @@ Status key: `done` · `in_progress` · `next` · `deferred` · `frozen`
 | ID | Deliverable | Status |
 | --- | --- | --- |
 | W1.1–W1.8 | Install crash, FP hotfixes, decision honesty, aliases | done |
-| W1.9 | Publish PyPI (`aesa-tools`) via trusted publishing | next (workflow ready) |
+| W1.9 | Publish PyPI (`aesa-tools`) via trusted publishing | next (workflow ready; tag `v3.6.1`) |
 | W1.10 | Docker → `python:3.12.16-slim-trixie` | done |
+| W1.11 | Target-policy blindfold + sticky comment + open parser | done (3.6.1) |
 
 ## Milestone W2–W3 — Facts + Authority Diff
 
@@ -18,6 +20,9 @@ Status key: `done` · `in_progress` · `next` · `deferred` · `frozen`
 | --- | --- | --- |
 | W2.1–W2.2 | Claude settings + JSONC MCP | done |
 | W3.1–W3.3 | Base-vs-head Action + advisory init | done |
+| W3.4 | Authority Snapshot + new-only gating (no fall-through) | done (3.6.1) |
+| W3.5 | Exact pin semantics, RULE-012 demotion, curl\|sh split | done (3.6.1) |
+| W3.6 | Rules-file Unicode, Codex TOML, `~/.claude.json` doctor | done (3.6.1) |
 | Product rename to **authdiff** | done (`aesa` compat alias) |
 | Physical archive `archive/methodology/` | done |
 

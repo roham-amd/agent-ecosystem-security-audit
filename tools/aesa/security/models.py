@@ -118,9 +118,14 @@ class Finding:
     evidence_strength: EvidenceStrength = "INFERRED_HINT"
     verify_in_60s: str = ""
     fix_snippet: str = ""
+    suppressed: bool = False
+    suppression: dict[str, str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        if not data.get("suppressed"):
+            data.pop("suppression", None)
+        return data
 
 
 @dataclass(slots=True)

@@ -1,7 +1,7 @@
-name: AESA Guard
+name: authdiff Authority Diff
 description: >-
-  Passive agent-ecosystem Guard scan with optional baseline risk delta, trusted
-  .aesa.yml policy loading, and PR annotations. Does not execute target
+  Passive authdiff scan with optional baseline Authority Diff, trusted
+  .aesa.yml policy loading, and sticky PR annotations. Does not execute target
   application code or contact MCP endpoints.
 
 inputs:
@@ -61,7 +61,8 @@ inputs:
     description: >-
       Path to AESA tools/ containing pyproject.toml. Empty (default) resolves to
       the Action-bundled tools directory when present, never the consumer
-      workspace `tools/` by accident.
+      workspace `tools/` by accident. Set to `path` or `pypi` to use a
+      preinstalled `aesa`/`authdiff` on PATH (skip uv sync).
     required: false
     default: ""
   upload-sarif:
@@ -93,14 +94,30 @@ runs:
         set -euo pipefail
         # Prefer explicit input, then Action-bundled tools, and only then a
         # workspace-relative path. Never silently uv-sync a PR-controlled tools/.
+        # Special values path|pypi mean: use preinstalled CLI on PATH.
         chosen="${AESA_INSTALL_TOOLS_FROM}"
+        if [[ "${chosen}" == "path" || "${chosen}" == "pypi" ]]; then
+          if ! command -v aesa >/dev/null 2>&1 && ! command -v authdiff >/dev/null 2>&1; then
+            echo "::error::install-tools-from=${chosen} but neither aesa nor authdiff is on PATH. pip/uv install aesa-tools first."
+            exit 1
+          fi
+          echo "mode=path" >> "$GITHUB_OUTPUT"
+          echo "dir=" >> "$GITHUB_OUTPUT"
+          echo "Using preinstalled authdiff/aesa on PATH."
+          exit 0
+        fi
         bundled="$(cd "$AESA_ACTION_PATH/../../.." && pwd)/tools"
         if [[ -z "${chosen}" ]]; then
           if [[ -f "${bundled}/pyproject.toml" ]]; then
             chosen="${bundled}"
             echo "Using Action-bundled AESA tools: ${chosen}"
+          elif command -v aesa >/dev/null 2>&1 || command -v authdiff >/dev/null 2>&1; then
+            echo "mode=path" >> "$GITHUB_OUTPUT"
+            echo "dir=" >> "$GITHUB_OUTPUT"
+            echo "install-tools-from empty; using preinstalled authdiff/aesa on PATH."
+            exit 0
           elif [[ -f tools/pyproject.toml ]]; then
-            echo "::error::install-tools-from is empty and Action-bundled tools were not found. Refusing to default to workspace ./tools (PR-controlled code execution risk). Pass install-tools-from explicitly to a pinned AESA checkout."
+            echo "::error::install-tools-from is empty and Action-bundled tools were not found. Refusing to default to workspace ./tools (PR-controlled code execution risk). Pass install-tools-from explicitly to a pinned AESA checkout, or install aesa-tools and set install-tools-from: path."
             exit 1
           else
             echo "::error::Could not locate AESA tools/pyproject.toml"
@@ -116,15 +133,18 @@ runs:
         if [[ "${chosen}" == "tools" || "${chosen}" == "./tools" ]]; then
           echo "::warning::install-tools-from points at workspace tools/. Prefer a pinned AESA kit checkout or Action-bundled tools so PRs cannot supply the scanner."
         fi
+        echo "mode=uv" >> "$GITHUB_OUTPUT"
         echo "dir=${chosen}" >> "$GITHUB_OUTPUT"
 
     - name: Install uv
+      if: steps.tools.outputs.mode != 'path'
       uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         enable-cache: true
         python-version: "3.12"
 
     - name: Install AESA tooling
+      if: steps.tools.outputs.mode != 'path'
       shell: bash
       working-directory: ${{ steps.tools.outputs.dir }}
       run: |
@@ -150,10 +170,14 @@ runs:
           base="${AESA_BASE_REF}"
         fi
         if git diff --name-only "${base}...HEAD" | grep -E '(^|/)\.aesa\.yml$' >/dev/null; then
-          echo "::error::PR modifies .aesa.yml. Policy changes are an authority-surface edit and must be reviewed on their own; the gate loads policy from the base ref when trusted-policy=true."
-          exit 1
+          # First-adoption PRs that *add* .aesa.yml (absent on base) must not fail the gate.
+          if git cat-file -e "${base}:.aesa.yml" 2>/dev/null; then
+            echo "::error::PR modifies existing .aesa.yml. Policy changes are an authority-surface edit and must be reviewed on their own; the gate loads policy from the base ref when trusted-policy=true."
+            exit 1
+          fi
+          echo "PR adds .aesa.yml for the first time (allowed for adoption)."
         fi
-        echo "No .aesa.yml edits in this PR."
+        echo "No blocking .aesa.yml edits in this PR."
 
     - name: Resolve trusted policy path
       if: inputs.mode == 'scan'
@@ -316,9 +340,15 @@ runs:
         fi
         echo "## AESA Authority Diff" >> "$GITHUB_STEP_SUMMARY"
         cat "$COMMENT" >> "$GITHUB_STEP_SUMMARY"
-        # Best-effort sticky comment via gh when available; never fail the gate on comment UX.
+        # Sticky Authority Diff comment (marker in pr-comment.md). Never fail the gate on UX.
         if command -v gh >/dev/null 2>&1 && [[ -n "${GITHUB_TOKEN:-}" ]]; then
-          gh pr comment "${{ github.event.pull_request.number }}" --body-file "$COMMENT" || true
+          PR_NUM="${{ github.event.pull_request.number }}"
+          if gh pr comment "$PR_NUM" --body-file "$COMMENT" --edit-last 2>/dev/null; then
+            echo "Updated sticky authdiff PR comment."
+          else
+            gh pr comment "$PR_NUM" --body-file "$COMMENT" \
+              || echo "::warning::Failed to post authdiff PR comment (check pull-requests: write)."
+          fi
         else
           echo "gh unavailable; Authority Diff written to $COMMENT and job summary."
         fi

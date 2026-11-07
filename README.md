@@ -33,30 +33,31 @@ long report.
 ## First useful minute
 
 ```bash
-# Requires Python ≥3.12 (uv will fetch a managed interpreter if needed)
-uv tool install --python 3.12 \
-  "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.0#subdirectory=tools"
+# Requires Python ≥3.12. Prefer PyPI when published; git tag works today:
+uvx --from "git+https://github.com/roham-amd/agent-ecosystem-security-audit.git@v3.6.1#subdirectory=tools" authdiff
 
-authdiff doctor
+authdiff                  # alias: check / scan cwd
 authdiff open github.com/org/some-skill
-authdiff init
-authdiff scan .
+authdiff ci init          # advisory .aesa.yml + workflow
+authdiff delta --baseline .aesa/baseline.json
 authdiff fix --findings aesa-out/findings.json   # dry-run patches
 ```
 
-Artifacts default to **`./aesa-out`**. Use `--agent` on `scan` / `open` /
-`explain` for a compact fenced JSON digest.
+Artifacts default to **`./aesa-out`**. Target `.aesa.yml` suppressions are **ignored**
+unless you pass `--policy` or `--trust-target-policy`. Use `--agent` for a compact
+fenced JSON digest (`decision`, `gated`, `suppressions`, `coverage_gaps`).
 
 | Command | Purpose |
 | --- | --- |
-| `authdiff doctor` | Host authority map (Cursor / Claude Code / VS Code) |
-| `authdiff open` / `vet` | Pre-install verdict (safe shallow clone) |
-| `authdiff scan` | Repo scan → findings, SARIF, coverage, risk delta, `pr-comment.md` |
+| `authdiff` / `check` / `scan` | Repo authority scan → findings, SARIF, snapshot, `pr-comment.md` |
+| `authdiff doctor` | Host authority map (Cursor / Claude / Codex / …) |
+| `authdiff open` / `vet` | Pre-install verdict (safe shallow clone; hooks/LFS off) |
+| `authdiff delta --baseline` | New-only authority gate vs a prior baseline |
 | `authdiff fix` / `harden` | Dry-run least-privilege patch templates |
-| `authdiff init` / `init-gate` | Write advisory `.aesa.yml` + starter workflow |
+| `authdiff ci init` / `init` | Write advisory `.aesa.yml` + starter workflow |
 | `authdiff explain F-001` | Explain one finding from a prior scan |
-| `authdiff run -- …` | Authority broker MVP (env scrub + description-hash pin) |
-| `authdiff snapshot` | Sandboxed MCP `tools/list` snapshot (opt-in network) |
+| `authdiff run -- …` | Env-scrub launcher MVP (**not a sandbox**) |
+| `authdiff snapshot` | MCP `tools/list` snapshot (opt-in; **not sandboxed**) |
 
 Docs: [`docs/DOCUMENTATION-INDEX.md`](docs/DOCUMENTATION-INDEX.md) ·
 [`docs/GUARD-SCAN.md`](docs/GUARD-SCAN.md) ·
@@ -78,7 +79,7 @@ Archived methodology kit: [`archive/methodology/`](archive/methodology/)
   with:
     repository: roham-amd/agent-ecosystem-security-audit
     path: .aesa-kit
-    ref: v3.6.0   # pin tag or SHA — never float on main
+    ref: v3.6.1   # pin tag or SHA — never float on main
 - uses: ./.aesa-kit/.github/actions/aesa-gate
   with:
     path: .

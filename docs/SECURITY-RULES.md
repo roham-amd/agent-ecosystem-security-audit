@@ -2,7 +2,7 @@
 
 Rules live in `tools/aesa/security/rules.py` and are applied by `aesa scan`.
 
-**Version:** rule pack **1.3** (embedded in tooling **0.8.1**).
+**Version:** rule pack **1.4** (embedded in tooling **0.9.1** / product **3.6.1**). Nineteen rules (001–019).
 
 **Discipline:** rules emit findings with confidence `OBSERVED` or `POTENTIAL`. They never claim confirmed runtime exploitation. Every finding references evidence and lists missing controls. Each finding also carries `evidence_strength` (`LITERAL_CONFIG` / `INFERRED_HINT` / `NAME_MARKER`).
 
@@ -45,12 +45,14 @@ Absent a matching hint/type, a rule does nothing for that component.
 | `AESA-RULE-009` | Example MCP config | EXPOSURE | LOW | MCP hint: `example_or_template_config` |
 | `AESA-RULE-010` | Prompt-injection oriented surface | CAPABILITY or EXPOSURE | LOW / MEDIUM | Name markers (`NAME_MARKER`/LOW) or abuse-shaped instruction content (`INFERRED_HINT`/MEDIUM) |
 | `AESA-RULE-011` | Unpinned MCP package launcher | SECURITY_FINDING | HIGH | `npx -y` / `uvx` / similar without version pin |
-| `AESA-RULE-012` | Literal secret in MCP env | SECURITY_FINDING | CRITICAL | Secret-like env key with non-placeholder value |
+| `AESA-RULE-012` | Literal secret in MCP env | SECURITY_FINDING | CRITICAL / MEDIUM | Known token formats CRITICAL; template placeholders MEDIUM |
 | `AESA-RULE-013` | Cleartext HTTP remote MCP | SECURITY_FINDING | HIGH | `url` starts with `http://` |
-| `AESA-RULE-014` | Hidden Unicode in instructions | SECURITY_FINDING | HIGH | Zero-width / bidi characters in `SKILL.md` |
-| `AESA-RULE-015` | Download-and-execute pattern | SECURITY_FINDING | CRITICAL | `curl\|sh` / `wget\|sh` / `iwr\|iex` in skills/hooks |
+| `AESA-RULE-014` | Hidden Unicode in instructions | SECURITY_FINDING | HIGH | Zero-width / bidi in skills **and** rules files |
+| `AESA-RULE-015` | Download-and-execute pattern | SECURITY_FINDING | CRITICAL | `curl\|sh` / `wget\|sh` / `iwr\|iex` (bare `curl` is not this) |
 | `AESA-RULE-016` | `pull_request_target` + agent steps | SECURITY_FINDING | HIGH | Privileged PR trigger combined with agent/MCP tokens |
 | `AESA-RULE-017` | Permission-bypass / auto-approve flag | SECURITY_FINDING | HIGH | `--dangerously-skip-permissions` / `--yolo` / auto-approve |
+| `AESA-RULE-018` | Project MCP auto-enable | SECURITY_FINDING | HIGH | `enableAllProjectMcpServers` / trust-bypass settings |
+| `AESA-RULE-019` | Base-URL / proxy override | SECURITY_FINDING | HIGH | `ANTHROPIC_BASE_URL` style env overrides in settings |
 
 ---
 
